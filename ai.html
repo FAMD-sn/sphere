@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DOROSai · ИИ экосистемы</title>
+    <meta name="description" content="DOROSai — центральный искусственный интеллект DOROSphere. Умные диалоги, мультимодельный движок, сохранение истории.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & GLOBAL ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --blue: #2563eb;
+            --cyan: #06cdd4;
+            --gold: #f4b940;
+            --purple: #9b5cf6;
+            --bg-deep: #0a0c12;
+            --card-glass: rgba(18, 22, 32, 0.65);
+            --border-cyan: rgba(6, 205, 212, 0.25);
+            --text-primary: #ffffff;
+            --text-muted: #8892b0;
+            --glow-cyan: 0 0 12px rgba(6, 205, 212, 0.4);
+            --glow-gold: 0 0 12px rgba(244, 185, 64, 0.4);
+            --radius-xl: 28px;
+            --radius-md: 18px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            cursor: none;
+            min-height: 100vh;
+        }
+
+        /* custom cursor */
+        .cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--cyan);
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width .15s, height .15s;
+        }
+        .cursor-ring {
+            position: fixed;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid rgba(6, 205, 212, 0.6);
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            transition: transform .1s, width .2s, height .2s;
+        }
+        .cursor-ring.expand {
+            width: 52px;
+            height: 52px;
+            border-color: var(--gold);
+        }
+
+        /* animated background */
+        .gradient-aura {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: radial-gradient(circle at 15% 25%, rgba(37, 99, 235, 0.2), var(--bg-deep) 80%);
+        }
+        .gradient-aura::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 85% 70%, rgba(6, 205, 212, 0.12), transparent 70%);
+            animation: slowBreath 10s infinite alternate;
+        }
+        @keyframes slowBreath {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        .grid-lines {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 45px 45px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* main layout */
+        .app-container {
+            max-width: 1480px;
+            margin: 0 auto;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            gap: 24px;
+        }
+
+        /* sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-cyan);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        .sidebar-header {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid rgba(6,205,212,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-header h3 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #fff, var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .new-chat-btn {
+            background: linear-gradient(135deg, var(--blue), var(--cyan));
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            cursor: none;
+            transition: all 0.2s;
+            box-shadow: 0 0 12px rgba(6,205,212,0.4);
+        }
+        .new-chat-btn:hover {
+            transform: scale(1.08);
+            filter: brightness(1.05);
+        }
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(6,205,212,0.2);
+            border-radius: 20px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: none;
+            transition: all 0.2s;
+        }
+        .chat-item:hover {
+            border-color: var(--cyan);
+            background: rgba(6,205,212,0.1);
+            box-shadow: var(--glow-cyan);
+        }
+        .chat-item.active {
+            background: linear-gradient(95deg, rgba(6,205,212,0.18), rgba(37,99,235,0.1));
+            border-color: var(--cyan);
+        }
+        .chat-title {
+            font-weight: 500;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+            color: rgba(255,255,255,0.85);
+        }
+        .delete-chat {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: none;
+            font-size: 0.9rem;
+            border-radius: 30px;
+            padding: 5px 8px;
+            transition: 0.15s;
+        }
+        .delete-chat:hover {
+            color: var(--gold);
+            background: rgba(244,185,64,0.15);
+        }
+
+        /* main chat */
+        .main-chat {
+            flex: 1;
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-cyan);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        .chat-header {
+            padding: 20px 28px;
+            background: rgba(0,0,0,0.25);
+            border-bottom: 1px solid rgba(6,205,212,0.25);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .chat-header h2 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff, var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .model-selector {
+            background: rgba(0,0,0,0.4);
+            border-radius: 60px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(6,205,212,0.3);
+        }
+        .model-selector label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .model-selector select {
+            background: #0f111a;
+            border: 1px solid var(--cyan);
+            border-radius: 40px;
+            padding: 6px 16px;
+            color: #fff;
+            font-family: 'Inter', monospace;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: none;
+            outline: none;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .message {
+            display: flex;
+            gap: 14px;
+            max-width: 85%;
+            animation: fadeSlideUp 0.3s ease;
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(12px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .bot-message {
+            align-self: flex-start;
+        }
+        .avatar {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(145deg, var(--blue), var(--cyan));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 15px rgba(6,205,212,0.4);
+            flex-shrink: 0;
+        }
+        .bot-message .avatar {
+            background: linear-gradient(145deg, var(--purple), var(--cyan));
+        }
+        .message-content {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(6,205,212,0.2);
+            padding: 12px 20px;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #f0f3fa;
+            word-break: break-word;
+            font-weight: 400;
+        }
+        .user-message .message-content {
+            background: linear-gradient(125deg, rgba(37,99,235,0.25), rgba(6,205,212,0.15));
+            border-color: var(--cyan);
+        }
+        .typing .message-content {
+            background: rgba(255,255,255,0.02);
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .input-area {
+            padding: 20px 24px 28px;
+            border-top: 1px solid rgba(6,205,212,0.2);
+            display: flex;
+            gap: 12px;
+            background: rgba(0,0,0,0.2);
+        }
+        .input-area input {
+            flex: 1;
+            background: rgba(10,12,18,0.8);
+            border: 1px solid var(--border-cyan);
+            border-radius: 60px;
+            padding: 16px 24px;
+            color: white;
+            font-family: 'Inter', monospace;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(6,205,212,0.3);
+        }
+        .input-area button {
+            background: linear-gradient(135deg, var(--cyan), var(--blue));
+            border: none;
+            width: 58px;
+            height: 58px;
+            border-radius: 58px;
+            color: white;
+            font-size: 1.3rem;
+            cursor: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 12px rgba(6,205,212,0.5);
+        }
+        .input-area button:hover {
+            transform: scale(1.03);
+            filter: brightness(1.05);
+        }
+
+        .footer-note {
+            text-align: center;
+            padding: 12px;
+            font-size: 0.7rem;
+            color: #4a5568;
+            border-top: 1px solid rgba(6,205,212,0.1);
+            letter-spacing: 0.5px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0f17;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--cyan);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 780px) {
+            .app-container {
+                flex-direction: column;
+                padding: 12px;
+            }
+            .sidebar {
+                width: 100%;
+                max-height: 260px;
+            }
+            .message {
+                max-width: 95%;
+            }
+            .cursor-dot, .cursor-ring {
+                display: none;
+            }
+            body {
+                cursor: auto;
+            }
+        }
+
+        .toast-dorai {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0f1222;
+            border: 1px solid var(--cyan);
+            border-radius: 40px;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            z-index: 9999;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            animation: toastPop 0.3s ease;
+        }
+        @keyframes toastPop {
+            from { opacity: 0; transform: translateX(30px);}
+            to { opacity: 1; transform: translateX(0);}
+        }
+    </style>
+</head>
+<body>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<canvas id="particleCanvas"></canvas>
+<div class="gradient-aura"></div>
+<div class="grid-lines"></div>
+
+<div class="app-container">
+    <!-- sidebar history -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-brain" style="margin-right: 8px; color: var(--cyan);"></i> DOROSai</h3>
+            <button class="new-chat-btn" id="newChatBtn"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="chat-list" id="chatList"></div>
+        <div style="padding: 16px; border-top: 1px solid rgba(6,205,212,0.2); font-size: 0.7rem; text-align: center; color: #4a5b7a;">
+            <i class="fas fa-database"></i> данные локально • эко-ИИ
+        </div>
+    </div>
+
+    <!-- main chat area -->
+    <div class="main-chat">
+        <div class="chat-header">
+            <h2 id="chatTitle">Сеанс DOROSai</h2>
+            <div class="model-selector">
+                <label><i class="fas fa-microchip"></i> движок</label>
+                <select id="modelSelect">
+                    <option value="openai">DOROS Core (GPT)</option>
+                    <option value="llama">Llama 3 (быстрый)</option>
+                    <option value="mistral">Mistral (средний)</option>
+                    <option value="gemini">Gemini Pro (эксперт)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Задай вопрос DOROSai...   /help — управление" autofocus>
+            <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <div class="footer-note">
+            ⚡ питание через Pollinations • модели без токенов • вся история в твоём браузере
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ========== DOROSai CORE ==========
+        const STORAGE_KEY = 'dorosai_chats_v2';
+        const API_URL = 'https://text.pollinations.ai/';
+
+        let chats = [];
+        let currentChatId = null;
+        let isLoading = false;
+
+        // DOM elements
+        const chatListEl = document.getElementById('chatList');
+        const chatMessagesEl = document.getElementById('chatMessages');
+        const chatTitleEl = document.getElementById('chatTitle');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const modelSelect = document.getElementById('modelSelect');
+
+        // helpers
+        function generateId() {
+            return 'dorai_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+
+        function showToast(message, icon = '✨') {
+            const existing = document.querySelector('.toast-dorai');
+            if(existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-dorai';
+            toast.innerHTML = `<i class="fas fa-${icon === '✨' ? 'star-of-life' : 'info-circle'}" style="color: var(--cyan);"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        function saveChats() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+        }
+
+        function loadChats() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                chats = JSON.parse(stored);
+                if (!chats.length) throw new Error();
+            } 
+            if (!stored || !chats.length) {
+                const defaultChat = {
+                    id: generateId(),
+                    title: '🌟 DOROSai · первый контакт',
+                    messages: [
+                        { role: 'assistant', content: 'Приветствую в экосистеме DOROSphere. Я — DOROSai, нейросетевой помощник. Спрашивай о технологиях, бизнесе, коде или просто общайся. Выбери модель и начнём.' }
+                    ],
+                    createdAt: Date.now()
+                };
+                chats = [defaultChat];
+                currentChatId = defaultChat.id;
+                saveChats();
+            }
+            if (!currentChatId && chats.length) currentChatId = chats[0].id;
+            renderChatList();
+            renderCurrentChat();
+        }
+
+        function renderChatList() {
+            if (!chats.length) {
+                chatListEl.innerHTML = '<div style="padding:20px;text-align:center;color:#5a6e8a;">✧ нет чатов ✧</div>';
+                return;
+            }
+            let html = '';
+            [...chats].sort((a,b) => b.createdAt - a.createdAt).forEach(chat => {
+                const activeClass = chat.id === currentChatId ? 'active' : '';
+                html += `
+                    <div class="chat-item ${activeClass}" data-chat-id="${chat.id}">
+                        <span class="chat-title">${escapeHtml(chat.title)}</span>
+                        <button class="delete-chat" data-chat-id="${chat.id}"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+            });
+            chatListEl.innerHTML = html;
+
+            document.querySelectorAll('.chat-item').forEach(el => {
+                const chatId = el.dataset.chatId;
+                el.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-chat')) {
+                        switchChat(chatId);
+                    }
+                });
+                const delBtn = el.querySelector('.delete-chat');
+                if (delBtn) {
+                    delBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteChat(chatId);
+                    });
+                }
+            });
+        }
+
+        function switchChat(chatId) {
+            const target = chats.find(c => c.id === chatId);
+            if (!target) return;
+            currentChatId = chatId;
+            renderChatList();
+            renderCurrentChat();
+        }
+
+        function renderCurrentChat() {
+            const chat = chats.find(c => c.id === currentChatId);
+            if (!chat) {
+                chatMessagesEl.innerHTML = '<div style="padding: 40px; text-align:center;">выберите чат или создайте новый</div>';
+                chatTitleEl.innerText = 'DOROSai';
+                return;
+            }
+            chatTitleEl.innerText = chat.title;
+            let messagesHtml = '';
+            chat.messages.forEach(msg => {
+                const isUser = msg.role === 'user';
+                const avatarIcon = isUser ? '<i class="fas fa-user-astronaut"></i>' : '<i class="fas fa-robot"></i>';
+                messagesHtml += `
+                    <div class="message ${isUser ? 'user-message' : 'bot-message'}">
+                        <div class="avatar">${avatarIcon}</div>
+                        <div class="message-content">${escapeHtml(msg.content)}</div>
+                    </div>
+                `;
+            });
+            chatMessagesEl.innerHTML = messagesHtml;
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+
+        function createNewChat() {
+            const newChat = {
+                id: generateId(),
+                title: '🧠 диалог с ИИ',
+                messages: [
+                    { role: 'assistant', content: 'Привет! Я DOROSai, твой интеллектуальный партнёр. Чем могу помочь сегодня?' }
+                ],
+                createdAt: Date.now()
+            };
+            chats.unshift(newChat);
+            currentChatId = newChat.id;
+            saveChats();
+            renderChatList();
+            renderCurrentChat();
+            showToast('Новый сеанс связи', '💠');
+        }
+
+        function deleteChat(chatId) {
+            if (chats.length === 1) {
+                showToast('Нельзя удалить последний чат. Создай новый.', '⚠️');
+                return;
+            }
+            chats = chats.filter(c => c.id !== chatId);
+            if (currentChatId === chatId) {
+                currentChatId = chats[0].id;
+            }
+            saveChats();
+            renderChatList();
+            renderCurrentChat();
+            showToast('Чат покинул эфир', '🗑️');
+        }
+
+        // Добавление индикатора печати
+        let typingInterval = null;
+        function showTypingIndicator() {
+            removeTypingIndicator();
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'bot-message', 'typing');
+            typingDiv.id = 'typingIndicatorDOR';
+            typingDiv.innerHTML = `
+                <div class="avatar"><i class="fas fa-sync-alt fa-fw"></i></div>
+                <div class="message-content">DOROSai размышляет <span class="dot-wave">...</span></div>
+            `;
+            chatMessagesEl.appendChild(typingDiv);
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            let dots = 0;
+            typingInterval = setInterval(() => {
+                const waveSpan = document.querySelector('#typingIndicatorDOR .dot-wave');
+                if (!waveSpan) return;
+                dots = (dots + 1) % 4;
+                waveSpan.textContent = '.'.repeat(dots);
+            }, 450);
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typingIndicatorDOR');
+            if (el) el.remove();
+            if (typingInterval) clearInterval(typingInterval);
+            typingInterval = null;
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text || isLoading) return;
+
+            const chat = chats.find(c => c.id === currentChatId);
+            if (!chat) return;
+
+            // добавить сообщение пользователя
+            chat.messages.push({ role: 'user', content: text });
+            if (chat.messages.filter(m => m.role === 'user').length === 1) {
+                let newTitle = text.slice(0, 32);
+                if (text.length > 32) newTitle += '…';
+                chat.title = newTitle;
+                saveChats();
+                renderChatList();
+            }
+            saveChats();
+            renderCurrentChat();
+
+            userInput.value = '';
+            isLoading = true;
+            sendBtn.disabled = true;
+            showTypingIndicator();
+
+            try {
+                const selectedModel = modelSelect.value;
+                // контекст последних 12 сообщений для целостности
+                const contextMessages = chat.messages.slice(-12);
+                const promptContext = contextMessages.map(m => `${m.role === 'user' ? 'Пользователь' : 'DOROSai'}: ${m.content}`).join('\n');
+                const finalPrompt = `${promptContext}\nDOROSai:`;
+                const encoded = encodeURIComponent(finalPrompt);
+                const url = `${API_URL}${encoded}?model=${selectedModel}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`API ошибка: ${response.status}`);
+                const answer = await response.text();
+                removeTypingIndicator();
+                let finalAnswer = answer.trim();
+                if (!finalAnswer) finalAnswer = '⚡ Ответ не распознан. Попробуй ещё раз.';
+                chat.messages.push({ role: 'assistant', content: finalAnswer });
+                saveChats();
+                renderCurrentChat();
+            } catch (err) {
+                console.error(err);
+                removeTypingIndicator();
+                chat.messages.push({ role: 'assistant', content: `❌ Ошибка связи: ${err.message || 'проверь интернет или модель'}. Повтори запрос.` });
+                saveChats();
+                renderCurrentChat();
+                showToast('Сбой нейросети, попробуй позже', '🌐');
+            } finally {
+                isLoading = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // ========== Custom cursor and particles ==========
+        const dotCursor = document.getElementById('cursorDot');
+        const ringCursor = document.getElementById('cursorRing');
+        let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX; mouseY = e.clientY;
+            dotCursor.style.left = mouseX + 'px';
+            dotCursor.style.top = mouseY + 'px';
+        });
+        function animateRing() {
+            ringX += (mouseX - ringX) * 0.12;
+            ringY += (mouseY - ringY) * 0.12;
+            ringCursor.style.left = ringX + 'px';
+            ringCursor.style.top = ringY + 'px';
+            requestAnimationFrame(animateRing);
+        }
+        animateRing();
+        const interactive = document.querySelectorAll('.sidebar, .main-chat, button, input, .chat-item, .new-chat-btn, .model-selector select');
+        interactive.forEach(el => {
+            el.addEventListener('mouseenter', () => ringCursor.classList.add('expand'));
+            el.addEventListener('mouseleave', () => ringCursor.classList.remove('expand'));
+        });
+
+        // particles background
+        const partCanvas = document.getElementById('particleCanvas');
+        const ctxPart = partCanvas.getContext('2d');
+        let particles = [];
+        function resizePart() {
+            partCanvas.width = window.innerWidth;
+            partCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizePart);
+        resizePart();
+        for (let i = 0; i < 65; i++) {
+            particles.push({
+                x: Math.random() * partCanvas.width,
+                y: Math.random() * partCanvas.height,
+                vx: (Math.random() - 0.5) * 0.35,
+                vy: (Math.random() - 0.5) * 0.35,
+                r: 1.5 + Math.random() * 3,
+                color: ['#2563eb', '#06cdd4', '#f4b940'][Math.floor(Math.random() * 3)]
+            });
+        }
+        function drawParticles() {
+            if (!ctxPart) return;
+            ctxPart.clearRect(0, 0, partCanvas.width, partCanvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0) p.x = partCanvas.width;
+                if (p.x > partCanvas.width) p.x = 0;
+                if (p.y < 0) p.y = partCanvas.height;
+                if (p.y > partCanvas.height) p.y = 0;
+                ctxPart.beginPath();
+                ctxPart.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctxPart.fillStyle = p.color + 'aa';
+                ctxPart.fill();
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+        // ========== Handlers ==========
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        newChatBtn.addEventListener('click', createNewChat);
+
+        // initial
+        loadChats();
+
+        // show welcome toast after small delay
+        setTimeout(() => {
+            showToast('DOROSai активен · выбери модель и задай вопрос', '🧬');
+        }, 800);
+    })();
+</script>
+</body>
+</html>
