@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DOROSphere — Экосистема Таджикистана</title>
+    <meta name="description" content="DOROSphere — единое цифровое пространство Центральной Азии. 1000+ пользователей, 300+ товаров, 27 курьеров.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --blue: #2563eb;
+            --cyan: #06cdd4;
+            --gold: #f4b940;
+            --purple: #9b5cf6;
+            --bg: #0a0c12;
+            --card-bg: rgba(18,22,32,0.6);
+            --border: rgba(6,205,212,0.15);
+            --text-muted: #8892b0;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: #fff;
+            line-height: 1.5;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* ===== CUSTOM CURSOR ===== */
+        .cursor-dot {
+            position: fixed; width:8px; height:8px; border-radius:50%;
+            background: var(--cyan); pointer-events: none; z-index:99999;
+            transform: translate(-50%,-50%); transition: width .15s, height .15s, background .15s;
+            will-change: transform;
+        }
+        .cursor-ring {
+            position: fixed; width:34px; height:34px; border-radius:50%;
+            border: 2px solid rgba(6,205,212,0.5); pointer-events: none; z-index:99998;
+            transform: translate(-50%,-50%); transition: transform .1s, width .2s, height .2s, border-color .2s;
+            will-change: transform;
+        }
+        .cursor-ring.expand { width:52px; height:52px; border-color: var(--gold); }
+
+        /* ===== BACKGROUNDS ===== */
+        .gradient-bg {
+            position:fixed; inset:0; z-index:-2;
+            background: radial-gradient(circle at 10% 20%, rgba(37,99,235,0.15) 0%, var(--bg) 90%);
+        }
+        .gradient-bg::before {
+            content:''; position:absolute; inset:0;
+            background: radial-gradient(circle at 90% 70%, rgba(6,205,212,0.12) 0%, transparent 60%);
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+        @keyframes pulseGlow { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+        .grid-bg {
+            position:fixed; inset:0;
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                              linear-gradient(90deg,rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px; z-index:-1; pointer-events:none;
+        }
+
+        /* ===== PARTICLE CANVAS ===== */
+        #particleCanvas { position:fixed; inset:0; z-index:-1; pointer-events:none; }
+
+        /* ===== LAYOUT ===== */
+        .container { max-width:1280px; margin:0 auto; padding:0 24px; }
+
+        /* ===== HEADER ===== */
+        .glass-header {
+            background: rgba(10,12,18,0.7); backdrop-filter:blur(20px);
+            border-bottom: 1px solid rgba(6,205,212,0.2);
+            position:sticky; top:0; z-index:100; padding:16px 0;
+        }
+        .header-flex { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; }
+        .logo { display:flex; align-items:center; gap:12px; text-decoration:none; }
+        .logo-icon {
+            width:42px; height:42px; background:linear-gradient(135deg,var(--blue),var(--cyan));
+            border-radius:14px; display:flex; align-items:center; justify-content:center;
+            box-shadow:0 0 20px rgba(6,205,212,0.3);
+        }
+        .logo-icon i { font-size:24px; color:white; }
+        .logo-text {
+            font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800;
+            background:linear-gradient(135deg,#fff,var(--blue),var(--cyan));
+            background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+            letter-spacing:-0.02em;
+        }
+        .logo-badge {
+            background:rgba(6,205,212,0.2); border:1px solid rgba(6,205,212,0.4);
+            padding:4px 10px; border-radius:40px; font-size:0.7rem; font-weight:600; color:var(--cyan);
+        }
+
+        /* ===== HERO ===== */
+        .hero { padding:80px 0 60px; text-align:center; position:relative; }
+
+        .typewriter-wrap {
+            font-family:'Syne',sans-serif; font-size:3.5rem; font-weight:800;
+            background:linear-gradient(135deg,#fff,var(--blue),var(--cyan));
+            -webkit-background-clip:text; background-clip:text; color:transparent;
+            margin-bottom:20px; letter-spacing:-0.02em; min-height:4.5rem;
+        }
+        .typewriter-cursor { color:var(--cyan); animation:blink .7s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        .hero-sub { font-size:1.2rem; color:var(--text-muted); max-width:700px; margin:0 auto 50px; }
+
+        /* ===== HERO STATS ===== */
+        .hero-stats {
+            display:flex; justify-content:center; gap:32px; flex-wrap:wrap;
+            margin-bottom:16px;
+        }
+        .stat { text-align:center; position:relative; }
+        .stat-number {
+            font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800; color:var(--cyan);
+            position:relative;
+        }
+        .stat-number::after {
+            content:''; position:absolute; inset:-8px; border-radius:50%;
+            box-shadow:0 0 0 2px rgba(6,205,212,0.3);
+            animation:statPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes statPulse {
+            0%,100%{box-shadow:0 0 0 2px rgba(6,205,212,0.3)}
+            50%{box-shadow:0 0 0 8px rgba(6,205,212,0)}
+        }
+        .stat-label { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
+        .stat-micro { font-size:0.65rem; color:rgba(255,255,255,0.3); margin-top:2px; }
+
+        /* Sphere SVG wrap */
+        .sphere-wrap { display:flex; justify-content:center; margin-bottom:40px; }
+
+        /* ===== APPROVED SECTION ===== */
+        .approved-section { padding:60px 0; }
+        .approved-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:24px; }
+        .approved-card {
+            background: var(--card-bg); backdrop-filter:blur(16px);
+            border-radius:24px; border:1px solid var(--border);
+            padding:24px; opacity:0; transform:translateY(30px);
+            transition: opacity .5s, transform .5s, border-color .3s, box-shadow .3s;
+        }
+        .approved-card.visible { opacity:1; transform:translateY(0); }
+        .approved-card:hover { border-color:rgba(6,205,212,0.4); box-shadow:0 12px 30px -10px rgba(0,0,0,0.5); }
+        .approved-card .ac-icon { font-size:2rem; margin-bottom:12px; }
+        .approved-card .ac-title { font-weight:700; font-size:1rem; margin-bottom:8px; }
+        .approved-card .ac-list { font-size:0.82rem; color:var(--text-muted); line-height:1.8; }
+        .approved-card .ac-list span { color:rgba(255,255,255,0.7); }
+
+        /* ===== SERVICES ===== */
+        .services-section { padding:40px 0 80px; }
+        .section-title { font-family:'Syne',sans-serif; font-size:2rem; font-weight:700; text-align:center; margin-bottom:16px; }
+        .section-subtitle { text-align:center; color:var(--text-muted); margin-bottom:48px; font-size:1rem; }
+        .services-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:28px; }
+
+        .service-card {
+            background: var(--card-bg); backdrop-filter:blur(16px);
+            border-radius:28px; border:1px solid var(--border);
+            padding:24px; cursor:pointer; position:relative; overflow:hidden;
+            display:flex; flex-direction:column;
+            transition: transform .3s cubic-bezier(.2,.9,.4,1.1), border-color .3s, box-shadow .3s;
+            will-change:transform;
+        }
+        .service-card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background:linear-gradient(90deg,var(--blue),var(--cyan));
+            opacity:0; transition:opacity .3s;
+        }
+        .service-card:hover { transform:translateY(-8px) rotateX(2deg) rotateY(-1deg); border-color:rgba(6,205,212,0.4); box-shadow:0 24px 40px -15px rgba(0,0,0,0.6); }
+        .service-card:hover::before { opacity:1; }
+
+        .card-icon {
+            width:60px; height:60px;
+            background:linear-gradient(135deg,rgba(37,99,235,0.2),rgba(6,205,212,0.1));
+            border-radius:18px; display:flex; align-items:center; justify-content:center;
+            margin-bottom:20px; transition:transform .3s;
+        }
+        .service-card:hover .card-icon { transform:rotate(8deg) scale(1.1); }
+        .card-icon i { font-size:32px; background:linear-gradient(135deg,var(--blue),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+        .card-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:700; margin-bottom:8px; }
+        .card-desc { color:var(--text-muted); font-size:0.9rem; line-height:1.6; margin-bottom:16px; flex-grow:1; }
+
+        .card-badge {
+            display:inline-block; padding:5px 12px; border-radius:40px;
+            font-size:0.7rem; font-weight:700; margin-bottom:16px; width:fit-content;
+            letter-spacing:0.04em;
+        }
+        .badge-live { background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#10b981; }
+        .badge-beta { background:rgba(244,185,64,0.15); border:1px solid rgba(244,185,64,0.4); color:var(--gold); }
+        .badge-soon { background:rgba(155,92,246,0.15); border:1px solid rgba(155,92,246,0.4); color:var(--purple); }
+        .badge-active { background:rgba(6,205,212,0.15); border:1px solid rgba(6,205,212,0.3); color:var(--cyan); }
+        .badge-portal { background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.4); color:#60a5fa; }
+
+        .badge-live::before { content:'● '; font-size:0.6rem; animation:blinkDot .8s infinite; }
+        @keyframes blinkDot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .card-stats { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+        .cs { font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); padding:4px 10px; border-radius:20px; color:rgba(255,255,255,0.6); }
+        .cs strong { color:var(--cyan); }
+
+        .card-footer { display:flex; justify-content:space-between; align-items:center; margin-top:8px; border-top:1px solid rgba(255,255,255,0.05); padding-top:16px; }
+        .btn-link {
+            background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+            padding:8px 20px; border-radius:40px; color:white; font-weight:600;
+            font-size:0.85rem; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+        }
+        .btn-link:hover { background:linear-gradient(135deg,var(--blue),var(--cyan)); border-color:transparent; transform:translateY(-2px); }
+
+        .card-actions { display:flex; gap:12px; margin-top:8px; }
+        .btn-sm { flex:1; text-align:center; padding:8px 12px; border-radius:40px; font-size:0.8rem; font-weight:600; text-decoration:none; transition:all .2s; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:white; }
+        .btn-sm.primary { background:linear-gradient(135deg,var(--blue),var(--cyan)); border:none; }
+        .btn-sm:hover { transform:translateY(-2px); filter:brightness(1.05); }
+
+        /* ===== TEAM SECTION ===== */
+        .team-section { padding:60px 0; }
+        .team-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:24px; }
+        .team-card {
+            background:var(--card-bg); border:1px solid var(--border); border-radius:24px;
+            padding:28px 20px; text-align:center;
+            opacity:0; transform:translateY(30px);
+            transition:opacity .5s, transform .5s, border-color .3s;
+        }
+        .team-card.visible { opacity:1; transform:translateY(0); }
+        .team-card:hover { border-color:rgba(6,205,212,0.4); }
+        .team-avatar {
+            width:72px; height:72px; border-radius:50%; margin:0 auto 16px;
+            background:linear-gradient(135deg,var(--blue),var(--cyan));
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.8rem; box-shadow:0 0 20px rgba(6,205,212,0.2);
+        }
+        .team-name { font-weight:700; font-size:0.95rem; margin-bottom:6px; }
+        .team-role { font-size:0.78rem; color:var(--text-muted); }
+
+        /* ===== PARTNERS SECTION ===== */
+        .partners-section { padding:60px 0; }
+        .partners-scroll { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+        .partner-badge {
+            background:var(--card-bg); border:1px solid var(--border);
+            padding:16px 28px; border-radius:60px;
+            font-weight:600; font-size:0.9rem; color:rgba(255,255,255,0.7);
+            transition:all .25s; cursor:default;
+        }
+        .partner-badge:hover { border-color:var(--cyan); color:#fff; transform:translateY(-3px); box-shadow:0 8px 20px -8px rgba(6,205,212,0.3); }
+
+        /* ===== MAP SECTION ===== */
+        .map-section { padding:60px 0; }
+        .map-wrap { display:flex; justify-content:center; }
+
+        /* ===== FOOTER ===== */
+        .footer { border-top:1px solid rgba(255,255,255,0.05); padding:48px 0; margin-top:40px; text-align:center; color:var(--text-muted); font-size:0.85rem; }
+        .footer-stats { font-size:0.78rem; margin-top:10px; color:rgba(255,255,255,0.3); }
+        .footer-tags { margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+        .footer-tag { background:rgba(255,255,255,0.05); padding:4px 14px; border-radius:20px; font-size:0.72rem; }
+
+        /* ===== EASTER EGGS ===== */
+        .scan-bar-i{position:fixed;top:-8px;left:0;right:0;height:5px;background:linear-gradient(90deg,transparent,#06cdd4,#2563eb,transparent);z-index:9999;pointer-events:none;opacity:0}
+        .scan-bar-i.active{animation:scanDi 1.2s cubic-bezier(.16,1,.3,1) forwards}
+        @keyframes scanDi{0%{top:-8px;opacity:1}100%{top:100vh;opacity:0}}
+        .photon-i{position:fixed;border-radius:50%;pointer-events:none;z-index:9998;animation:photonFi .5s ease forwards}
+        @keyframes photonFi{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0) translate(var(--tx),var(--ty))}}
+        .matrix-overlay-i{position:fixed;inset:0;z-index:9990;pointer-events:none;background:#000;opacity:0;transition:opacity .3s}
+        .matrix-overlay-i.active{opacity:.92}
+        .matrix-canvas-i{position:fixed;inset:0;z-index:9991;pointer-events:none;display:none}
+        .matrix-canvas-i.active{display:block}
+        .star-i{position:fixed;pointer-events:none;z-index:9999;font-size:1.2rem;animation:starFi .9s ease forwards}
+        @keyframes starFi{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.3)}}
+        .lang-sel-i{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:40px;padding:6px 28px 6px 10px;font-size:.8rem;cursor:pointer;font-family:'Inter',sans-serif;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:all .18s}
+        .toast-ci{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:300px}
+        .toasti{background:#12161f;border:1px solid rgba(6,205,212,.3);border-radius:16px;padding:12px 16px;font-size:.85rem;color:#fff;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:tIni .4s cubic-bezier(.34,1.56,.64,1);transition:opacity .3s,transform .3s}
+        .toasti.out{opacity:0;transform:translateX(20px)}
+        @keyframes tIni{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+        .treasure-fab{position:fixed;bottom:90px;right:24px;z-index:800;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#f4b940,#e07b20);color:#fff;border:none;cursor:none;font-size:1rem;box-shadow:0 6px 22px rgba(244,185,64,.4);transition:all .22s;display:flex;align-items:center;justify-content:center}
+        .treasure-fab:hover{transform:scale(1.1)}
+        .fab-up-i{position:fixed;bottom:28px;right:24px;z-index:800;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;cursor:none;font-size:1rem;transition:all .22s;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transform:translateY(10px)}
+        .fab-up-i.vis{opacity:1;pointer-events:auto;transform:translateY(0)}
+        .moverlay-i{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:9990;opacity:0;visibility:hidden;transition:all .28s;display:flex;align-items:center;justify-content:center;padding:20px}
+        .moverlay-i.open{opacity:1;visibility:visible}
+        .mbox-i{background:#12161f;border:1px solid rgba(6,205,212,.2);border-radius:32px;padding:32px;width:100%;max-width:660px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7);transform:scale(.95) translateY(16px);transition:transform .32s cubic-bezier(.34,1.56,.64,1)}
+        .moverlay-i.open .mbox-i{transform:scale(1) translateY(0)}
+        .mhdr-i{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+        .mttl-i{font-size:1.1rem;font-weight:700;color:#fff}
+        .mclose-i{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;cursor:none;font-size:.9rem;transition:all .18s}
+        .mclose-i:hover{background:rgba(255,255,255,.12);color:#fff}
+        .egg-table-i{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:12px}
+        .egg-table-i th{text-align:left;padding:8px 12px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.08)}
+        .egg-table-i td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top;line-height:1.5;color:rgba(255,255,255,.8)}
+        .egg-table-i tr:last-child td{border-bottom:none}
+        .egg-table-i td:first-child{color:#f4b940;font-weight:700;width:28px}
+        .egg-table-i .egg-nm-i{font-weight:600;color:#fff}
+        .egg-table-i .egg-how-i{color:#06cdd4;font-family:monospace;font-size:.78rem}
+        .parchment-hdr-i{background:linear-gradient(135deg,rgba(244,185,64,.08),rgba(6,205,212,.08));border:1px solid rgba(244,185,64,.2);border-radius:16px;padding:16px 20px;margin-bottom:20px;text-align:center}
+        .parchment-hdr-i h3{font-size:1.2rem;font-weight:700;color:#f4b940;margin-bottom:4px}
+        .parchment-hdr-i p{font-size:.82rem;color:rgba(255,255,255,.5)}
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:768px){
+            .typewriter-wrap{font-size:2rem;}
+            .services-grid{grid-template-columns:1fr;}
+            .container{padding:0 16px;}
+            .hero-stats{gap:20px;}
+            .approved-grid{grid-template-columns:1fr;}
+            .team-grid{grid-template-columns:repeat(2,1fr);}
+            .cursor-dot,.cursor-ring{display:none;}
+            body{cursor:auto;}
+        }
+
+        /* ===== FADE-UP ===== */
+        .fade-up { opacity:0; transform:translateY(28px); transition:opacity .6s, transform .6s; }
+        .fade-up.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body>
+<!-- Custom cursor -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<canvas id="particleCanvas"></canvas>
+<div class="gradient-bg"></div>
+<div class="grid-bg"></div>
+
+<!-- Header -->
+<header class="glass-header">
+    <div class="container header-flex">
+        <a href="#" class="logo" id="logoEl">
+            <div class="logo-icon"><i class="fas fa-dharmachakra"></i></div>
+            <div class="logo-text">DOROSphere</div>
+            <span class="logo-badge">ОСНОВНОЙ ХАБ</span>
+        </a>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <select class="lang-sel-i" id="langSelectI" title="Language">
+                <option value="ru">🇷🇺 RU</option>
+                <option value="tg">🇹🇯 TG</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="uz">🇺🇿 UZ</option>
+                <option value="kk">🇰🇿 KK</option>
+                <option value="ar">🇸🇦 AR</option>
+                <option value="fa">🇮🇷 FA</option>
+                <option value="zh">🇨🇳 ZH</option>
+                <option value="hi">🇮🇳 HI</option>
+                <option value="ky">🇰🇬 KY</option>
+            </select>
+            <a href="index.html" class="btn-link" style="padding:6px 16px;" data-i18n-i="portal">DOROSfamd</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <div class="typewriter-wrap" id="typewriterEl"><span class="typewriter-cursor">|</span></div>
+            <p class="hero-sub">Финтех · Логистика · Образование · ИИ · Маркетплейс — единое цифровое пространство Таджикистана и Центральной Азии.</p>
+
+<div class="sphere-wrap">
+    <!-- Твой SVG-логотип (увеличенный, 280px) -->
+    <svg viewBox="0 0 600 600" width="280" height="280" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto; display:block;">
+        <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" style="background: #070b12; font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif; border-radius: 32px; box-shadow: 0 0 0 1px rgba(6,205,212,0.1), 0 25px 50px -12px rgba(0,0,0,0.5);">
+    <defs>
+        <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="12" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-gold" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-intense" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="15" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-text" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+
+        <linearGradient id="grad-primary" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2563eb" />
+            <stop offset="100%" stop-color="#06cdd4" />
+        </linearGradient>
+        <linearGradient id="grad-secondary" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#9b5cf6" />
+            <stop offset="100%" stop-color="#5865f8" />
+        </linearGradient>
+        <linearGradient id="grad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f4b940" />
+            <stop offset="100%" stop-color="#06cdd4" />
+        </linearGradient>
+        <radialGradient id="grad-core" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#06cdd4" />
+            <stop offset="40%" stop-color="#2563eb" />
+            <stop offset="100%" stop-color="#070b12" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="grad-aura" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(6,205,212,0.15)" />
+            <stop offset="50%" stop-color="rgba(37,99,235,0.08)" />
+            <stop offset="100%" stop-color="transparent" />
+        </radialGradient>
+        <linearGradient id="grad-letter" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="100%" stop-color="#06cdd4" />
+        </linearGradient>
+
+        <clipPath id="clip-D">
+            <path d="M 265 155 L 335 155 L 335 255 L 265 255 Z" />
+        </clipPath>
+
+        <filter id="drop-shadow-soft">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="rgba(6,205,212,0.3)" />
+        </filter>
+    </defs>
+
+    <style>
+        /* Вращения */
+        .rot-cw { transform-origin: 300px 260px; animation: rotCw 22s linear infinite; }
+        .rot-ccw { transform-origin: 300px 260px; animation: rotCcw 26s linear infinite; }
+        .orbit-dots { transform-origin: 300px 260px; animation: rotCw 14s linear infinite; }
+        .orbit-dots-reverse { transform-origin: 300px 260px; animation: rotCcw 18s linear infinite; }
+        @keyframes rotCw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes rotCcw { from { transform: rotate(45deg); } to { transform: rotate(-315deg); } }
+
+        /* Пульсации */
+        .pulse-core { transform-origin: 300px 260px; animation: corePulse 3.5s ease-in-out infinite; }
+        @keyframes corePulse { 
+            0%, 100% { transform: scale(1); opacity: 0.9; filter: drop-shadow(0 0 8px #06cdd4); } 
+            50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 25px #06cdd4); } 
+        }
+
+        /* Голографическая волна на орбите */
+        .wave-orbit { animation: waveFlow 3s ease-in-out infinite; }
+        @keyframes waveFlow {
+            0% { stroke-dashoffset: 0; opacity: 0.6; }
+            50% { stroke-dashoffset: 40; opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 0.6; }
+        }
+
+        /* Цифровые молнии */
+        .digital-bolt { stroke-dasharray: 200; stroke-dashoffset: 200; animation: boltFlash 4s ease-in-out infinite; }
+        .digital-bolt-delayed { stroke-dasharray: 200; stroke-dashoffset: 200; animation: boltFlash 4s ease-in-out 2s infinite; }
+        @keyframes boltFlash {
+            0%, 100% { stroke-dashoffset: 200; opacity: 0; }
+            20%, 30% { stroke-dashoffset: 0; opacity: 1; }
+            40% { opacity: 0.3; }
+            50%, 100% { stroke-dashoffset: -200; opacity: 0; }
+        }
+
+        /* Звёздная пыль — мерцание частиц */
+        .star-dust { animation: twinkle 2.5s ease-in-out infinite; }
+        .star-dust:nth-child(1) { animation-delay: 0s; }
+        .star-dust:nth-child(2) { animation-delay: 0.5s; }
+        .star-dust:nth-child(3) { animation-delay: 1s; }
+        .star-dust:nth-child(4) { animation-delay: 1.5s; }
+        .star-dust:nth-child(5) { animation-delay: 2s; }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 8px currentColor); }
+        }
+
+        /* Бегущие точки с переменой цвета */
+        .color-dot { animation: colorShift 3s linear infinite; }
+        .color-dot:nth-child(1) { animation-delay: 0s; }
+        .color-dot:nth-child(2) { animation-delay: 0.75s; }
+        .color-dot:nth-child(3) { animation-delay: 1.5s; }
+        .color-dot:nth-child(4) { animation-delay: 2.25s; }
+        @keyframes colorShift {
+            0% { fill: #2563eb; }
+            25% { fill: #06cdd4; }
+            50% { fill: #f4b940; }
+            75% { fill: #9b5cf6; }
+            100% { fill: #2563eb; }
+        }
+
+        /* Появление текста */
+        .text-reveal { animation: revealText 0.8s ease-out forwards; }
+        @keyframes revealText {
+            from { opacity: 0; transform: translateY(15px); letter-spacing: 8px; }
+            to { opacity: 1; transform: translateY(0); letter-spacing: 4px; }
+        }
+
+        /* Рождение звезды при загрузке */
+        .star-birth { animation: starBirth 1.2s cubic-bezier(0.34, 1.2, 0.64, 1) forwards; transform-origin: 300px 260px; }
+        @keyframes starBirth {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Пульсация текста */
+        .text-pulse { animation: textPulse 2s ease-in-out infinite; }
+        @keyframes textPulse {
+            0%, 100% { opacity: 0.6; text-shadow: 0 0 2px #06cdd4; }
+            50% { opacity: 1; text-shadow: 0 0 10px #06cdd4; }
+        }
+
+        /* Вращение внешних колец с переменной скоростью */
+        .speed-ring-1 { transform-origin: 300px 260px; animation: ringSpin 18s linear infinite; }
+        .speed-ring-2 { transform-origin: 300px 260px; animation: ringSpin 24s linear infinite reverse; }
+        @keyframes ringSpin { to { transform: rotate(360deg); } }
+    </style>
+
+    <g class="star-birth">
+        <circle cx="300" cy="260" r="180" fill="url(#grad-aura)" />
+        
+        <circle cx="180" cy="150" r="3" fill="#06cdd4" filter="url(#glow-cyan)" class="star-dust" />
+        <circle cx="420" cy="140" r="2.5" fill="#2563eb" filter="url(#glow-blue)" class="star-dust" />
+        <circle cx="150" cy="320" r="2" fill="#f4b940" filter="url(#glow-gold)" class="star-dust" />
+        <circle cx="460" cy="330" r="3.5" fill="#9b5cf6" filter="url(#glow-blue)" class="star-dust" />
+        <circle cx="280" cy="110" r="2" fill="#06cdd4" filter="url(#glow-cyan)" class="star-dust" />
+        <circle cx="330" cy="420" r="2.5" fill="#2563eb" filter="url(#glow-blue)" class="star-dust" />
+        <circle cx="130" cy="240" r="1.5" fill="#f4b940" filter="url(#glow-gold)" class="star-dust" />
+        <circle cx="470" cy="250" r="2" fill="#9b5cf6" filter="url(#glow-blue)" class="star-dust" />
+        <circle cx="200" cy="400" r="2" fill="#06cdd4" filter="url(#glow-cyan)" class="star-dust" />
+        <circle cx="410" cy="390" r="1.5" fill="#2563eb" filter="url(#glow-blue)" class="star-dust" />
+    </g>
+
+    <g class="star-birth" style="animation-delay: 0.1s;">
+        <circle cx="300" cy="260" r="175" fill="none" stroke="rgba(6,205,212,0.12)" stroke-width="1.5" stroke-dasharray="6 10" />
+        <circle cx="300" cy="260" r="185" fill="none" stroke="url(#grad-primary)" stroke-width="2" stroke-dasharray="15 30" class="wave-orbit" />
+        <circle cx="300" cy="260" r="195" fill="none" stroke="rgba(37,99,235,0.15)" stroke-width="1" stroke-dasharray="4 12" class="speed-ring-1" />
+        <circle cx="300" cy="260" r="140" fill="none" stroke="rgba(155,92,246,0.15)" stroke-width="1" stroke-dasharray="3 8" class="speed-ring-2" />
+    </g>
+
+    <g class="star-birth" style="animation-delay: 0.2s;">
+        <rect x="175" y="135" width="250" height="250" rx="60" fill="none" stroke="url(#grad-primary)" stroke-width="3" class="rot-cw" filter="url(#glow-blue)" />
+        <rect x="175" y="135" width="250" height="250" rx="60" fill="none" stroke="url(#grad-secondary)" stroke-width="2" class="rot-ccw" opacity="0.85" />
+    </g>
+
+    <g class="orbit-dots">
+        <circle cx="300" cy="85" r="6" class="color-dot" filter="url(#glow-cyan)" />
+        <circle cx="515" cy="260" r="6" class="color-dot" filter="url(#glow-blue)" />
+        <circle cx="300" cy="435" r="6" class="color-dot" filter="url(#glow-gold)" />
+        <circle cx="85" cy="260" r="6" class="color-dot" filter="url(#glow-blue)" />
+    </g>
+
+    <g class="orbit-dots-reverse">
+        <circle cx="300" cy="115" r="4" fill="#06cdd4" class="star-dust" />
+        <circle cx="485" cy="260" r="4" fill="#9b5cf6" class="star-dust" />
+        <circle cx="300" cy="405" r="4" fill="#f4b940" class="star-dust" />
+        <circle cx="115" cy="260" r="4" fill="#2563eb" class="star-dust" />
+    </g>
+
+    <g>
+        <path d="M 300 80 Q 340 120 280 160 Q 240 190 300 215" fill="none" stroke="#06cdd4" stroke-width="2" class="digital-bolt" filter="url(#glow-cyan)" />
+        <path d="M 520 260 Q 480 300 440 250 Q 410 210 450 170" fill="none" stroke="#9b5cf6" stroke-width="2" class="digital-bolt-delayed" />
+        <path d="M 300 440 Q 260 400 320 360 Q 360 330 300 305" fill="none" stroke="#2563eb" stroke-width="2" class="digital-bolt" filter="url(#glow-blue)" />
+        <path d="M 80 260 Q 120 220 160 270 Q 190 310 150 350" fill="none" stroke="#f4b940" stroke-width="2" class="digital-bolt-delayed" filter="url(#glow-gold)" />
+    </g>
+
+    <g class="pulse-core">
+        <circle cx="300" cy="260" r="65" fill="#070b12" stroke="url(#grad-primary)" stroke-width="2.5" filter="url(#drop-shadow-soft)" />
+        <circle cx="300" cy="260" r="65" fill="url(#grad-core)" opacity="0.35" />
+        <circle cx="300" cy="260" r="60" fill="none" stroke="rgba(6,205,212,0.25)" stroke-width="1" stroke-dasharray="4 6" />
+    </g>
+
+    <g class="pulse-core" style="animation-delay: 0.3s;">
+        <line x1="275" y1="220" x2="275" y2="300" stroke="#06cdd4" stroke-width="4.5" stroke-linecap="round" filter="url(#glow-cyan)" />
+        
+        <path d="M 275 220 L 305 220 C 345 220, 345 300, 305 300 L 275 300" fill="none" stroke="url(#grad-primary)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-blue)" />
+        
+        <path d="M 288 240 L 302 240 C 322 240, 322 280, 302 280 L 288 280" fill="none" stroke="#9b5cf6" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+        
+        <circle cx="325" cy="260" r="3.5" fill="#f4b940" filter="url(#glow-gold)" class="star-dust" />
+    </g>
+
+    <g>
+        <text x="300" y="500" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="44" fill="#ffffff" letter-spacing="5" filter="url(#drop-shadow-soft)" class="text-reveal">
+            <tspan fill="url(#grad-primary)">ДОРО</tspan><tspan fill="#06cdd4">Сфера</tspan>
+        </text>
+        
+        <text x="300" y="535" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="600" font-size="12" fill="rgba(255,255,255,0.45)" letter-spacing="4" class="text-reveal" style="animation-delay: 0.15s;">
+            DIGITAL ECOSYSTEM OF CENTRAL ASIA
+        </text>
+
+        <line x1="180" y1="555" x2="420" y2="555" stroke="url(#grad-primary)" stroke-width="1" opacity="0.4" class="text-reveal" style="animation-delay: 0.2s;" />
+        
+        <text x="300" y="575" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="500" font-size="9" fill="rgba(6,205,212,0.5)" letter-spacing="3" class="text-pulse">
+            ЕДИНАЯ ЭКОСИСТЕМА ЦЕНТРАЛЬНОЙ АЗИИ
+        </text>
+    </g>
+</svg>
+
+    </svg>
+</div>
+
+            <!-- Stat counters -->
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number" data-target="1000" data-suffix="+">0</div>
+                    <div class="stat-label">Пользователей</div>
+                    <div class="stat-micro">реальных пользователей</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" data-target="150" data-suffix="+">0</div>
+                    <div class="stat-label">Регистраций</div>
+                    <div class="stat-micro">верифицированных аккаунтов</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" data-target="300" data-suffix="+">0</div>
+                    <div class="stat-label">Товаров</div>
+                    <div class="stat-micro">в DOROShop</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" data-target="100" data-suffix="+">0</div>
+                    <div class="stat-label">Продавцов</div>
+                    <div class="stat-micro">реальные договоры</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" data-target="27" data-suffix="">0</div>
+                    <div class="stat-label">Курьеров</div>
+                    <div class="stat-micro">20 мото + 7 авто</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" data-target="2" data-suffix="">0</div>
+                    <div class="stat-label">Модуля запущено</div>
+                    <div class="stat-micro">DOROShop + DOROSgo</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Approved & Tested Section -->
+    <section class="approved-section">
+        <div class="container">
+            <h2 class="section-title fade-up">Одобрено и протестировано</h2>
+            <p class="section-subtitle fade-up">Реальные люди, реальные организации, реальное доверие</p>
+            <div class="approved-grid">
+                <div class="approved-card">
+                    <div class="ac-icon">✅</div>
+                    <div class="ac-title">Одобрено</div>
+                    <div class="ac-list">
+                        <span>IT Park Dushanbe</span> — директор<br>
+                        <span>Smart City</span> — директор
+                    </div>
+                </div>
+                <div class="approved-card" style="transition-delay:.1s">
+                    <div class="ac-icon">🧪</div>
+                    <div class="ac-title">Тестировали</div>
+                    <div class="ac-list">
+                        Программист <span>Эсхата</span><br>
+                        Программист <span>Dushanbe City Bank</span><br>
+                        Программист <span>Амид</span>
+                    </div>
+                </div>
+                <div class="approved-card" style="transition-delay:.2s">
+                    <div class="ac-icon">📄</div>
+                    <div class="ac-title">Документы</div>
+                    <div class="ac-list">
+                        Реальные договоры с <span>100+ продавцами</span><br>
+                        <span>Юридическое лицо</span> оформлено<br>
+                        ООО «DOROS» — все документы готовы
+                    </div>
+                </div>
+                <div class="approved-card" style="transition-delay:.3s">
+                    <div class="ac-icon">🏦</div>
+                    <div class="ac-title">Интеграции</div>
+                    <div class="ac-list">
+                        <span>Alif Visa</span> — карта привязана<br>
+                        Комиссия <span>1%</span> — эскроу работает<br>
+                        <span>DC Bank</span> — интеграция активна
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="services-section">
+        <div class="container">
+            <h2 class="section-title fade-up">Единое цифровое пространство</h2>
+            <p class="section-subtitle fade-up">Все сервисы DOROSphere в одной точке доступа</p>
+            <div class="services-grid">
+
+                <!-- DOROSfamd -->
+                <div class="service-card" onclick="window.location.href='index.html'">
+                    <div class="card-icon"><i class="fas fa-crown"></i></div>
+                    <div class="card-title">DOROSfamd</div>
+                    <div class="card-badge badge-portal">ЦЕНТРАЛЬНЫЙ ПОРТАЛ</div>
+                    <div class="card-stats"><span class="cs">Главная точка входа</span></div>
+                    <div class="card-desc">Главная страница экосистемы. Управляйте школой, обучайтесь, используйте ИИ и десятки сервисов — в одном месте.</div>
+                    <div class="card-footer">
+                        <a href="index.html" class="btn-link" onclick="event.stopPropagation()">Перейти в портал →</a>
+                    </div>
+                </div>
+
+                <!-- DOROShop -->
+                <div class="service-card" onclick="window.location.href='DOROShop1.html'">
+                    <div class="card-icon"><i class="fas fa-store"></i></div>
+                    <div class="card-title">DOROShop</div>
+                    <div class="card-badge badge-live">LIVE — ЗАПУЩЕН</div>
+                    <div class="card-stats">
+                        <span class="cs"><strong>300+</strong> товаров</span>
+                        <span class="cs"><strong>100+</strong> продавцов</span>
+                    </div>
+                    <div class="card-desc">Маркетплейс Таджикистана. Реальные продавцы с договорами, оплата через DOROSpay и Dushanbe City Bank. Заказы уже идут.</div>
+                    <div class="card-footer">
+                        <a href="DOROShop1.html" class="btn-link" onclick="event.stopPropagation()">Магазин →</a>
+                    </div>
+                </div>
+
+                <!-- DOROSgo -->
+                <div class="service-card" onclick="window.location.href='go.html'">
+                    <div class="card-icon"><i class="fas fa-truck-fast"></i></div>
+                    <div class="card-title">DOROSgo</div>
+                    <div class="card-badge badge-live">LIVE — ЗАПУЩЕН</div>
+                    <div class="card-stats">
+                        <span class="cs"><strong>27</strong> курьеров</span>
+                        <span class="cs"><strong>20</strong> мото</span>
+                        <span class="cs"><strong>7</strong> авто</span>
+                    </div>
+                    <div class="card-desc">Экспресс-доставка с реальной геолокацией. 27 курьеров (20 мотоциклов + 7 автомобилей), отслеживание в реальном времени.</div>
+                    <div class="card-footer">
+                        <a href="go.html" class="btn-link" onclick="event.stopPropagation()">Заказать доставку →</a>
+                    </div>
+                </div>
+
+                <!-- DOROSpay -->
+                <div class="service-card" onclick="window.location.href='pay.html'">
+                    <div class="card-icon"><i class="fas fa-credit-card"></i></div>
+                    <div class="card-title">DOROSpay</div>
+                    <div class="card-badge badge-beta">BETA — ТЕСТ</div>
+                    <div class="card-stats">
+                        <span class="cs"><strong>Alif Visa</strong> привязана</span>
+                        <span class="cs">Комиссия <strong>1%</strong></span>
+                    </div>
+                    <div class="card-desc">Финтех-ядро экосистемы. Реальные транзакции, эскроу работает, привязана Alif Visa. Комиссия всего 1% с продавца.</div>
+                    <div class="card-footer">
+                        <a href="pay.html" class="btn-link" onclick="event.stopPropagation()">Открыть кошелёк →</a>
+                    </div>
+                </div>
+
+                <!-- FAMDlearn -->
+                <div class="service-card" onclick="window.location.href='index.html'">
+                    <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="card-title">FAMDlearn</div>
+                    <div class="card-badge badge-active">АКТИВЕН</div>
+                    <div class="card-stats">
+                        <span class="cs">Видеоуроки</span>
+                        <span class="cs">Сертификаты</span>
+                        <span class="cs">ИИ-помощник</span>
+                    </div>
+                    <div class="card-desc">Образовательный модуль с реальными видеоуроками, выданными сертификатами и ИИ-ассистентом для обучения.</div>
+                    <div class="card-footer">
+                        <a href="index.html" class="btn-link" onclick="event.stopPropagation()">Учиться →</a>
+                    </div>
+                </div>
+
+                <!-- DOROSauto -->
+                <div class="service-card" onclick="window.location.href='auto.html'">
+                    <div class="card-icon"><i class="fas fa-car-side"></i></div>
+                    <div class="card-title">DOROSauto</div>
+                    <div class="card-badge badge-soon">СКОРО</div>
+                    <div class="card-stats"><span class="cs">Готовится к запуску</span></div>
+                    <div class="card-desc">Автомобильный хаб: попутчики, аренда техники, автоконсьерж премиум-класса и автозапчасти.</div>
+                    <div class="card-footer">
+                        <a href="auto.html" class="btn-link" onclick="event.stopPropagation()">Перейти в хаб →</a>
+                    </div>
+                </div>
+
+                <!-- DOROService -->
+                <div class="service-card" onclick="window.location.href='ser.html'">
+                    <div class="card-icon"><i class="fas fa-tools"></i></div>
+                    <div class="card-title">DOROService</div>
+                    <div class="card-badge badge-soon">СКОРО</div>
+                    <div class="card-stats"><span class="cs">Готовится к запуску</span></div>
+                    <div class="card-desc">Маркетплейс мастеров Таджикистана. Ремонт, строительство, IT, клининг — с оплатой через DOROSpay.</div>
+                    <div class="card-footer">
+                        <a href="ser.html" class="btn-link" onclick="event.stopPropagation()">Найти мастера →</a>
+                    </div>
+                </div>
+
+                <!-- JURA Taxi -->
+                <div class="service-card" onclick="window.location.href='driver.html'">
+                    <div class="card-icon"><i class="fas fa-taxi"></i></div>
+                    <div class="card-title">JURA Taxi</div>
+                    <div class="card-badge badge-active">АКТИВЕН</div>
+                    <div class="card-stats"><span class="cs">Панель водителя</span></div>
+                    <div class="card-desc">Панель водителя JURA Taxi. Управление заказами, маршрутами и заработком в единой экосистеме.</div>
+                    <div class="card-footer">
+                        <a href="driver1.html" class="btn-link" onclick="event.stopPropagation()">Войти в такси →</a>
+                    </div>
+                </div>
+
+                <!-- Seller Cabinet -->
+                <div class="service-card" onclick="window.location.href='dsp1.html'">
+                    <div class="card-icon"><i class="fas fa-user-tie"></i></div>
+                    <div class="card-title">Кабинет продавца</div>
+                    <div class="card-badge badge-live">LIVE</div>
+                    <div class="card-stats"><span class="cs"><strong>100+</strong> активных продавцов</span></div>
+                    <div class="card-desc">Управляйте товарами, анализируйте продажи и получайте оплату через DOROSpay. Реальные договоры с каждым.</div>
+                    <div class="card-footer">
+                        <a href="dsp1.html" class="btn-link" onclick="event.stopPropagation()">Войти в кабинет →</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section">
+        <div class="container">
+            <h2 class="section-title fade-up">Наша команда</h2>
+            <p class="section-subtitle fade-up">5 человек, которые строят цифровое будущее Таджикистана</p>
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-avatar">👨‍💻</div>
+                    <div class="team-name">Архитектор</div>
+                    <div class="team-role">Программист / Основатель</div>
+                </div>
+                <div class="team-card" style="transition-delay:.08s">
+                    <div class="team-avatar">📣</div>
+                    <div class="team-name">Маркетолог</div>
+                    <div class="team-role">Рост и продвижение</div>
+                </div>
+                <div class="team-card" style="transition-delay:.16s">
+                    <div class="team-avatar">⚖️</div>
+                    <div class="team-name">Юрист</div>
+                    <div class="team-role">ООО «DOROS» оформлено</div>
+                </div>
+                <div class="team-card" style="transition-delay:.24s">
+                    <div class="team-avatar">🌟</div>
+                    <div class="team-name">Амбассадор</div>
+                    <div class="team-role">Лицо экосистемы</div>
+                </div>
+                <div class="team-card" style="transition-delay:.32s">
+                    <div class="team-avatar">🏢</div>
+                    <div class="team-name">ООО «DOROS»</div>
+                    <div class="team-role">Юридическое лицо зарегистрировано</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section class="partners-section">
+        <div class="container">
+            <h2 class="section-title fade-up">Партнёры и союзники</h2>
+            <p class="section-subtitle fade-up">Организации, которые верят в DOROSphere</p>
+            <div class="partners-scroll">
+                <div class="partner-badge">🏛️ IT Park Dushanbe</div>
+                <div class="partner-badge">🏙️ Smart City</div>
+                <div class="partner-badge">🏦 Dushanbe City Bank</div>
+                <div class="partner-badge">💳 Alif</div>
+                <div class="partner-badge">👨‍💻 Эсхат</div>
+                <div class="partner-badge">👨‍💻 Амид</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="container">
+            <h2 class="section-title fade-up">Цифровое пространство Центральной Азии</h2>
+            <p class="section-subtitle fade-up">Таджикистан сегодня — Центральная Азия завтра</p>
+            <div class="map-wrap">
+                <svg id="caMap" viewBox="0 0 700 420" width="100%" style="max-width:700px" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="mapGlow">
+                            <feGaussianBlur stdDeviation="2" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <radialGradient id="tajGrad" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#06cdd4" stop-opacity="0.6"/>
+                            <stop offset="100%" stop-color="#2563eb" stop-opacity="0.2"/>
+                        </radialGradient>
+                    </defs>
+                    <!-- Background -->
+                    <rect width="700" height="420" fill="rgba(18,22,32,0.7)" rx="24" ry="24"/>
+                    <!-- Country shapes (simplified polygons) -->
+                    <!-- Kazakhstan -->
+                    <polygon points="60,60 320,50 340,130 280,160 200,140 100,170 60,120" fill="rgba(37,99,235,0.12)" stroke="rgba(37,99,235,0.3)" stroke-width="1.5"/>
+                    <text x="180" y="110" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11" font-family="Inter,sans-serif">Казахстан</text>
+                    <!-- Kyrgyzstan -->
+                    <polygon points="340,130 400,120 420,160 380,175 340,165" fill="rgba(155,92,246,0.12)" stroke="rgba(155,92,246,0.3)" stroke-width="1.5"/>
+                    <text x="380" y="150" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Inter,sans-serif">Кыргызстан</text>
+                    <!-- Uzbekistan -->
+                    <polygon points="200,140 280,160 300,200 260,230 200,220 170,190" fill="rgba(37,99,235,0.1)" stroke="rgba(37,99,235,0.25)" stroke-width="1.5"/>
+                    <text x="235" y="195" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10" font-family="Inter,sans-serif">Узбекистан</text>
+                    <!-- Tajikistan (highlighted) -->
+                    <polygon points="300,200 380,175 420,210 400,260 360,270 320,255 295,230" fill="url(#tajGrad)" stroke="#06cdd4" stroke-width="2"/>
+                    <text x="358" y="230" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="Inter,sans-serif">Тажикистан</text>
+                    <!-- Dushanbe star -->
+                    <circle cx="350" cy="235" r="6" fill="#f4b940" filter="url(#mapGlow)">
+                        <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
+                    </circle>
+                    <!-- Afghanistan -->
+                    <polygon points="295,230 360,270 400,300 360,330 300,320 260,290 260,260" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                    <text x="320" y="300" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="10" font-family="Inter,sans-serif">Афганистан</text>
+                    <!-- Iran -->
+                    <polygon points="200,290 260,260 300,320 280,370 200,360 160,330" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                    <text x="225" y="335" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="10" font-family="Inter,sans-serif">Иран</text>
+                    <!-- China -->
+                    <polygon points="420,160 560,130 600,200 580,280 420,260 400,210" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+                    <text x="500" y="210" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="11" font-family="Inter,sans-serif">Китай</text>
+                    <!-- India -->
+                    <polygon points="420,280 500,290 520,370 460,390 420,360 400,320" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                    <text x="460" y="345" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="10" font-family="Inter,sans-serif">Индия</text>
+
+                    <!-- Caravan route lines -->
+                    <line x1="350" y1="235" x2="235" y2="195" stroke="rgba(6,205,212,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+                    <line x1="350" y1="235" x2="380" y2="150" stroke="rgba(6,205,212,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+                    <line x1="350" y1="235" x2="500" y2="210" stroke="rgba(6,205,212,0.2)" stroke-width="1" stroke-dasharray="4,4"/>
+                    <line x1="350" y1="235" x2="180" y2="110" stroke="rgba(37,99,235,0.2)" stroke-width="1" stroke-dasharray="4,4"/>
+
+                    <!-- Animated caravans -->
+                    <circle r="4" fill="#06cdd4" opacity="0.9" filter="url(#mapGlow)">
+                        <animateMotion dur="5s" repeatCount="indefinite" path="M350,235 L235,195"/>
+                    </circle>
+                    <circle r="3" fill="#f4b940" opacity="0.9" filter="url(#mapGlow)">
+                        <animateMotion dur="4s" repeatCount="indefinite" begin="-2s" path="M350,235 L380,150"/>
+                    </circle>
+                    <circle r="3" fill="#2563eb" opacity="0.9" filter="url(#mapGlow)">
+                        <animateMotion dur="6s" repeatCount="indefinite" begin="-1s" path="M350,235 L500,210"/>
+                    </circle>
+
+                    <!-- Legend -->
+                    <circle cx="36" cy="380" r="5" fill="#06cdd4"/>
+                    <text x="48" y="384" fill="rgba(255,255,255,0.5)" font-size="10" font-family="Inter,sans-serif">Душанбе — штаб DOROSphere</text>
+                    <circle cx="36" cy="397" r="3" fill="#f4b940"/>
+                    <text x="48" y="401" fill="rgba(255,255,255,0.4)" font-size="9" font-family="Inter,sans-serif">Цифровые торговые маршруты</text>
+                </svg>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p>© 2026 DOROSphere — Единое цифровое пространство Таджикистана</p>
+        <p class="footer-stats">Основано на реальных данных: 1000+ пользователей · 150+ регистраций · 100+ продавцов · 27 курьеров · ООО «DOROS»</p>
+        <div class="footer-tags">
+            <span class="footer-tag">Президентская олимпиада</span>
+            <span class="footer-tag">Инновации</span>
+            <span class="footer-tag">Экосистема</span>
+            <span class="footer-tag">Центральная Азия</span>
+        </div>
+    </div>
+</footer>
+
+<!-- Easter egg elements -->
+<div class="toast-ci" id="toastCI"></div>
+<div class="scan-bar-i" id="scanBarI"></div>
+<canvas class="matrix-canvas-i" id="matrixCanvasI"></canvas>
+<div class="matrix-overlay-i" id="matrixOverlayI"></div>
+<button class="treasure-fab" id="treasureFabI" title="Сокровищница"><i class="fas fa-gem"></i></button>
+<button class="fab-up-i" id="fabUpI" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
+
+<div class="moverlay-i" id="treasureModalI">
+    <div class="mbox-i">
+        <div class="mhdr-i"><span class="mttl-i">💎 Сокровищница DOROSphere</span><button class="mclose-i" id="closeTreasureI"><i class="fas fa-times"></i></button></div>
+        <div class="parchment-hdr-i">
+            <h3>🗝️ Зал Тайных Пасхалок</h3>
+            <p>Секреты экосистемы ждут тебя</p>
+        </div>
+        <table class="egg-table-i">
+            <thead><tr><th>#</th><th>Название</th><th>Активация</th><th>Эффект</th></tr></thead>
+            <tbody>
+                <tr><td>1</td><td class="egg-nm-i">Голографическая перезагрузка</td><td class="egg-how-i">Нажать R</td><td>Световая полоса сканирования</td></tr>
+                <tr><td>2</td><td class="egg-nm-i">Стая цифровых птиц</td><td class="egg-how-i">Нажать T</td><td>Светящиеся частицы по экрану</td></tr>
+                <tr><td>3</td><td class="egg-nm-i">Поиск</td><td class="egg-how-i">Ctrl+K</td><td>Тост «Поиск в разработке»</td></tr>
+                <tr><td>4</td><td class="egg-nm-i">Фейерверк знаний</td><td class="egg-how-i">5 кликов по логотипу</td><td>Звёздочки вокруг логотипа</td></tr>
+                <tr><td>5</td><td class="egg-nm-i">Тёмный лорд</td><td class="egg-how-i">Набрать DARK</td><td>Инвертирование цветов</td></tr>
+                <tr><td>6</td><td class="egg-nm-i">Матрица</td><td class="egg-how-i">Набрать MATRIX</td><td>Зелёный экран с кодом</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// ===== CUSTOM CURSOR =====
+const dot = document.getElementById('cursorDot');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';},{passive:true});
+(function lerp(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(lerp);})();
+document.querySelectorAll('.service-card,.team-card,.approved-card,.partner-badge,.btn-link,.logo').forEach(el=>{
+    el.addEventListener('mouseenter',()=>ring.classList.add('expand'));
+    el.addEventListener('mouseleave',()=>ring.classList.remove('expand'));
+});
+
+// ===== PARTICLE CANVAS =====
+const canvas=document.getElementById('particleCanvas');
+const ctx=canvas.getContext('2d');
+let pts=[];
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize(); window.addEventListener('resize',resize);
+for(let i=0;i<80;i++) pts.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:1+Math.random()*2,c:['#2563eb','#06cdd4','#f4b940'][Math.floor(Math.random()*3)]});
+function drawPts(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pts.forEach(p=>{
+        const dx=p.x-mx,dy=p.y-my,dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<120){p.vx+=dx/dist*.05;p.vy+=dy/dist*.05;}
+        p.x+=p.vx;p.y+=p.vy;
+        if(p.x<0||p.x>canvas.width)p.vx*=-1;
+        if(p.y<0||p.y>canvas.height)p.vy*=-1;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=p.c+'88';ctx.fill();
+    });
+    requestAnimationFrame(drawPts);
+}
+drawPts();
+
+// ===== TYPEWRITER =====
+const phrases=['DOROSphere\nЭкосистема будущего','DOROSphere\nЦифровой Таджикистан','DOROSphere\n1000+ пользователей'];
+let pIdx=0,cIdx=0,typing=true,pause=false;
+const twEl=document.getElementById('typewriterEl');
+function typeStep(){
+    if(pause){setTimeout(typeStep,2000);pause=false;return;}
+    const txt=phrases[pIdx];
+    if(typing){
+        cIdx++;
+        twEl.innerHTML=txt.slice(0,cIdx).replace('\n','<br>')+'<span class="typewriter-cursor">|</span>';
+        if(cIdx>=txt.length){typing=false;pause=true;}
+        setTimeout(typeStep,typing?60:40);
+    } else {
+        cIdx--;
+        twEl.innerHTML=txt.slice(0,cIdx).replace('\n','<br>')+'<span class="typewriter-cursor">|</span>';
+        if(cIdx<=0){typing=true;pIdx=(pIdx+1)%phrases.length;}
+        setTimeout(typeStep,30);
+    }
+}
+typeStep();
+
+// ===== COUNTER ANIMATION =====
+function animateCounter(el){
+    const target=+el.dataset.target, suffix=el.dataset.suffix||'';
+    const dur=1800, start=performance.now();
+    function step(now){
+        const p=Math.min((now-start)/dur,1);
+        const ease=1-Math.pow(1-p,3);
+        el.textContent=Math.round(ease*target)+suffix;
+        if(p<1)requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+const counterObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){animateCounter(e.target);counterObs.unobserve(e.target);}});
+},{threshold:.3});
+document.querySelectorAll('.stat-number[data-target]').forEach(el=>counterObs.observe(el));
+
+// ===== FADE-UP + APPROVED/TEAM CARDS =====
+const fadeObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fadeObs.unobserve(e.target);}});
+},{threshold:.1});
+document.querySelectorAll('.fade-up,.approved-card,.team-card').forEach(el=>fadeObs.observe(el));
+
+// ===== SERVICE CARD ANIMATIONS =====
+const cards=document.querySelectorAll('.service-card');
+const cardObs=new IntersectionObserver((entries)=>{
+    entries.forEach((entry,i)=>{
+        if(entry.isIntersecting){
+            setTimeout(()=>{entry.target.style.opacity='1';entry.target.style.transform='translateY(0)';},i*60);
+            cardObs.unobserve(entry.target);
+        }
+    });
+},{threshold:.1});
+cards.forEach(card=>{
+    card.style.opacity='0';card.style.transform='translateY(24px)';
+    card.style.transition='all .5s cubic-bezier(.2,.9,.4,1.1)';
+    cardObs.observe(card);
+});
+
+// ===== TOAST =====
+function toastI(msg){
+    const c=document.getElementById('toastCI');
+    const el=document.createElement('div');el.className='toasti';
+    el.innerHTML=`<i class="fas fa-star" style="color:#06cdd4"></i><span>${msg}</span>`;
+    c.appendChild(el);setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),350)},3000);
+}
+
+// ===== SCROLL FAB =====
+window.addEventListener('scroll',()=>document.getElementById('fabUpI').classList.toggle('vis',window.scrollY>300),{passive:true});
+
+// ===== PHOTONS =====
+let photonCountI=0;
+document.addEventListener('mousemove',e=>{
+    if(photonCountI>=10)return;
+    const card=e.target.closest('.service-card');if(!card)return;
+    if(Math.random()>.35)return;
+    photonCountI++;
+    const p=document.createElement('div');p.className='photon-i';
+    const size=4+Math.random()*6;
+    const cols=['#2563eb','#06cdd4','#f4b940'];
+    p.style.cssText=`left:${e.clientX}px;top:${e.clientY}px;width:${size}px;height:${size}px;background:${cols[Math.floor(Math.random()*3)]};--tx:${(Math.random()-.5)*40}px;--ty:${(Math.random()-.5)*40-15}px`;
+    document.body.appendChild(p);setTimeout(()=>{p.remove();photonCountI--;},500);
+},{passive:true});
+
+// ===== TRANSLATIONS =====
+const TRANS_I={ru:{portal:'DOROSfamd',hub:'Единое цифровое пространство'},en:{portal:'DOROSfamd',hub:'Unified Digital Space'},tg:{portal:'DOROSfamd',hub:'Фазои рақамии ягона'},uz:{portal:'DOROSfamd',hub:'Yagona raqamli makon'},kk:{portal:'DOROSfamd',hub:'Бірыңғай цифрлық кеңістік'},ar:{portal:'DOROSfamd',hub:'الفضاء الرقمي الموحد'},fa:{portal:'DOROSfamd',hub:'فضای دیجیتال یکپارچه'},zh:{portal:'DOROSfamd',hub:'统一数字空间'},hi:{portal:'DOROSfamd',hub:'एकीकृत डिजिटल स्थान'},ky:{portal:'DOROSfamd',hub:'Бирдиктүү санариптик мейкиндик'}};
+let langCountI=0;
+document.getElementById('langSelectI')?.addEventListener('change',e=>{
+    const lang=e.target.value,t=TRANS_I[lang]||TRANS_I.ru;
+    document.querySelectorAll('[data-i18n-i]').forEach(el=>{const k=el.getAttribute('data-i18n-i');if(t[k])el.textContent=t[k];});
+    langCountI++;if(langCountI%3===0)toastI('🌍 Полиглот! Вы сменили язык 3 раза!');
+    toastI('Язык: '+lang.toUpperCase());
+});
+
+// ===== EASTER EGGS =====
+let kbBufI='',kbTimerI=null,logoClickI=0,logoTimerI=null,matRunI=false;
+function scanI(){const b=document.getElementById('scanBarI');b.classList.remove('active');void b.offsetWidth;b.classList.add('active');toastI('Голографическая перезагрузка');}
+function birdsI(){const cols=['#2563eb','#06cdd4','#f4b940'];for(let i=0;i<8;i++){setTimeout(()=>{const p=document.createElement('div');p.className='photon-i';const size=6+Math.random()*8;p.style.cssText=`left:${Math.random()*window.innerWidth}px;top:${Math.random()*window.innerHeight*.3}px;width:${size}px;height:${size}px;background:${cols[Math.floor(Math.random()*3)]};--tx:${(Math.random()-.5)*200}px;--ty:${50+Math.random()*150}px;box-shadow:0 0 8px currentColor`;document.body.appendChild(p);setTimeout(()=>p.remove(),600);},i*80);}}
+function fireworksI(){const logo=document.querySelector('.logo');if(!logo)return;const rect=logo.getBoundingClientRect();const stars=['⭐','✨','🌟','💫','⚡'];for(let i=0;i<10;i++){const s=document.createElement('div');s.className='star-i';s.textContent=stars[Math.floor(Math.random()*stars.length)];const angle=Math.random()*Math.PI*2,dist=80+Math.random()*80;s.style.cssText=`left:${rect.left+rect.width/2}px;top:${rect.top+rect.height/2}px;--sx:${Math.cos(angle)*dist}px;--sy:${Math.sin(angle)*dist}px;animation-delay:${i*50}ms`;document.body.appendChild(s);setTimeout(()=>s.remove(),1000);}toastI('✨ Фейерверк знаний! Пасхалка найдена!');}
+function darkI(){document.body.style.transition='filter .4s';document.body.style.filter='invert(1) hue-rotate(180deg)';setTimeout(()=>{document.body.style.filter='';toastI('🌑 Тёмный Лорд!');},600);}
+function matrixI(){if(matRunI)return;matRunI=true;const canvas=document.getElementById('matrixCanvasI'),overlay=document.getElementById('matrixOverlayI');canvas.classList.add('active');overlay.classList.add('active');canvas.width=window.innerWidth;canvas.height=window.innerHeight;const ctx=canvas.getContext('2d');const cols=Math.floor(canvas.width/16),drops=Array(cols).fill(1);const chars='アカサタナハマヤラワABCDEF012ドロスファムド';const iv=setInterval(()=>{ctx.fillStyle='rgba(0,0,0,.05)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#00ff41';ctx.font='14px monospace';drops.forEach((y,i)=>{ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,y*16);if(y*16>canvas.height&&Math.random()>.975)drops[i]=0;drops[i]++;});},40);toastI('🟩 МАТРИЦА!');setTimeout(()=>{clearInterval(iv);ctx.clearRect(0,0,canvas.width,canvas.height);canvas.classList.remove('active');overlay.classList.remove('active');matRunI=false;},3000);}
+
+document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();toastI('🔍 Поиск в разработке');return;}
+    if(e.key==='Escape'){document.getElementById('treasureModalI').classList.remove('open');return;}
+    if(!e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key.length===1&&document.activeElement.tagName!=='INPUT'){
+        if(e.key.toLowerCase()==='r'){scanI();return;}
+        if(e.key.toLowerCase()==='t'){birdsI();return;}
+        kbBufI=(kbBufI+e.key.toUpperCase()).slice(-6);
+        clearTimeout(kbTimerI);kbTimerI=setTimeout(()=>{kbBufI='';},2000);
+        if(kbBufI.endsWith('DARK')){kbBufI='';darkI();}
+        if(kbBufI.endsWith('MATRIX')){kbBufI='';matrixI();}
+    }
+});
+document.querySelector('.logo')?.addEventListener('click',()=>{
+    logoClickI++;clearTimeout(logoTimerI);logoTimerI=setTimeout(()=>{logoClickI=0;},1500);
+    if(logoClickI>=5){logoClickI=0;fireworksI();}
+});
+
+// ===== TREASURE MODAL =====
+document.getElementById('treasureFabI')?.addEventListener('click',()=>document.getElementById('treasureModalI').classList.add('open'));
+document.getElementById('closeTreasureI')?.addEventListener('click',()=>document.getElementById('treasureModalI').classList.remove('open'));
+document.getElementById('treasureModalI')?.addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+
+// ===== MAP HOVER TOOLTIPS =====
+const caMap=document.getElementById('caMap');
+const tooltip=document.createElement('div');
+tooltip.style.cssText='position:fixed;background:rgba(18,22,32,0.95);border:1px solid rgba(6,205,212,0.3);border-radius:12px;padding:8px 16px;font-size:0.82rem;color:#fff;pointer-events:none;z-index:500;display:none;font-family:Inter,sans-serif;';
+document.body.appendChild(tooltip);
+caMap.querySelectorAll('polygon').forEach(poly=>{
+    const name=poly.nextElementSibling?.textContent||'';
+    poly.style.cursor='pointer';
+    poly.addEventListener('mouseenter',e=>{
+        tooltip.textContent=name+' — следующий этап экспансии';
+        tooltip.style.display='block';
+    });
+    poly.addEventListener('mousemove',e=>{tooltip.style.left=e.clientX+12+'px';tooltip.style.top=e.clientY-30+'px';});
+    poly.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
+});
+
+// ===== WELCOME =====
+setTimeout(()=>toastI('👋 Добро пожаловать в DOROSphere!'),1000);
+</script>
+</body>
+</html>

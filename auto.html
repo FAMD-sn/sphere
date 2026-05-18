@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>DOROSauto | Премиум автомобильный хаб Таджикистана</title>
+    <meta name="description" content="DOROSauto — элитный автомобильный хаб в составе супераппа DOROSphere. Автозапчасти, попутчики, аренда техники, автоконсьерж премиум-класса.">
+    
+    <!-- Tailwind CSS + Font Awesome + AOS + GSAP -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs (та же конфигурация, что и в DOROService) -->
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #080a0f; color: #ffffff; overflow-x: hidden; cursor: default; }
+        
+        /* Анимированные фоновые частицы */
+        .particle-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden;
+        }
+        .particle {
+            position: absolute; background: radial-gradient(circle, rgba(6,205,212,0.4), transparent); border-radius: 50%;
+            animation: floatParticle 20s infinite linear;
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Падающие звёзды */
+        .shooting-star {
+            position: fixed; width: 2px; height: 80px; background: linear-gradient(to bottom, transparent, #06cdd4, #2563eb);
+            animation: shoot 4s linear infinite; opacity: 0; pointer-events: none; z-index: -1;
+        }
+        @keyframes shoot {
+            0% { transform: translateX(-100px) translateY(-100px) rotate(45deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(45deg); opacity: 0; }
+        }
+
+        /* Основные анимации */
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float3D { 0%,100% { transform: translateY(0px) rotateX(0deg); } 50% { transform: translateY(-15px) rotateX(5deg); } }
+        @keyframes glowPulse { 0%,100% { box-shadow: 0 0 5px rgba(6,205,212,0.2); } 50% { box-shadow: 0 0 30px rgba(6,205,212,0.5); } }
+        @keyframes rotateSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Welcome Screen Premium */
+        .welcome-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 30% 40%, #0a0e1a, #020408);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+        }
+        .welcome-screen.hidden { opacity: 0; visibility: hidden; }
+        .welcome-card {
+            background: rgba(18, 21, 32, 0.85); backdrop-filter: blur(40px);
+            border-radius: 80px; padding: 70px 60px; text-align: center; max-width: 600px; width: 90%;
+            border: 1px solid rgba(6, 205, 212, 0.4); animation: fadeInScale 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+            position: relative; overflow: hidden;
+        }
+        .welcome-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(6,205,212,0.1), rgba(37,99,235,0.1), transparent);
+            animation: rotateSlow 15s linear infinite; pointer-events: none;
+        }
+        .welcome-icon { font-size: 100px; background: linear-gradient(135deg, #2563eb, #06cdd4, #2563eb); background-size: 200% 200%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: float3D 3s ease-in-out infinite; }
+        .welcome-card h1 { font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #ffffff, #2563eb, #06cdd4); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.02em; }
+        .welcome-btn {
+            padding: 16px 32px; border-radius: 60px; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1); display: flex; align-items: center; justify-content: center; gap: 14px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: white; position: relative; overflow: hidden;
+        }
+        .welcome-btn.primary { background: linear-gradient(135deg, #2563eb, #06cdd4); color: #080a0f; border: none; box-shadow: 0 5px 25px rgba(6,205,212,0.4); }
+        .welcome-btn.primary:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 40px rgba(6,205,212,0.6); }
+        .welcome-btn.secondary:hover { background: rgba(37,99,235,0.2); border-color: #2563eb; transform: translateY(-3px); }
+
+        /* Glass Header Premium */
+        .glass-header { background: rgba(8, 10, 15, 0.9); backdrop-filter: blur(25px); border-bottom: 1px solid rgba(6, 205, 212, 0.2); position: sticky; top: 0; z-index: 100; padding: 18px 0; }
+        .container { max-width: 1440px; margin: 0 auto; padding: 0 30px; }
+        
+        /* Neon Tabs Premium */
+        .neon-tabs { display: flex; flex-wrap: wrap; gap: 15px; margin: 40px 0 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(6, 205, 212, 0.2); }
+        .tab-btn {
+            background: rgba(18, 21, 32, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(6, 205, 212, 0.2);
+            padding: 14px 32px; border-radius: 60px; font-weight: 600; color: #a0aec0; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; gap: 12px; font-size: 1rem;
+        }
+        .tab-btn i { font-size: 1.2rem; transition: transform 0.3s; }
+        .tab-btn:hover i { transform: scale(1.2) rotate(5deg); }
+        .tab-btn.active { background: linear-gradient(135deg, #2563eb, #06cdd4); color: #080a0f; border: none; box-shadow: 0 0 20px rgba(6,205,212,0.4); }
+        .tab-btn:hover:not(.active) { border-color: #2563eb; transform: translateY(-3px); background: rgba(37,99,235,0.1); }
+
+        /* Search Premium */
+        .search-wrapper { position: relative; margin-bottom: 35px; }
+        .search-wrapper i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #06cdd4; z-index: 1; }
+        #searchInput {
+            width: 100%; padding: 18px 20px 18px 55px; background: rgba(18, 21, 32, 0.7); backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 205, 212, 0.2); border-radius: 60px; color: white; font-family: 'Inter', sans-serif;
+            transition: all 0.3s; font-size: 1rem;
+        }
+        #searchInput:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 25px rgba(37,99,235,0.3); transform: translateY(-2px); }
+
+        /* Cards Grid Premium */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 35px; margin: 40px 0 60px; }
+        .glass-card {
+            background: rgba(18, 21, 32, 0.6); backdrop-filter: blur(20px); border-radius: 40px;
+            border: 1px solid rgba(6, 205, 212, 0.15); transition: all 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            overflow: hidden; animation: fadeInUp 0.6s ease forwards; opacity: 0; position: relative;
+        }
+        .glass-card:hover { transform: translateY(-12px) scale(1.02); border-color: rgba(6, 205, 212, 0.5); box-shadow: 0 30px 50px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(6,205,212,0.3); }
+        .glass-card:hover .avatar { transform: scale(1.05); filter: drop-shadow(0 0 10px #06cdd4); }
+
+        /* Stats Bar Premium */
+        .stats-bar { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 30px; margin: 40px 0; padding: 40px; background: rgba(18, 21, 32, 0.4); backdrop-filter: blur(20px); border-radius: 60px; border: 1px solid rgba(6, 205, 212, 0.15); }
+        .stat-item { text-align: center; transition: all 0.3s; cursor: pointer; }
+        .stat-item:hover { transform: translateY(-5px); }
+        .stat-number { font-size: 3rem; font-weight: 900; background: linear-gradient(135deg, #2563eb, #06cdd4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+        /* Hero Banner */
+        .hero-banner { background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(6,205,212,0.08)); border-radius: 60px; padding: 60px 40px; margin: 40px 0; text-align: center; border: 1px solid rgba(6,205,212,0.2); backdrop-filter: blur(10px); animation: glowPulse 3s infinite; }
+
+        /* Modal Premium */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.97); backdrop-filter: blur(30px); z-index: 3000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: all 0.4s; }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-window { background: rgba(18, 21, 32, 0.98); backdrop-filter: blur(40px); border-radius: 56px; max-width: 580px; width: 90%; padding: 45px; border: 1px solid rgba(6,205,212,0.4); transform: scale(0.9) translateY(30px); transition: all 0.4s; max-height: 85vh; overflow-y: auto; }
+        .modal-overlay.active .modal-window { transform: scale(1) translateY(0); }
+        .modal-window input, .modal-window select, .modal-window textarea { width: 100%; padding: 16px 18px; margin: 12px 0; background: rgba(8,10,15,0.9); border: 1px solid rgba(6,205,212,0.2); border-radius: 28px; color: white; font-family: 'Inter', sans-serif; transition: all 0.3s; }
+        .modal-window input:focus, .modal-window select:focus, .modal-window textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 20px rgba(37,99,235,0.3); transform: translateY(-2px); }
+        .close-modal-icon { float: right; font-size: 28px; cursor: pointer; color: #a0aec0; transition: all 0.3s; }
+        .close-modal-icon:hover { color: #06cdd4; transform: rotate(90deg) scale(1.1); }
+
+        /* Payment Buttons */
+        .payment-buttons { display: flex; gap: 12px; margin: 18px 0; flex-wrap: wrap; }
+        .pay-btn { flex: 1; padding: 12px; border-radius: 50px; text-align: center; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s; font-size: 0.85rem; cursor: pointer; border: none; }
+        .pay-btn.dorospay { background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; }
+        .pay-btn.dc { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .pay-btn:hover { filter: brightness(1.1); transform: scale(0.98); }
+        .contact-btn { flex: 1; padding: 12px; border-radius: 50px; text-align: center; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s; font-size: 0.85rem; background: linear-gradient(135deg, #2563eb, #1a4fbb); color: white; }
+
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: linear-gradient(135deg, #06cdd4, #2563eb); color: #080a0f; padding: 14px 32px; border-radius: 60px; font-weight: 800; z-index: 4000; opacity: 0; transition: all 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .scroll-top { position: fixed; bottom: 30px; right: 30px; width: 55px; height: 55px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #06cdd4); border: none; color: white; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 100; font-size: 1.3rem; transition: all 0.3s; }
+        .scroll-top:hover { transform: translateY(-5px) scale(1.05); }
+
+        .empty-state { text-align: center; padding: 80px; color: #a0aec0; grid-column: 1 / -1; }
+        .loading { text-align: center; padding: 80px; color: #a0aec0; }
+        
+        .bg-white\/5 { background-color: rgba(255,255,255,0.05); }
+        .backdrop-blur { backdrop-filter: blur(12px); }
+        
+        @media (max-width: 768px) { .container { padding: 0 20px; } .cards-grid { grid-template-columns: 1fr; } .welcome-card { padding: 40px 30px; } .stats-bar { flex-direction: column; align-items: center; } }
+    </style>
+</head>
+<body>
+
+<!-- Фоновые эффекты -->
+<div class="particle-bg" id="particleBg"></div>
+<div id="shootingStars"></div>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen" class="welcome-screen">
+    <div class="welcome-card">
+        <i class="fas fa-car-side welcome-icon"></i>
+        <h1>DOROSauto</h1>
+        <div class="text-gray-400 mt-3 mb-10 text-lg" id="welcomeTagline">Премиум автомобильный хаб Таджикистана</div>
+        <div class="flex flex-col gap-4">
+            <button class="welcome-btn primary" id="clientEnterBtn"><i class="fas fa-eye"></i> <span id="enterAsClientText">Войти как клиент</span></button>
+            <button class="welcome-btn secondary" id="openLoginBtn"><i class="fas fa-sign-in-alt"></i> <span id="loginText">Войти</span></button>
+            <button class="welcome-btn secondary" id="openRegisterBtn"><i class="fas fa-user-plus"></i> <span id="registerText">Зарегистрироваться</span></button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN SITE -->
+<div id="mainSite" class="hidden">
+    <div class="glass-header">
+        <div class="container flex justify-between items-center flex-wrap gap-4">
+            <div class="flex items-center gap-3 group cursor-pointer" onclick="location.reload()">
+                <i class="fas fa-car-side text-4xl bg-gradient-to-r from-[#2563eb] to-[#06cdd4] bg-clip-text text-transparent group-hover:scale-110 transition"></i>
+                <span class="text-2xl font-black bg-gradient-to-r from-white via-[#2563eb] to-[#06cdd4] bg-clip-text text-transparent">DOROSauto</span>
+            </div>
+            <div class="flex gap-3 items-center flex-wrap">
+                <select id="languageSelect" class="bg-white/5 border border-[#06cdd4]/30 rounded-full px-5 py-2.5 text-white cursor-pointer">
+                    <option value="ru">🇷🇺 Русский</option><option value="tj">🇹🇯 Тоҷикӣ</option>
+                    <option value="en">🇬🇧 English</option><option value="uz">🇺🇿 Oʻzbekcha</option>
+                </select>
+                <div id="dynamicButtons"></div>
+                <button id="adminPanelBtn" class="hidden bg-white/5 border border-[#06cdd4]/30 rounded-full px-5 py-2.5 text-white font-semibold flex items-center gap-2"><i class="fas fa-shield-alt"></i> Админ-панель</button>
+                <button id="logoutBtn" class="hidden bg-white/5 border border-[#06cdd4]/30 rounded-full px-5 py-2.5 text-white font-semibold flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Hero Banner -->
+        <div class="hero-banner" data-aos="fade-up">
+            <i class="fas fa-crown text-5xl text-[#06cdd4]"></i>
+            <h2 class="text-3xl font-bold mt-4 bg-gradient-to-r from-white to-[#06cdd4] bg-clip-text text-transparent">Элитный автомобильный сервис Таджикистана</h2>
+            <p class="text-gray-400 mt-3">Более 5000 довольных клиентов | 1000+ активных мастеров | 24/7 поддержка</p>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="100"><div class="stat-number" id="statServices">0</div><div class="stat-label text-gray-400">Всего объявлений</div></div>
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="200"><div class="stat-number" id="statUsers">0</div><div class="stat-label text-gray-400">Активных пользователей</div></div>
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="300"><div class="stat-number">8</div><div class="stat-label text-gray-400">Категорий услуг</div></div>
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="400"><div class="stat-number">100%</div><div class="stat-label text-gray-400">Безопасные платежи</div></div>
+        </div>
+
+        <!-- Neon Tabs -->
+        <div class="neon-tabs">
+            <button class="tab-btn active" data-tab="parts"><i class="fas fa-tools"></i> Автозапчасти</button>
+            <button class="tab-btn" data-tab="trips"><i class="fas fa-users"></i> Попутчики</button>
+            <button class="tab-btn" data-tab="rentals"><i class="fas fa-truck"></i> Спецтехника и Аренда</button>
+            <button class="tab-btn" data-tab="concierge"><i class="fas fa-star-of-life"></i> Автоконсьерж</button>
+        </div>
+
+        <!-- Search -->
+        <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Поиск по объявлениям..."></div>
+
+        <!-- Cards Container -->
+        <div id="cardsContainer" class="cards-grid"><div class="loading"><i class="fas fa-spinner fa-spin text-3xl"></i><p class="mt-4">Загрузка премиум контента...</p></div></div>
+    </div>
+</div>
+
+<button id="scrollTopBtn" class="scroll-top"><i class="fas fa-arrow-up"></i></button>
+<div id="toastMessage" class="toast"></div>
+
+<!-- MODALS -->
+<div id="loginModal" class="modal-overlay"><div class="modal-window"><i class="fas fa-times close-modal-icon" onclick="closeModal('loginModal')"></i><h2 class="text-2xl font-bold mb-5"><i class="fas fa-sign-in-alt"></i> Вход</h2><form id="loginForm"><input type="email" id="loginEmail" placeholder="Email" required><input type="password" id="loginPassword" placeholder="Пароль" required><button type="submit" class="w-full mt-5 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Войти</button></form></div></div>
+
+<div id="registerModal" class="modal-overlay"><div class="modal-window"><i class="fas fa-times close-modal-icon" onclick="closeModal('registerModal')"></i><h2 class="text-2xl font-bold mb-5"><i class="fas fa-user-plus"></i> Регистрация</h2><form id="registerForm"><input type="text" id="regName" placeholder="Имя" required><input type="email" id="regEmail" placeholder="Email" required><input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" required><input type="tel" id="regPhone" placeholder="Номер телефона" required><button type="submit" class="w-full mt-5 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Зарегистрироваться</button></form></div></div>
+
+<div id="addPartModal" class="modal-overlay"><div class="modal-window"><i class="fas fa-times close-modal-icon" onclick="closeModal('addPartModal')"></i><h2><i class="fas fa-plus-circle"></i> Добавить запчасть</h2><form id="addPartForm"><input type="text" id="partName" placeholder="Название детали" required><select id="partCategory" required><option>Двигатель</option><option>Ходовая</option><option>Кузов</option><option>Электрика</option><option>Трансмиссия</option></select><textarea id="partDesc" placeholder="Описание состояния" rows="2" required></textarea><input type="url" id="partPhoto" placeholder="Ссылка на фото"><select id="partPriceType"><option value="fixed">Фиксированная</option><option value="from">От суммы</option><option value="negotiable">Договорная</option></select><input type="text" id="partPrice" placeholder="Цена в сомони"><input type="tel" id="partPhone" placeholder="Номер телефона (обязательно)" required><div class="bg-white/5 rounded-2xl p-4 mt-3"><label class="block mb-2 font-semibold">💳 Платежные реквизиты:</label><input type="text" id="partDorospay" placeholder="DOROSpay номер карты"><input type="text" id="partDcPhone" placeholder="Dushanbe City Bank телефон"></div><button type="submit" class="w-full mt-5 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Опубликовать</button></form></div></div>
+
+<div id="addTripModal" class="modal-overlay"><div class="modal-window"><i class="fas fa-times close-modal-icon" onclick="closeModal('addTripModal')"></i><h2><i class="fas fa-users"></i> Добавить поездку</h2><form id="addTripForm"><input type="text" id="tripTitle" placeholder="Заголовок поездки" required><input type="text" id="tripRoute" placeholder="Маршрут: Откуда -> Куда" required><input type="datetime-local" id="tripDateTime" required><input type="number" id="tripSeats" placeholder="Количество мест" required><input type="text" id="tripPrice" placeholder="Цена за место (сомони)" required><textarea id="tripDesc" placeholder="Описание" rows="2"></textarea><input type="tel" id="tripPhone" placeholder="Номер телефона (обязательно)" required><div class="bg-white/5 rounded-2xl p-4 mt-3"><label class="block mb-2 font-semibold">💳 Платежные реквизиты:</label><input type="text" id="tripDorospay" placeholder="DOROSpay номер карты"><input type="text" id="tripDcPhone" placeholder="Dushanbe City Bank телефон"></div><button type="submit" class="w-full mt-5 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Опубликовать</button></form></div></div>
+
+<div id="addRentalModal" class="modal-overlay"><div class="modal-window"><i class="fas fa-truck"></i><h2>Добавить в Аренду/Спецтехнику</h2><form id="addRentalForm"><input type="text" id="rentalTitle" placeholder="Название" required><select id="rentalType" required><option>Аренда авто</option><option>Вызов Эвакуатора</option><option>Заказ Маршруток/Автобусов</option><option>Зарядить двигатель / Техпомощь</option></select><textarea id="rentalDesc" placeholder="Описание" rows="2" required></textarea><input type="text" id="rentalPrice" placeholder="Цена (сомони)" required><input type="tel" id="rentalPhone" placeholder="Номер телефона (обязательно)" required><div class="bg-white/5 rounded-2xl p-4 mt-3"><label class="block mb-2 font-semibold">💳 Платежные реквизиты:</label><input type="text" id="rentalDorospay" placeholder="DOROSpay номер карты"><input type="text" id="rentalDcPhone" placeholder="Dushanbe City Bank телефон"></div><button type="submit" class="w-full mt-5 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Опубликовать</button></form></div></div>
+
+<div id="adminModal" class="modal-overlay"><div class="modal-window"><i class="fas fa-times close-modal-icon" onclick="closeModal('adminModal')"></i><h2><i class="fas fa-shield-alt"></i> Панель управления</h2><div class="bg-yellow-500/10 border-l-4 border-yellow-500 p-3 rounded-xl mb-4 text-sm"><i class="fas fa-crown"></i> Режим Главного Администратора DOROSauto</div><form id="adminAddForm"><input type="text" id="adminSection" placeholder="Раздел (parts/trips/rentals)" required><textarea id="adminData" placeholder='JSON данные объявления' rows="3" class="w-full p-3 bg-black/50 rounded-xl border border-[#06cdd4]/20" required></textarea><button type="submit" class="w-full mt-4 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Добавить в БД</button></form><hr class="my-4 border-white/10"><button id="adminViewUsersBtn" class="w-full py-2 rounded-full bg-white/10 hover:bg-white/20 transition">Посмотреть пользователей</button></div></div>
+
+<div id="splitBillModal" class="modal-overlay"><div class="modal-window text-center"><i class="fas fa-times close-modal-icon" onclick="closeModal('splitBillModal')"></i><i class="fas fa-qrcode text-7xl text-[#06cdd4] my-5"></i><h2 class="text-2xl font-bold">Разделить чек</h2><p class="text-gray-400 my-3">Сумма к оплате: <span id="splitAmount" class="text-2xl font-bold text-[#06cdd4]">0</span> сомони</p><div class="bg-white p-4 rounded-2xl inline-block mx-auto my-4"><i class="fas fa-qrcode text-8xl text-black"></i></div><p class="text-sm text-gray-500">Отсканируйте QR-код для оплаты через DOROSpay</p><button onclick="closeModal('splitBillModal')" class="mt-5 px-8 py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold">Закрыть</button></div></div>
+
+<script>
+    // ======================== FIREBASE CONFIG (ТА ЖЕ, ЧТО И В DOROService) ========================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAE4zNwMJynqso1XTS1612Kri5RMgVCGmw",
+        authDomain: "dreamfamd.firebaseapp.com",
+        projectId: "dreamfamd",
+        databaseURL: "https://dreamfamd-default-rtdb.firebaseio.com/",
+        storageBucket: "dreamfamd.appspot.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let currentLang = 'ru';
+    let currentTab = 'parts';
+    let allData = { parts: [], trips: [], rentals: [] };
+
+    // ======================== ФОНОВЫЕ ЭФФЕКТЫ ========================
+    function createParticles() {
+        const container = document.getElementById('particleBg');
+        for(let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            const size = Math.random() * 8 + 2;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = 15 + Math.random() * 10 + 's';
+            container.appendChild(particle);
+        }
+        const starsContainer = document.getElementById('shootingStars');
+        for(let i = 0; i < 5; i++) {
+            const star = document.createElement('div');
+            star.className = 'shooting-star';
+            star.style.top = Math.random() * 50 + '%';
+            star.style.animationDelay = Math.random() * 10 + 's';
+            starsContainer.appendChild(star);
+        }
+    }
+    createParticles();
+
+    // ======================== МУЛЬТИЯЗЫЧНОСТЬ ========================
+    const translations = {
+        ru: { tab_parts: "Автозапчасти", tab_trips: "Попутчики", tab_rentals: "Спецтехника", tab_concierge: "Автоконсьерж", add_part: "Добавить запчасть", add_trip: "Добавить поездку", add_rental: "Добавить объявление", call: "Позвонить", pay_dorospay: "Оплатить DOROSpay", pay_dc: "Оплатить DC Bank", split_bill: "Разделить чек" },
+        tj: { tab_parts: "Автоэҳтиётқисмҳо", tab_trips: "Ҳамсафрон", tab_rentals: "Техникаи махсус", tab_concierge: "Автоконсьерж", add_part: "Иловаи қисм", add_trip: "Иловаи сафар", add_rental: "Иловаи эълон", call: "Заанг занед", pay_dorospay: "Пардохт DOROSpay", pay_dc: "Пардохт DC Bank", split_bill: "Тақсими чек" },
+        en: { tab_parts: "Auto Parts", tab_trips: "Carpooling", tab_rentals: "Heavy Equipment", tab_concierge: "Concierge", add_part: "Add Part", add_trip: "Add Trip", add_rental: "Add Listing", call: "Call", pay_dorospay: "Pay with DOROSpay", pay_dc: "Pay with DC Bank", split_bill: "Split Bill" },
+        uz: { tab_parts: "Avto ehtiyot qismlar", tab_trips: "Hamrohlar", tab_rentals: "Maxsus texnika", tab_concierge: "Avtokonsyerj", add_part: "Qism qo'shish", add_trip: "Sayohat qo'shish", add_rental: "E'lon qo'shish", call: "Qo'ng'iroq", pay_dorospay: "DOROSpay orqali to'lash", pay_dc: "DC Bank orqali to'lash", split_bill: "Chekni bo'lish" }
+    };
+    function updateUI() { Object.keys(translations[currentLang]).forEach(k => { document.querySelectorAll(`[data-i18n="${k}"]`).forEach(el => el.innerText = translations[currentLang][k]); }); }
+
+    // ======================== ЗАГРУЗКА ДАННЫХ ИЗ FIREBASE ========================
+    function loadData() {
+        // Загружаем запчасти из узла /dorosauto/parts
+        db.ref('dorosauto/parts').on('value', snap => { 
+            allData.parts = snap.val() ? Object.keys(snap.val()).map(k => ({ id: k, ...snap.val()[k] })) : []; 
+            renderCurrentTab(); 
+            updateStats(); 
+        });
+        
+        // Загружаем поездки из узла /dorosauto/trips
+        db.ref('dorosauto/trips').on('value', snap => { 
+            allData.trips = snap.val() ? Object.keys(snap.val()).map(k => ({ id: k, ...snap.val()[k] })) : []; 
+            renderCurrentTab(); 
+            updateStats(); 
+        });
+        
+        // Загружаем аренду из узла /dorosauto/rentals
+        db.ref('dorosauto/rentals').on('value', snap => { 
+            allData.rentals = snap.val() ? Object.keys(snap.val()).map(k => ({ id: k, ...snap.val()[k] })) : []; 
+            renderCurrentTab(); 
+            updateStats(); 
+        });
+        
+        // Загружаем пользователей для статистики
+        db.ref('users').on('value', snap => { 
+            const usersCount = snap.val() ? Object.keys(snap.val()).length : 0; 
+            document.getElementById('statUsers') && (document.getElementById('statUsers').innerText = usersCount); 
+        });
+    }
+
+    function updateStats() {
+        const total = allData.parts.length + allData.trips.length + allData.rentals.length;
+        document.getElementById('statServices') && (document.getElementById('statServices').innerText = total);
+    }
+
+    function renderCurrentTab() {
+        const container = document.getElementById('cardsContainer');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        let items = [];
+        
+        if (currentTab === 'parts') {
+            items = allData.parts.filter(i => (i.title || '').toLowerCase().includes(searchTerm) || (i.desc || '').toLowerCase().includes(searchTerm));
+        } else if (currentTab === 'trips') {
+            items = allData.trips.filter(i => (i.title || '').toLowerCase().includes(searchTerm) || (i.route || '').toLowerCase().includes(searchTerm));
+        } else if (currentTab === 'rentals') {
+            items = allData.rentals.filter(i => (i.title || '').toLowerCase().includes(searchTerm) || (i.desc || '').toLowerCase().includes(searchTerm));
+        } else if (currentTab === 'concierge') { 
+            renderConcierge(); 
+            return; 
+        }
+        
+        if (!items.length) { 
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-car-side text-6xl mb-5 opacity-50"></i><p class="text-lg">Ничего не найдено</p><p class="text-sm mt-2">Попробуйте изменить параметры поиска</p></div>'; 
+            return; 
+        }
+        
+        container.innerHTML = items.map((item, idx) => {
+            let priceDisplay = '';
+            if (item.priceType === 'fixed') priceDisplay = `${item.price} сомони`;
+            else if (item.priceType === 'from') priceDisplay = `от ${item.price} сомони`;
+            else if (item.priceType === 'negotiable') priceDisplay = 'договорная';
+            else priceDisplay = item.price ? `${item.price} сомони` : 'договорная';
+            
+            let numericPrice = parseInt(item.price) || 0;
+            let paymentBtns = '';
+            
+            if (numericPrice > 0) {
+                if (item.dorospay) paymentBtns += `<a href="https://dorosfamd.com/pay?card=${item.dorospay}&amount=${numericPrice}" target="_blank" class="pay-btn dorospay"><i class="fas fa-bolt"></i> Оплатить DOROSpay</a>`;
+                if (item.dcPhone) paymentBtns += `<a href="http://pay.dc.tj/?a=${item.dcPhone}&s=${numericPrice}&c=&f1=124&f2=&f3=" target="_blank" class="pay-btn dc"><i class="fas fa-building"></i> Оплатить DC Bank</a>`;
+            }
+            
+            if (currentTab === 'trips' && numericPrice > 0) {
+                paymentBtns += `<button onclick="showSplitBill('${item.id}', ${numericPrice})" class="pay-btn dorospay"><i class="fas fa-qrcode"></i> Разделить чек</button>`;
+            }
+            
+            const categoryName = item.category || item.type || (currentTab === 'trips' ? 'Поездка' : 'Услуга');
+            const titleText = item.title || item.name || 'Без названия';
+            const descText = item.desc || item.route || '';
+            
+            return `<div class="glass-card" data-aos="fade-up" data-aos-delay="${idx * 30}"><div class="p-6"><div class="flex items-center gap-5 mb-5"><img src="${item.photo || 'https://via.placeholder.com/80'}" class="avatar w-20 h-20 rounded-full object-cover border-2 border-[#06cdd4]/50" onerror="this.src='https://via.placeholder.com/80'"><div><h3 class="font-bold text-xl">${escapeHtml(titleText)}</h3><span class="text-xs bg-[#06cdd4]/20 px-3 py-1.5 rounded-full inline-flex items-center gap-1 mt-2"><i class="fas fa-tag"></i> ${escapeHtml(categoryName)}</span></div></div><p class="text-gray-300 text-sm leading-relaxed mb-4">${escapeHtml(descText)}</p><div class="text-2xl font-black bg-gradient-to-r from-white to-[#2563eb] bg-clip-text text-transparent mb-4">${priceDisplay}</div><div class="flex flex-wrap gap-3"><a href="tel:${item.phone}" class="contact-btn"><i class="fas fa-phone-alt"></i> Позвонить</a>${paymentBtns}</div></div></div>`;
+        }).join('');
+        
+        if (typeof AOS !== 'undefined') AOS.refresh();
+    }
+
+    function renderConcierge() {
+        document.getElementById('cardsContainer').innerHTML = `<div class="col-span-full glass-card p-12 text-center" data-aos="zoom-in"><i class="fas fa-star-of-life text-7xl bg-gradient-to-r from-[#2563eb] to-[#06cdd4] bg-clip-text text-transparent mb-6 animate-pulse"></i><h2 class="text-4xl font-black mb-5 bg-gradient-to-r from-white to-[#06cdd4] bg-clip-text text-transparent">✨ Автоконсьерж Премиум ✨</h2><p class="text-gray-300 max-w-2xl mx-auto mb-8 text-lg">Услуга Автоконсьерж: Мы приедем, заберем ваш автомобиль, бережно отвезем его на автомойку или детейлинг, проконтролируем процесс и вернем его вам в идеальном состоянии. Стоимость услуги — от 50 сомони.</p><div class="flex flex-wrap gap-6 justify-center"><a href="tel:+992876619999" class="px-10 py-4 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06cdd4] font-bold text-xl flex items-center gap-3 hover:scale-105 transition shadow-lg"><i class="fas fa-phone-alt"></i> Позвонить Консьержу</a><a href="https://wa.me/992876619999" target="_blank" class="px-10 py-4 rounded-full bg-[#25D366] font-bold text-xl flex items-center gap-3 hover:scale-105 transition shadow-lg"><i class="fab fa-whatsapp"></i> Написать в WhatsApp</a></div></div>`;
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    function showToast(msg) { const t = document.getElementById('toastMessage'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+    function openModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow = 'hidden'; }
+    window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow = 'auto'; };
+    window.showSplitBill = (id, price) => { document.getElementById('splitAmount').innerText = price; openModal('splitBillModal'); };
+
+    // ======================== АВТОРИЗАЦИЯ ========================
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => { 
+        e.preventDefault(); 
+        try { 
+            await auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value); 
+            closeModal('loginModal'); 
+            showToast("Добро пожаловать в DOROSauto!"); 
+        } catch(err) { showToast(err.message); } 
+    });
+    
+    document.getElementById('registerForm')?.addEventListener('submit', async (e) => { 
+        e.preventDefault(); 
+        try { 
+            const cred = await auth.createUserWithEmailAndPassword(document.getElementById('regEmail').value, document.getElementById('regPassword').value); 
+            await db.ref(`users/${cred.user.uid}`).set({ 
+                name: document.getElementById('regName').value, 
+                email: document.getElementById('regEmail').value, 
+                phone: document.getElementById('regPhone').value, 
+                createdAt: Date.now() 
+            }); 
+            showToast("Регистрация успешна!"); 
+            closeModal('registerModal'); 
+        } catch(err) { showToast(err.message); } 
+    });
+    
+    document.getElementById('clientEnterBtn')?.addEventListener('click', () => { 
+        document.getElementById('welcomeScreen').classList.add('hidden'); 
+        document.getElementById('mainSite').classList.remove('hidden'); 
+        currentUser = null; 
+        updateButtons(); 
+    });
+    
+    document.getElementById('openLoginBtn')?.addEventListener('click', () => openModal('loginModal'));
+    document.getElementById('openRegisterBtn')?.addEventListener('click', () => openModal('registerModal'));
+    
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => { 
+        await auth.signOut(); 
+        showToast("Вы вышли из аккаунта"); 
+        setTimeout(() => location.reload(), 1000); 
+    });
+
+    function updateButtons() {
+        const container = document.getElementById('dynamicButtons');
+        const adminBtn = document.getElementById('adminPanelBtn');
+        const logoutBtnElem = document.getElementById('logoutBtn');
+        
+        if (currentUser) {
+            let btnHtml = '';
+            if (currentTab === 'parts') btnHtml += `<button id="addBtn" class="bg-gradient-to-r from-[#2563eb] to-[#06cdd4] rounded-full px-5 py-2.5 font-semibold flex items-center gap-2 hover:scale-105 transition"><i class="fas fa-plus"></i> Добавить запчасть</button>`;
+            else if (currentTab === 'trips') btnHtml += `<button id="addBtn" class="bg-gradient-to-r from-[#2563eb] to-[#06cdd4] rounded-full px-5 py-2.5 font-semibold flex items-center gap-2 hover:scale-105 transition"><i class="fas fa-plus"></i> Добавить поездку</button>`;
+            else if (currentTab === 'rentals') btnHtml += `<button id="addBtn" class="bg-gradient-to-r from-[#2563eb] to-[#06cdd4] rounded-full px-5 py-2.5 font-semibold flex items-center gap-2 hover:scale-105 transition"><i class="fas fa-plus"></i> Добавить объявление</button>`;
+            container.innerHTML = btnHtml;
+            
+            document.getElementById('addBtn')?.addEventListener('click', () => { 
+                if (currentTab === 'parts') openModal('addPartModal'); 
+                else if (currentTab === 'trips') openModal('addTripModal'); 
+                else if (currentTab === 'rentals') openModal('addRentalModal'); 
+            });
+            
+            if (currentUser.email === 'doriush@auto.com') adminBtn.classList.remove('hidden');
+            else adminBtn.classList.add('hidden');
+            
+            logoutBtnElem.classList.remove('hidden');
+        } else { 
+            container.innerHTML = ''; 
+            adminBtn.classList.add('hidden'); 
+            logoutBtnElem.classList.add('hidden'); 
+        }
+    }
+
+    // ======================== ДОБАВЛЕНИЕ ОБЪЯВЛЕНИЙ ========================
+    document.getElementById('addPartForm')?.addEventListener('submit', async (e) => { 
+        e.preventDefault(); 
+        if (!currentUser) { showToast("Авторизуйтесь!"); return; } 
+        if (!document.getElementById('partPhone').value) { showToast("Номер телефона обязателен!"); return; } 
+        
+        await db.ref('dorosauto/parts').push({ 
+            title: document.getElementById('partName').value, 
+            category: document.getElementById('partCategory').value, 
+            desc: document.getElementById('partDesc').value, 
+            photo: document.getElementById('partPhoto').value, 
+            priceType: document.getElementById('partPriceType').value, 
+            price: document.getElementById('partPrice').value, 
+            phone: document.getElementById('partPhone').value, 
+            dorospay: document.getElementById('partDorospay').value, 
+            dcPhone: document.getElementById('partDcPhone').value, 
+            userId: currentUser.uid, 
+            createdAt: Date.now() 
+        }); 
+        showToast("✅ Запчасть добавлена!"); 
+        closeModal('addPartModal'); 
+        document.getElementById('addPartForm').reset();
+    });
+    
+    document.getElementById('addTripForm')?.addEventListener('submit', async (e) => { 
+        e.preventDefault(); 
+        if (!currentUser) return; 
+        if (!document.getElementById('tripPhone').value) { showToast("Номер телефона обязателен!"); return; } 
+        
+        await db.ref('dorosauto/trips').push({ 
+            title: document.getElementById('tripTitle').value, 
+            route: document.getElementById('tripRoute').value, 
+            dateTime: document.getElementById('tripDateTime').value, 
+            seats: document.getElementById('tripSeats').value, 
+            price: document.getElementById('tripPrice').value, 
+            desc: document.getElementById('tripDesc').value, 
+            phone: document.getElementById('tripPhone').value, 
+            dorospay: document.getElementById('tripDorospay').value, 
+            dcPhone: document.getElementById('tripDcPhone').value, 
+            userId: currentUser.uid, 
+            createdAt: Date.now() 
+        }); 
+        showToast("✅ Поездка добавлена!"); 
+        closeModal('addTripModal'); 
+        document.getElementById('addTripForm').reset();
+    });
+    
+    document.getElementById('addRentalForm')?.addEventListener('submit', async (e) => { 
+        e.preventDefault(); 
+        if (!currentUser) return; 
+        if (!document.getElementById('rentalPhone').value) { showToast("Номер телефона обязателен!"); return; } 
+        
+        await db.ref('dorosauto/rentals').push({ 
+            title: document.getElementById('rentalTitle').value, 
+            type: document.getElementById('rentalType').value, 
+            desc: document.getElementById('rentalDesc').value, 
+            price: document.getElementById('rentalPrice').value, 
+            phone: document.getElementById('rentalPhone').value, 
+            dorospay: document.getElementById('rentalDorospay').value, 
+            dcPhone: document.getElementById('rentalDcPhone').value, 
+            userId: currentUser.uid, 
+            createdAt: Date.now() 
+        }); 
+        showToast("✅ Объявление добавлено!"); 
+        closeModal('addRentalModal'); 
+        document.getElementById('addRentalForm').reset();
+    });
+
+    // ======================== АДМИН-ПАНЕЛЬ ========================
+    document.getElementById('adminPanelBtn')?.addEventListener('click', () => openModal('adminModal'));
+    
+    document.getElementById('adminAddForm')?.addEventListener('submit', async (e) => { 
+        e.preventDefault(); 
+        if (currentUser?.email !== 'doriush@auto.com') { showToast("Доступ только у Doriush"); return; } 
+        const section = document.getElementById('adminSection').value; 
+        try {
+            const data = JSON.parse(document.getElementById('adminData').value); 
+            await db.ref(`dorosauto/${section}`).push({ ...data, createdAt: Date.now() }); 
+            showToast("Добавлено!"); 
+            closeModal('adminModal'); 
+        } catch(e) { showToast("Ошибка парсинга JSON"); }
+    });
+    
+    document.getElementById('adminViewUsersBtn')?.addEventListener('click', async () => { 
+        const snap = await db.ref('users').once('value'); 
+        const users = snap.val(); 
+        alert(JSON.stringify(users, null, 2)); 
+    });
+
+    // ======================== ТАБЫ И ФИЛЬТРЫ ========================
+    document.querySelectorAll('.tab-btn').forEach(btn => { 
+        btn.addEventListener('click', () => { 
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+            btn.classList.add('active'); 
+            currentTab = btn.dataset.tab; 
+            renderCurrentTab(); 
+            updateButtons(); 
+        }); 
+    });
+    
+    document.getElementById('searchInput')?.addEventListener('input', () => renderCurrentTab());
+    document.getElementById('languageSelect')?.addEventListener('change', (e) => { currentLang = e.target.value; updateUI(); renderCurrentTab(); });
+    
+    document.getElementById('scrollTopBtn')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    window.addEventListener('scroll', () => { const btn = document.getElementById('scrollTopBtn'); if (window.scrollY > 300) btn.style.display = 'flex'; else btn.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id); });
+
+    // Инициализация
+    auth.onAuthStateChanged(user => { 
+        currentUser = user; 
+        if (user && document.getElementById('welcomeScreen') && !document.getElementById('welcomeScreen').classList.contains('hidden')) { 
+            document.getElementById('welcomeScreen').classList.add('hidden'); 
+            document.getElementById('mainSite').classList.remove('hidden'); 
+        } 
+        updateButtons(); 
+        renderCurrentTab(); 
+    });
+    
+    AOS.init({ duration: 800, once: true, offset: 100 });
+    loadData();
+    updateUI();
+</script>
+
+<!-- ======================== FIREBASE SECURITY RULES ======================== -->
+<!--
+    ПРАВИЛА БЕЗОПАСНОСТИ ДЛЯ FIREBASE REALTIME DATABASE:
+    (СКОПИРУЙТЕ И ВСТАВЬТЕ В КОНСОЛЬ FIREBASE)
+    
+    {
+      "rules": {
+        "dorosauto": {
+          "parts": { ".read": true, ".write": "auth != null" },
+          "trips": { ".read": true, ".write": "auth != null" },
+          "rentals": { ".read": true, ".write": "auth != null" }
+        },
+        "users": {
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.token.email === 'doriush@auto.com' || auth.token.email === 'doriush@service.com')"
+        },
+        "services": {
+          ".read": true,
+          ".write": "auth != null"
+        },
+        "wishes": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    }
+    
+    ⚠️ ВАЖНО: Включите Email/Password в Firebase Console → Authentication → Sign-in methods
+-->
+</body>
+</html>

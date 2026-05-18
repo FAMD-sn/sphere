@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>DOROService | Премиум маркетплейс мастеров Таджикистана</title>
+    <meta name="description" content="DOROService — высокотехнологичная платформа поиска мастеров и компаний в Таджикистане с оплатой через DOROSpay">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    
+    <!-- AOS Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0c12;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        /* Фоновые эффекты */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(42, 109, 244, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 224, 255, 0.08) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, rgba(42, 109, 244, 0.02) 0px, rgba(42, 109, 244, 0.02) 2px, transparent 2px, transparent 8px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* ========== РАСШИРЕННЫЕ АНИМАЦИИ ========== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(42, 109, 244, 0.3), 0 0 10px rgba(0, 224, 255, 0.15); border-color: rgba(0, 224, 255, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(42, 109, 244, 0.6), 0 0 35px rgba(0, 224, 255, 0.3); border-color: rgba(0, 224, 255, 0.6); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        @keyframes rotateSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes cardShine {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* ========== ПРИВЕТСТВЕННЫЙ ЭКРАН ========== */
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 30% 40%, #0f141f, #020408);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+        }
+
+        .welcome-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .welcome-card {
+            background: rgba(15, 25, 45, 0.75);
+            backdrop-filter: blur(30px);
+            border-radius: 64px;
+            padding: 65px 55px;
+            text-align: center;
+            max-width: 620px;
+            width: 90%;
+            border: 1px solid rgba(0, 224, 255, 0.3);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 224, 255, 0.15);
+            animation: fadeInScale 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 224, 255, 0.05), transparent);
+            animation: rotateSlow 20s linear infinite;
+            pointer-events: none;
+        }
+
+        .welcome-icon {
+            font-size: 90px;
+            background: linear-gradient(135deg, #2a6df4, #00e0ff, #2a6df4);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .welcome-card h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #2a6df4, #00e0ff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .welcome-tagline {
+            color: #a0b3d9;
+            margin-bottom: 50px;
+            font-size: 1.15rem;
+            opacity: 0.9;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .welcome-btn {
+            padding: 18px 32px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .welcome-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .welcome-btn.primary {
+            background: linear-gradient(135deg, #2a6df4, #00e0ff);
+            color: #0a0c12;
+            border: none;
+            box-shadow: 0 4px 25px rgba(0, 224, 255, 0.4);
+        }
+
+        .welcome-btn.primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 40px rgba(0, 224, 255, 0.6);
+        }
+
+        .welcome-btn.secondary:hover {
+            background: rgba(42, 109, 244, 0.2);
+            border-color: rgba(42, 109, 244, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* ========== ОСНОВНОЙ САЙТ ========== */
+        .main-site {
+            display: none;
+        }
+
+        .main-site.visible {
+            display: block;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+        }
+
+        /* Хедер */
+        .glass-header {
+            background: rgba(10, 12, 18, 0.85);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(0, 224, 255, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 18px 0;
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .logo-area:hover {
+            transform: scale(1.03);
+            filter: drop-shadow(0 0 10px rgba(0, 224, 255, 0.5));
+        }
+
+        .logo-area i {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #2a6df4, #00e0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-area span {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #2a6df4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.01em;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .lang-selector {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 224, 255, 0.25);
+            border-radius: 40px;
+            padding: 10px 18px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .lang-selector:hover {
+            border-color: #2a6df4;
+            background: rgba(42, 109, 244, 0.15);
+        }
+
+        .btn-neon {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 224, 255, 0.35);
+            padding: 10px 24px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-neon:hover::before {
+            left: 100%;
+        }
+
+        .btn-neon.primary-solid {
+            background: linear-gradient(135deg, #2a6df4, #00e0ff);
+            border: none;
+            color: #0a0c12;
+        }
+
+        .btn-neon:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 224, 255, 0.3);
+        }
+
+        /* Баннер */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(42, 109, 244, 0.15), rgba(0, 224, 255, 0.08));
+            border-radius: 48px;
+            padding: 50px 40px;
+            margin: 40px 0;
+            text-align: center;
+            border: 1px solid rgba(0, 224, 255, 0.2);
+            backdrop-filter: blur(10px);
+            animation: glowPulse 3s infinite;
+        }
+
+        .hero-banner h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff, #00e0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Статистика */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin: 40px 0;
+            padding: 35px;
+            background: rgba(15, 25, 45, 0.4);
+            backdrop-filter: blur(16px);
+            border-radius: 48px;
+            border: 1px solid rgba(0, 224, 255, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+            animation: fadeInUp 0.5s ease-out;
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #2a6df4, #00e0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .stat-label {
+            color: #a0b3d9;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* Фильтры улучшенные */
+        .filters-glass {
+            background: rgba(15, 25, 45, 0.5);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 35px;
+            margin: 35px 0;
+            border: 1px solid rgba(0, 224, 255, 0.12);
+            animation: slideInLeft 0.5s ease-out;
+            transition: all 0.3s;
+        }
+
+        .filters-glass:hover {
+            border-color: rgba(0, 224, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 224, 255, 0.1);
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #a0b3d9;
+            font-weight: 500;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(10, 12, 18, 0.8);
+            border: 1px solid rgba(0, 224, 255, 0.2);
+            border-radius: 28px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #2a6df4;
+            box-shadow: 0 0 20px rgba(42, 109, 244, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Карточки услуг премиум */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 35px;
+            margin: 50px 0;
+        }
+
+        .service-card {
+            background: rgba(15, 25, 45, 0.55);
+            backdrop-filter: blur(16px);
+            border-radius: 40px;
+            border: 1px solid rgba(0, 224, 255, 0.12);
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            position: relative;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #2a6df4, #00e0ff, #2a6df4);
+            border-radius: 42px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+        }
+
+        .service-card:hover::before {
+            opacity: 0.15;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px) scale(1.01);
+            border-color: rgba(0, 224, 255, 0.35);
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8);
+        }
+
+        .card-header {
+            padding: 28px 28px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .avatar {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #2a6df4, #00e0ff);
+            border: 2px solid rgba(0, 224, 255, 0.5);
+            transition: all 0.3s;
+        }
+
+        .service-card:hover .avatar {
+            transform: scale(1.08);
+            box-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
+        }
+
+        .company-info h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .category-badge {
+            background: rgba(0, 224, 255, 0.12);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-body {
+            padding: 24px 28px 28px;
+        }
+
+        .service-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00e0ff;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .service-desc {
+            color: #b8c7e7;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .price-block {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #2a6df4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 15px 0;
+            color: #ffc107;
+        }
+
+        .payment-buttons {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .pay-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 40px;
+            text-align: center;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .pay-btn.dorospay {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+        }
+
+        .pay-btn.dc {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .pay-btn:hover {
+            filter: brightness(1.1);
+            transform: scale(0.98);
+        }
+
+        .contact-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .contact-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 40px;
+            text-align: center;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .contact-btn.call {
+            background: linear-gradient(135deg, #2a6df4, #1a4fbb);
+            color: white;
+        }
+        .contact-btn.message {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+        }
+        .contact-btn:hover {
+            filter: brightness(1.15);
+            transform: scale(0.97);
+        }
+
+        /* Модальные окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-window {
+            background: rgba(18, 28, 50, 0.98);
+            backdrop-filter: blur(30px);
+            border-radius: 48px;
+            max-width: 580px;
+            width: 90%;
+            padding: 45px;
+            border: 1px solid rgba(0, 224, 255, 0.4);
+            box-shadow: 0 0 50px rgba(0, 224, 255, 0.2);
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-window {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-window h2 {
+            font-size: 1.8rem;
+            margin-bottom: 28px;
+            background: linear-gradient(135deg, #fff, #2a6df4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-window input,
+        .modal-window select,
+        .modal-window textarea {
+            width: 100%;
+            padding: 15px 18px;
+            margin: 10px 0;
+            background: rgba(10, 12, 18, 0.9);
+            border: 1px solid rgba(0, 224, 255, 0.2);
+            border-radius: 28px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .modal-window input:focus,
+        .modal-window select:focus,
+        .modal-window textarea:focus {
+            outline: none;
+            border-color: #2a6df4;
+            box-shadow: 0 0 20px rgba(42, 109, 244, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .modal-window textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .close-modal-icon {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #a0b3d9;
+            transition: all 0.3s;
+        }
+
+        .close-modal-icon:hover {
+            color: #00e0ff;
+            transform: rotate(90deg);
+        }
+
+        .warning-text {
+            background: rgba(255, 170, 68, 0.12);
+            border-left: 3px solid #ffaa44;
+            padding: 14px 18px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            font-size: 0.85rem;
+            color: #ffcc88;
+        }
+
+        .bank-selection {
+            background: rgba(0, 224, 255, 0.05);
+            border-radius: 28px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .bank-option {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid rgba(0, 224, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        /* Кнопка наверх */
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2a6df4, #00e0ff);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 224, 255, 0.3);
+            font-size: 1.2rem;
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 224, 255, 0.5);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: linear-gradient(135deg, #00e0ff, #2a6df4);
+            color: #0a0c12;
+            padding: 15px 35px;
+            border-radius: 60px;
+            font-weight: 700;
+            z-index: 4000;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 5px 25px rgba(0, 224, 255, 0.4);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px;
+            font-size: 1.1rem;
+            color: #a0b3d9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 100px 20px;
+            color: #a0b3d9;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .services-grid { grid-template-columns: 1fr; }
+            .welcome-card { padding: 40px 25px; }
+            .welcome-card h1 { font-size: 2.2rem; }
+            .modal-window { padding: 25px; margin: 20px; }
+            .toast { white-space: normal; text-align: center; font-size: 0.9rem; }
+            .stats-bar { flex-direction: column; align-items: center; }
+            .hero-banner h2 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen" class="welcome-screen">
+    <div class="welcome-card">
+        <i class="fas fa-crown welcome-icon"></i>
+        <h1>DOROService</h1>
+        <div class="welcome-tagline" id="welcomeTagline">Элитные мастера Таджикистана с оплатой через DOROSpay</div>
+        <div class="welcome-buttons">
+            <button class="welcome-btn primary" id="clientEnterBtn">
+                <i class="fas fa-eye"></i> <span id="enterAsClientText">Войти как клиент</span>
+            </button>
+            <button class="welcome-btn secondary" id="openLoginBtn">
+                <i class="fas fa-sign-in-alt"></i> <span id="loginText">Войти</span>
+            </button>
+            <button class="welcome-btn secondary" id="openRegisterMasterBtn">
+                <i class="fas fa-user-plus"></i> <span id="registerText">Зарегистрироваться</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN SITE -->
+<div id="mainSite" class="main-site">
+    <div class="glass-header">
+        <div class="container">
+            <div class="header-flex">
+                <a href="#" class="logo-area" id="logoLink">
+                    <i class="fas fa-bolt"></i>
+                    <span>DOROService</span>
+                </a>
+                <div class="header-controls">
+                    <select id="languageSelect" class="lang-selector">
+                        <option value="ru">🇷🇺 Русский</option>
+                        <option value="tj">🇹🇯 Тоҷикӣ</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="uz">🇺🇿 Oʻzbekcha</option>
+                    </select>
+                    <div id="dynamicButtons"></div>
+                    <button id="adminCenterBtn" style="display: none;" class="btn-neon">
+                        <i class="fas fa-shield-alt"></i> Админ-центр
+                    </button>
+                    <button id="logoutBtn" style="display: none;" class="btn-neon">
+                        <i class="fas fa-sign-out-alt"></i> Выйти
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Hero Banner -->
+        <div class="hero-banner" data-aos="fade-up">
+            <i class="fas fa-bolt" style="font-size: 48px; color: #00e0ff; margin-bottom: 20px; display: inline-block;"></i>
+            <h2>Лучшие мастера Таджикистана</h2>
+            <p style="color: #a0b3d9; margin-top: 15px;">Более 1000 специалистов готовы выполнить вашу работу качественно и в срок</p>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-number" id="statServices">0</div>
+                <div class="stat-label"><i class="fas fa-tools"></i> Услуг предоставлено</div>
+            </div>
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-number" id="statMasters">0</div>
+                <div class="stat-label"><i class="fas fa-users"></i> Активных мастеров</div>
+            </div>
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="300">
+                <div class="stat-number" id="statCategories">6</div>
+                <div class="stat-label"><i class="fas fa-tags"></i> Категорий услуг</div>
+            </div>
+            <div class="stat-item" data-aos="fade-up" data-aos-delay="400">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label"><i class="fas fa-headset"></i> Поддержка</div>
+            </div>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="filters-glass" data-aos="fade-up">
+            <div class="filter-row">
+                <div class="filter-group" style="flex: 2;">
+                    <label><i class="fas fa-search"></i> Поиск услуг</label>
+                    <input type="text" id="searchInput" placeholder="🔍 Поиск по названию или описанию...">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-tags"></i> Категория</label>
+                    <select id="categoryFilter">
+                        <option value="">Все категории</option>
+                        <option value="Ремонт">🔧 Ремонт</option>
+                        <option value="Строительство">🏗️ Строительство</option>
+                        <option value="Клининг">🧹 Клининг</option>
+                        <option value="Доставка">📦 Доставка</option>
+                        <option value="IT">💻 IT-услуги</option>
+                        <option value="Красота">💄 Красота и здоровье</option>
+                        <option value="Обучение">📚 Обучение</option>
+                        <option value="Переводы">🌐 Переводы</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-arrow-up-wide-short"></i> Сортировка</label>
+                    <select id="sortFilter">
+                        <option value="newest">🆕 Сначала новые</option>
+                        <option value="price_asc">💰 Сначала дешевле</option>
+                        <option value="price_desc">💎 Сначала дороже</option>
+                        <option value="rating">⭐ По рейтингу</option>
+                    </select>
+                </div>
+                <button id="applyFilters" class="btn-neon primary-solid">
+                    <i class="fas fa-filter"></i> Применить
+                </button>
+            </div>
+        </div>
+
+        <!-- Каталог услуг -->
+        <div id="servicesContainer" class="services-grid">
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i> Загрузка услуг...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Кнопка наверх -->
+<button id="scrollTopBtn" class="scroll-top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<div id="toastMessage" class="toast"></div>
+
+<!-- MODALS -->
+<div id="loginModal" class="modal-overlay">
+    <div class="modal-window">
+        <i class="fas fa-times close-modal-icon" onclick="closeModal('loginModal')"></i>
+        <h2><i class="fas fa-sign-in-alt"></i> Вход в аккаунт</h2>
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <input type="password" id="loginPassword" placeholder="Пароль" required>
+            <button type="submit" class="btn-neon primary-solid" style="width:100%; margin-top: 15px;">
+                <i class="fas fa-arrow-right"></i> Войти
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="registerMasterModal" class="modal-overlay">
+    <div class="modal-window">
+        <i class="fas fa-times close-modal-icon" onclick="closeModal('registerMasterModal')"></i>
+        <h2><i class="fas fa-user-plus"></i> Регистрация мастера</h2>
+        <form id="masterRegForm">
+            <input type="text" id="masterName" placeholder="Имя мастера / Название предприятия" required>
+            <input type="tel" id="masterPhone" placeholder="Номер телефона" required>
+            <input type="text" id="masterMessenger" placeholder="WhatsApp или Telegram" required>
+            <select id="masterCategory" required>
+                <option value="">Выберите категорию</option>
+                <option>Ремонт</option><option>Строительство</option><option>Клининг</option>
+                <option>Доставка</option><option>IT</option><option>Красота</option>
+                <option>Обучение</option><option>Переводы</option>
+            </select>
+            <textarea id="masterDesc" placeholder="Опишите ваш опыт и услуги" rows="3" required></textarea>
+            <input type="url" id="masterPhoto" placeholder="Ссылка на фото / логотип">
+            <button type="submit" class="btn-neon primary-solid" style="width:100%">
+                <i class="fab fa-telegram"></i> Отправить заявку
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="addServiceModal" class="modal-overlay">
+    <div class="modal-window">
+        <i class="fas fa-times close-modal-icon" onclick="closeModal('addServiceModal')"></i>
+        <h2><i class="fas fa-plus-circle"></i> Добавить услугу</h2>
+        <form id="addServiceForm">
+            <input type="text" id="serviceName" placeholder="Название услуги" required>
+            <select id="serviceCategory" required>
+                <option>Ремонт</option><option>Строительство</option><option>Клининг</option>
+                <option>Доставка</option><option>IT</option><option>Красота</option>
+                <option>Обучение</option><option>Переводы</option>
+            </select>
+            <textarea id="serviceDesc" placeholder="Описание услуги" rows="3" required></textarea>
+            <select id="priceType">
+                <option value="fixed">Фиксированная цена</option>
+                <option value="from">Цена от</option>
+                <option value="negotiable">Договорная</option>
+            </select>
+            <input type="text" id="priceValue" placeholder="Сумма в сомони">
+            
+            <!-- Платежные реквизиты -->
+            <div class="bank-selection">
+                <label style="display: block; margin-bottom: 10px;"><i class="fas fa-credit-card"></i> Платежные реквизиты (для приема оплаты)</label>
+                <div class="bank-option">
+                    <label><i class="fas fa-bolt" style="color: #00e0ff;"></i> DOROSpay</label>
+                    <input type="text" id="dorospayCard" placeholder="Номер карты DOROSpay">
+                    <small style="color: #a0b3d9;">Формат: 16 цифр</small>
+                </div>
+                <div class="bank-option">
+                    <label><i class="fas fa-building" style="color: #f5576c;"></i> Dushanbe City Bank</label>
+                    <input type="text" id="dcPhone" placeholder="Номер телефона (счет в DC)">
+                    <small style="color: #a0b3d9;">Формат: 992XXXXXXXXX</small>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-neon primary-solid" style="width:100%">
+                <i class="fas fa-check-circle"></i> Опубликовать услугу
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="adminCenterModal" class="modal-overlay">
+    <div class="modal-window">
+        <i class="fas fa-times close-modal-icon" onclick="closeModal('adminCenterModal')"></i>
+        <h2><i class="fas fa-shield-alt"></i> Админ-центр</h2>
+        <div class="warning-text">
+            <i class="fas fa-exclamation-triangle"></i> Внимание: Регистрация новых провайдеров услуг доступна исключительно главному администратору экосистемы.
+        </div>
+        <form id="adminCreateUserForm">
+            <input type="email" id="newMasterEmail" placeholder="Email мастера" required>
+            <input type="password" id="newMasterPass" placeholder="Пароль" required>
+            <input type="tel" id="newMasterPhone" placeholder="Телефон" required>
+            <input type="url" id="newMasterPhotoUrl" placeholder="Ссылка на фото/логотип">
+            <button type="submit" class="btn-neon primary-solid" style="width:100%">
+                <i class="fas fa-user-check"></i> Создать аккаунт
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ======================== FIREBASE CONFIG ========================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAE4zNwMJynqso1XTS1612Kri5RMgVCGmw",
+        authDomain: "dreamfamd.firebaseapp.com",
+        projectId: "dreamfamd",
+        databaseURL: "https://dreamfamd-default-rtdb.firebaseio.com/",
+        storageBucket: "dreamfamd.appspot.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // ======================== TELEGRAM CONFIG ========================
+    const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN';
+    const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID';
+
+    // ======================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ========================
+    let currentUser = null;
+    let currentLang = 'ru';
+    let services = [];
+    let allServices = [];
+
+    // ======================== МУЛЬТИЯЗЫЧНОСТЬ ========================
+    const translations = {
+        ru: {
+            welcome_tagline: "Элитные мастера Таджикистана с оплатой через DOROSpay",
+            enter_as_client: "Войти как клиент", login: "Войти", register: "Зарегистрироваться",
+            add_service: "Добавить услугу", admin_panel: "Админ-центр", call: "Позвонить",
+            message: "Написать", search_placeholder: "Поиск услуг...", apply: "Применить", logout: "Выйти"
+        },
+        tj: {
+            welcome_tagline: "Устодони беҳтарини Тоҷикистон бо пардохт тавассути DOROSpay",
+            enter_as_client: "Ворид ҳамчун муштарӣ", login: "Ворид шавед", register: "Сабти ном",
+            add_service: "Иловаи хизмат", admin_panel: "Маркази админ", call: "Заанг занед",
+            message: "Нависед", search_placeholder: "Ҷустуҷӯи хизматҳо...", apply: "Татбиқ кунед", logout: "Бароед"
+        },
+        en: {
+            welcome_tagline: "Elite Masters of Tajikistan with DOROSpay payment",
+            enter_as_client: "Enter as Client", login: "Login", register: "Register",
+            add_service: "Add Service", admin_panel: "Admin Center", call: "Call",
+            message: "Message", search_placeholder: "Search services...", apply: "Apply", logout: "Logout"
+        },
+        uz: {
+            welcome_tagline: "Tojikistonning eng yaxshi ustalari DOROSpay orqali to'lov bilan",
+            enter_as_client: "Mijoz sifatida kiring", login: "Kirish", register: "Ro'yxatdan o'tish",
+            add_service: "Xizmat qo'shish", admin_panel: "Admin markazi", call: "Qo'ng'iroq",
+            message: "Yozish", search_placeholder: "Xizmatlarni qidirish...", apply: "Qo'llash", logout: "Chiqish"
+        }
+    };
+
+    function updateUILang() {
+        if(translations[currentLang]) {
+            const el = (id) => document.getElementById(id);
+            if(el('welcomeTagline')) el('welcomeTagline').innerText = translations[currentLang].welcome_tagline;
+            if(el('enterAsClientText')) el('enterAsClientText').innerText = translations[currentLang].enter_as_client;
+            if(el('loginText')) el('loginText').innerText = translations[currentLang].login;
+            if(el('registerText')) el('registerText').innerText = translations[currentLang].register;
+            if(el('searchInput')) el('searchInput').placeholder = translations[currentLang].search_placeholder;
+            if(el('logoutBtn')) el('logoutBtn').innerHTML = `<i class="fas fa-sign-out-alt"></i> ${translations[currentLang].logout}`;
+        }
+    }
+
+    // ======================== TELEGRAM ОТПРАВКА ========================
+    async function sendToTelegram(data) {
+        if(TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN') {
+            showToast("⚠️ Настройте TELEGRAM_BOT_TOKEN в коде");
+            return false;
+        }
+        const text = `🛠 НОВАЯ ЗАЯВКА МАСТЕРА\n\n👤 Имя: ${data.name}\n📞 Телефон: ${data.phone}\n💬 Мессенджер: ${data.messenger}\n📂 Категория: ${data.category}\n📝 Описание: ${data.desc}\n🖼 Фото: ${data.photo}`;
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(text)}`;
+        try {
+            await fetch(url);
+            return true;
+        } catch(e) { return false; }
+    }
+
+    // Функция для генерации платежных ссылок
+    function getPaymentUrl(cardNumber, phoneNumber, amount, bankType) {
+        if(bankType === 'dorospay' && cardNumber) {
+            return `https://dorosfamd.com/pay?card=${cardNumber}&amount=${amount}`;
+        } else if(bankType === 'dc' && phoneNumber) {
+            return `http://pay.dc.tj/?a=${phoneNumber}&s=${amount}&c=&f1=124&f2=&f3=`;
+        }
+        return '#';
+    }
+
+    // ======================== ОТРИСОВКА КАРТОЧЕК ========================
+    function renderServices() {
+        const container = document.getElementById('servicesContainer');
+        if(!services.length) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-tools" style="font-size: 58px; margin-bottom: 25px; opacity: 0.5;"></i><p>Пока нет услуг. Станьте первым мастером!</p></div>';
+            return;
+        }
+        container.innerHTML = services.map((svc, idx) => {
+            let priceDisplay = '';
+            let numericPrice = 0;
+            if(svc.priceType === 'fixed') {
+                priceDisplay = `${svc.priceValue} сомони`;
+                numericPrice = parseInt(svc.priceValue) || 0;
+            } else if(svc.priceType === 'from') {
+                priceDisplay = `от ${svc.priceValue} сомони`;
+                numericPrice = parseInt(svc.priceValue) || 0;
+            } else {
+                priceDisplay = 'договорная';
+                numericPrice = 0;
+            }
+            
+            const phoneLink = svc.masterPhone ? svc.masterPhone : '';
+            let messengerLink = '#';
+            if(svc.masterMessenger) {
+                if(svc.masterMessenger.includes('@')) messengerLink = `https://t.me/${svc.masterMessenger.replace('@','')}`;
+                else if(svc.masterMessenger.match(/^\d+$/)) messengerLink = `https://wa.me/${svc.masterMessenger}`;
+                else messengerLink = `https://wa.me/${svc.masterMessenger}`;
+            }
+            
+            const rating = (Math.random() * 2 + 3.5).toFixed(1);
+            
+            // Платежные кнопки
+            let paymentButtons = '';
+            if(svc.dorospayCard && numericPrice > 0) {
+                const payUrl = getPaymentUrl(svc.dorospayCard, null, numericPrice, 'dorospay');
+                paymentButtons += `<a href="${payUrl}" target="_blank" class="pay-btn dorospay"><i class="fas fa-bolt"></i> Оплатить DOROSpay</a>`;
+            }
+            if(svc.dcPhone && numericPrice > 0) {
+                const payUrl = getPaymentUrl(null, svc.dcPhone, numericPrice, 'dc');
+                paymentButtons += `<a href="${payUrl}" target="_blank" class="pay-btn dc"><i class="fas fa-building"></i> Оплатить DC Bank</a>`;
+            }
+            
+            // Если договорная цена, показываем кнопку "Уточнить цену"
+            if(svc.priceType === 'negotiable') {
+                paymentButtons = `<a href="${messengerLink}" target="_blank" class="pay-btn dc"><i class="fab fa-whatsapp"></i> Уточнить цену</a>`;
+            }
+            
+            return `
+            <div class="service-card" data-aos="fade-up" data-aos-delay="${idx * 50}">
+                <div class="card-header">
+                    <img class="avatar" src="${svc.masterPhoto || 'https://via.placeholder.com/85'}" onerror="this.src='https://via.placeholder.com/85'">
+                    <div class="company-info">
+                        <h3>${escapeHtml(svc.masterName)}</h3>
+                        <div class="category-badge"><i class="fas fa-tag"></i> ${svc.category}</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="service-title"><i class="fas fa-wrench"></i> ${escapeHtml(svc.serviceName)}</div>
+                    <div class="service-desc">${escapeHtml(svc.description)}</div>
+                    <div class="rating"><i class="fas fa-star"></i> ${rating} <span style="color:#a0b3d9; margin-left:8px;">(отзывы клиентов)</span></div>
+                    <div class="price-block"><i class="fas fa-coin"></i> ${priceDisplay}</div>
+                    ${paymentButtons ? `<div class="payment-buttons">${paymentButtons}</div>` : ''}
+                    <div class="contact-buttons">
+                        <a class="contact-btn call" href="tel:${phoneLink}"><i class="fas fa-phone-alt"></i> ${translations[currentLang]?.call || 'Позвонить'}</a>
+                        <a class="contact-btn message" href="${messengerLink}" target="_blank"><i class="fab fa-whatsapp"></i> ${translations[currentLang]?.message || 'Написать'}</a>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+        if(typeof AOS !== 'undefined') AOS.refresh();
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+
+    // ======================== ЗАГРУЗКА УСЛУГ ========================
+    function loadServices() {
+        db.ref('services').on('value', snap => {
+            const data = snap.val();
+            allServices = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+            allServices.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+            services = [...allServices];
+            renderServices();
+            updateStats();
+        });
+    }
+
+    function updateStats() {
+        const statServices = document.getElementById('statServices');
+        if(statServices) statServices.innerText = allServices.length;
+        const uniqueMasters = new Set(allServices.map(s => s.masterId)).size;
+        const statMasters = document.getElementById('statMasters');
+        if(statMasters) statMasters.innerText = uniqueMasters;
+    }
+
+    // ======================== ФИЛЬТРАЦИЯ ========================
+    function applyFiltersAndSort() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        const sortType = document.getElementById('sortFilter').value;
+        
+        let filtered = allServices.filter(s => {
+            const matchSearch = s.serviceName?.toLowerCase().includes(searchTerm) || s.description?.toLowerCase().includes(searchTerm);
+            const matchCategory = !category || s.category === category;
+            return matchSearch && matchCategory;
+        });
+        
+        if(sortType === 'price_asc') {
+            filtered.sort((a,b) => (parseFloat(a.priceValue) || 0) - (parseFloat(b.priceValue) || 0));
+        } else if(sortType === 'price_desc') {
+            filtered.sort((a,b) => (parseFloat(b.priceValue) || 0) - (parseFloat(a.priceValue) || 0));
+        } else if(sortType === 'rating') {
+            filtered.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+        } else {
+            filtered.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+        }
+        
+        services = filtered;
+        renderServices();
+    }
+
+    // ======================== ДОБАВЛЕНИЕ УСЛУГИ ========================
+    const addServiceForm = document.getElementById('addServiceForm');
+    if(addServiceForm) {
+        addServiceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!currentUser) { showToast("Авторизуйтесь чтобы добавить услугу"); return; }
+            
+            const masterData = await db.ref(`users/${currentUser.uid}`).once('value');
+            const profile = masterData.val() || {};
+            
+            const serviceObj = {
+                masterId: currentUser.uid,
+                masterName: profile.name || currentUser.email?.split('@')[0] || 'Мастер',
+                masterPhone: profile.phone || '',
+                masterMessenger: profile.messenger || '',
+                masterPhoto: profile.photoURL || '',
+                serviceName: document.getElementById('serviceName').value,
+                category: document.getElementById('serviceCategory').value,
+                description: document.getElementById('serviceDesc').value,
+                priceType: document.getElementById('priceType').value,
+                priceValue: document.getElementById('priceValue').value,
+                dorospayCard: document.getElementById('dorospayCard').value,
+                dcPhone: document.getElementById('dcPhone').value,
+                createdAt: Date.now()
+            };
+            
+            await db.ref('services').push(serviceObj);
+            showToast("✅ Услуга опубликована с платежными реквизитами!");
+            closeModal('addServiceModal');
+            addServiceForm.reset();
+        });
+    }
+
+    // ======================== МОДАЛЬНЫЕ ОКНА ========================
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if(modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
+        }
+    }
+    
+    window.closeModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            document.body.classList.remove('modal-open');
+        }
+    };
+
+    function showToast(msg) { 
+        const t = document.getElementById('toastMessage'); 
+        if(t) {
+            t.innerText = msg; 
+            t.classList.add('show'); 
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    }
+
+    // ======================== АВТОРИЗАЦИЯ ========================
+    const loginForm = document.getElementById('loginForm');
+    if(loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pwd = document.getElementById('loginPassword').value;
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, pwd);
+                currentUser = cred.user;
+                closeModal('loginModal');
+                document.getElementById('welcomeScreen').classList.add('hidden');
+                document.getElementById('mainSite').classList.add('visible');
+                updateUiByUser();
+                showToast(`Добро пожаловать, ${currentUser.email}`);
+                loginForm.reset();
+            } catch(err) { showToast("Ошибка: " + err.message); }
+        });
+    }
+
+    const clientEnterBtn = document.getElementById('clientEnterBtn');
+    if(clientEnterBtn) {
+        clientEnterBtn.addEventListener('click', () => {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainSite').classList.add('visible');
+            currentUser = null;
+            updateUiByUser();
+        });
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if(logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await auth.signOut();
+            currentUser = null;
+            updateUiByUser();
+            showToast("Вы вышли из аккаунта");
+            location.reload();
+        });
+    }
+
+    function updateUiByUser() {
+        const container = document.getElementById('dynamicButtons');
+        const adminBtn = document.getElementById('adminCenterBtn');
+        const logoutBtnElem = document.getElementById('logoutBtn');
+        if(currentUser) {
+            if(container) {
+                container.innerHTML = `<button id="openAddServiceBtn" class="btn-neon primary-solid"><i class="fas fa-plus"></i> ${translations[currentLang]?.add_service || 'Добавить услугу'}</button>`;
+                const openAddServiceBtn = document.getElementById('openAddServiceBtn');
+                if(openAddServiceBtn) openAddServiceBtn.addEventListener('click',() => openModal('addServiceModal'));
+            }
+            if(logoutBtnElem) logoutBtnElem.style.display = 'flex';
+            if(adminBtn) {
+                if(currentUser.email === 'doriush@service.com') {
+                    adminBtn.style.display = 'flex';
+                } else {
+                    adminBtn.style.display = 'none';
+                }
+            }
+        } else {
+            if(container) container.innerHTML = '';
+            if(adminBtn) adminBtn.style.display = 'none';
+            if(logoutBtnElem) logoutBtnElem.style.display = 'none';
+        }
+    }
+
+    // ======================== РЕГИСТРАЦИЯ МАСТЕРА ========================
+    const masterRegForm = document.getElementById('masterRegForm');
+    if(masterRegForm) {
+        masterRegForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('masterName').value,
+                phone: document.getElementById('masterPhone').value,
+                messenger: document.getElementById('masterMessenger').value,
+                category: document.getElementById('masterCategory').value,
+                desc: document.getElementById('masterDesc').value,
+                photo: document.getElementById('masterPhoto').value
+            };
+            const ok = await sendToTelegram(data);
+            if(ok) showToast("✅ Заявка отправлена администратору!");
+            else showToast("❌ Ошибка отправки");
+            closeModal('registerMasterModal');
+            masterRegForm.reset();
+        });
+    }
+
+    // ======================== АДМИН-ЦЕНТР ========================
+    const adminCenterBtn = document.getElementById('adminCenterBtn');
+    if(adminCenterBtn) {
+        adminCenterBtn.addEventListener('click', () => openModal('adminCenterModal'));
+    }
+    
+    const adminCreateUserForm = document.getElementById('adminCreateUserForm');
+    if(adminCreateUserForm) {
+        adminCreateUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!currentUser || currentUser.email !== 'doriush@service.com') { showToast("⛔ Нет прав! Только главный администратор может регистрировать мастеров."); return; }
+            
+            const email = document.getElementById('newMasterEmail').value;
+            const pass = document.getElementById('newMasterPass').value;
+            const phone = document.getElementById('newMasterPhone').value;
+            const photo = document.getElementById('newMasterPhotoUrl').value;
+            
+            if(!email || !pass || !phone) { showToast("❌ Заполните все обязательные поля!"); return; }
+            if(pass.length < 6) { showToast("❌ Пароль должен быть не менее 6 символов!"); return; }
+            
+            showToast("⏳ Создание аккаунта мастера...");
+            
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.ref(`users/${cred.user.uid}`).set({
+                    email: email, phone: phone, photoURL: photo || '', role: 'master',
+                    name: email.split('@')[0], messenger: '', createdAt: Date.now(), createdBy: currentUser.email
+                });
+                showToast(`✅ Мастер ${email} успешно зарегистрирован!`);
+                closeModal('adminCenterModal');
+                adminCreateUserForm.reset();
+            } catch(err) {
+                if(err.code === 'auth/email-already-in-use') showToast("❌ Этот email уже используется!");
+                else if(err.code === 'auth/operation-not-allowed') showToast("❌ Включите Email/Password в Firebase Console → Authentication");
+                else showToast(`❌ Ошибка: ${err.message}`);
+            }
+        });
+    }
+
+    // ======================== ОБРАБОТЧИКИ ========================
+    const openLoginBtn = document.getElementById('openLoginBtn');
+    if(openLoginBtn) openLoginBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('loginModal'); });
+    
+    const openRegisterMasterBtn = document.getElementById('openRegisterMasterBtn');
+    if(openRegisterMasterBtn) openRegisterMasterBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('registerMasterModal'); });
+    
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    if(applyFiltersBtn) applyFiltersBtn.addEventListener('click', applyFiltersAndSort);
+    
+    const searchInput = document.getElementById('searchInput');
+    if(searchInput) searchInput.addEventListener('input', applyFiltersAndSort);
+    
+    const categoryFilter = document.getElementById('categoryFilter');
+    if(categoryFilter) categoryFilter.addEventListener('change', applyFiltersAndSort);
+    
+    const sortFilter = document.getElementById('sortFilter');
+    if(sortFilter) sortFilter.addEventListener('change', applyFiltersAndSort);
+    
+    const languageSelect = document.getElementById('languageSelect');
+    if(languageSelect) {
+        languageSelect.addEventListener('change', (e) => { currentLang = e.target.value; updateUILang(); renderServices(); });
+    }
+
+    // Кнопка наверх
+    const scrollBtnElem = document.getElementById('scrollTopBtn');
+    if(scrollBtnElem) {
+        window.addEventListener('scroll', () => {
+            if(window.scrollY > 300) scrollBtnElem.style.display = 'flex';
+            else scrollBtnElem.style.display = 'none';
+        });
+        scrollBtnElem.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
+    // Закрытие модалок по клику на оверлей
+    window.addEventListener('click', (e) => {
+        if(e.target.classList.contains('modal-overlay')) {
+            e.target.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    // Инициализация AOS
+    if(typeof AOS !== 'undefined') {
+        AOS.init({ duration: 800, once: true, offset: 100 });
+    }
+
+    // Запуск
+    auth.onAuthStateChanged(user => { 
+        currentUser = user; 
+        if(user && document.getElementById('welcomeScreen') && !document.getElementById('welcomeScreen').classList.contains('hidden')) {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainSite').classList.add('visible');
+        }
+        updateUiByUser(); 
+    });
+    
+    loadServices();
+    updateUILang();
+</script>
+
+<!-- ======================== FIREBASE SECURITY RULES ======================== -->
+<!--
+    ПРАВИЛА БЕЗОПАСНОСТИ ДЛЯ FIREBASE REALTIME DATABASE:
+    
+    {
+      "rules": {
+        "services": {
+          ".read": true,
+          ".write": "auth != null"
+        },
+        "users": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.token.email === 'doriush@service.com'"
+        }
+      }
+    }
+    
+    ⚠️ В Firebase Console → Authentication → Sign-in methods:
+    Email/Password должен быть ВКЛЮЧЕН!
+-->
+</body>
+</html>

@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DOROSgo — Экспресс-доставка</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { 
+                        doros: '#2563eb',
+                        dorosLight: '#3b82f6',
+                        dorosCyan: '#06cdd4',
+                        darkBg: '#080a0f',
+                        darkCard: '#1a1d26',
+                    },
+                    animation: { 
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-down': 'slideDown 0.4s ease-out',
+                        'glass-shine': 'glassShine 8s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        slideUp: { '0%': { transform: 'translateY(100%)' }, '100%': { transform: 'translateY(0)' } },
+                        slideDown: { '0%': { transform: 'translateY(0)' }, '100%': { transform: 'translateY(100%)' } },
+                        glassShine: { '0%': { backgroundPosition: '200% 0' }, '100%': { backgroundPosition: '-200% 0' } },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(145deg, #0a0c12 0%, #0f111a 100%);
+            height: 100dvh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        .dark body {
+            background: linear-gradient(145deg, #0a0c12 0%, #0f111a 100%);
+        }
+        
+        #map {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            filter: saturate(1.2) contrast(1.05);
+        }
+        
+        .pt-safe {
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+        
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        /* Glassmorphism Panel */
+        .bottom-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 45%;
+            background: rgba(26, 29, 38, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            z-index: 20;
+            box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(37, 99, 235, 0.15);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+        }
+        
+        .dark .bottom-panel {
+            background: rgba(26, 29, 38, 0.85);
+        }
+        
+        .scroll-area {
+            overflow-y: auto;
+            padding-bottom: 160px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        
+        .scroll-area::-webkit-scrollbar {
+            width: 3px;
+        }
+        
+        .scroll-area::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .scroll-area::-webkit-scrollbar-thumb {
+            background: #2563eb;
+            border-radius: 10px;
+        }
+        
+        /* Glass Card Style */
+        .tariff-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            background: rgba(30, 34, 48, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            min-width: 110px;
+        }
+        
+        .tariff-card.selected {
+            border-color: #2563eb;
+            background: rgba(37, 99, 235, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .dark .tariff-card.selected {
+            background: rgba(37, 99, 235, 0.2);
+            border-color: #2563eb;
+        }
+        
+        .tab-btn {
+            border-bottom: 3px solid transparent;
+            opacity: 0.6;
+            transition: all 0.25s;
+        }
+        
+        .tab-btn.active {
+            border-color: #2563eb;
+            opacity: 1;
+            color: #3b82f6;
+            font-weight: 700;
+        }
+        
+        .panel-base {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(18, 20, 28, 0.95);
+            backdrop-filter: blur(24px);
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            z-index: 30;
+            transform: translateY(110%);
+            transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(37, 99, 235, 0.2);
+            max-height: 85%;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        .dark .panel-base {
+            background: rgba(18, 20, 28, 0.95);
+        }
+        
+        .panel-visible {
+            transform: translateY(0) !important;
+            animation: slide-up 0.4s ease-out;
+        }
+        
+        .strike-price {
+            text-decoration: line-through;
+            color: #6b7280;
+            font-size: 0.85em;
+            margin-right: 6px;
+        }
+        
+        .input-range {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .input-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .input-checkbox {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #4b5563;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            background: transparent;
+        }
+        
+        .input-checkbox:checked {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+        
+        .input-checkbox:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .receipt-body {
+            background: rgba(18, 20, 28, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 24px;
+            border-radius: 20px;
+            position: relative;
+            border-top: 4px solid #2563eb;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .dark .receipt-body {
+            background: rgba(18, 20, 28, 0.95);
+            color: white;
+        }
+        
+        .spinner {
+            animation: spin 1.2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .driver-icon {
+            background: rgba(26, 29, 38, 0.9);
+            backdrop-filter: blur(8px);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .client-icon {
+            background: rgba(26, 29, 38, 0.9);
+            backdrop-filter: blur(8px);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #06cdd4;
+            box-shadow: 0 4px 12px rgba(6, 205, 212, 0.3);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+        }
+        
+        .modal-overlay.active {
+            display: block;
+        }
+        
+        .distance-price-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #2563eb, #06cdd4);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+        
+        .trip-meter {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #2563eb, #06cdd4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        
+        .dark .search-result-item {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+        
+        .dark .search-result-item:hover {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        
+        .address-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .address-item:hover {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        
+        .dark .address-item {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+        
+        .dark .address-item:hover {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        
+        .chat-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(18, 20, 28, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .dark .chat-container {
+            background: rgba(18, 20, 28, 0.98);
+        }
+        
+        .chat-container.visible {
+            transform: translateY(0);
+        }
+        
+        .chat-header {
+            background: rgba(26, 29, 38, 0.9);
+            padding: 16px;
+            border-bottom: 1px solid rgba(37, 99, 235, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        
+        .dark .chat-header {
+            background: rgba(26, 29, 38, 0.9);
+            border-bottom-color: rgba(37, 99, 235, 0.3);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .message {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .message-sent {
+            background: linear-gradient(135deg, #2563eb, #06cdd4);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+        
+        .message-received {
+            background: rgba(55, 65, 81, 0.7);
+            backdrop-filter: blur(8px);
+            color: #f3f4f6;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            margin-right: auto;
+        }
+        
+        .dark .message-received {
+            background: rgba(55, 65, 81, 0.7);
+            color: #f3f4f6;
+        }
+        
+        .settings-item {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .settings-item:hover {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        
+        .dark .settings-item {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+        
+        .dark .settings-item:hover {
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        
+        .profile-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: rgba(26, 29, 38, 0.8);
+            color: white;
+        }
+        
+        .dark .profile-input {
+            background: rgba(26, 29, 38, 0.8);
+            border-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .profile-input:focus {
+            border-color: #2563eb;
+        }
+        
+        .language-btn {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 8px;
+            background: rgba(26, 29, 38, 0.8);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+        
+        .language-btn:hover {
+            background: rgba(37, 99, 235, 0.3);
+            border-color: #2563eb;
+        }
+        
+        .dark .language-btn {
+            background: rgba(26, 29, 38, 0.8);
+            border-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .dark .language-btn:hover {
+            background: rgba(37, 99, 235, 0.3);
+        }
+        
+        .guide-step {
+            padding: 16px;
+            margin-bottom: 16px;
+            background: rgba(26, 29, 38, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .dark .guide-step {
+            background: rgba(26, 29, 38, 0.6);
+        }
+        
+        .address-type-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .home-badge {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .work-badge {
+            background: #06cdd4;
+            color: white;
+        }
+        
+        .other-badge {
+            background: #8b5cf6;
+            color: white;
+        }
+        
+        .address-search-container {
+            position: relative;
+        }
+        
+        .address-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(26, 29, 38, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            margin-top: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+        
+        .dark .address-search-results {
+            background: rgba(26, 29, 38, 0.95);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+        
+        .address-search-results.active {
+            display: block;
+        }
+        
+        .selected-address-preview {
+            padding: 16px;
+            background: rgba(37, 99, 235, 0.15);
+            border-radius: 12px;
+            border: 2px solid #2563eb;
+            margin-top: 12px;
+            display: none;
+        }
+        
+        .dark .selected-address-preview {
+            background: rgba(37, 99, 235, 0.15);
+            border-color: #2563eb;
+        }
+        
+        .selected-address-preview.active {
+            display: block;
+        }
+        
+        .type-btn {
+            padding: 12px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            background: rgba(26, 29, 38, 0.6);
+            color: white;
+        }
+        
+        .type-btn:hover {
+            border-color: #2563eb;
+        }
+        
+        .type-btn.active {
+            border-color: #2563eb;
+            background: rgba(37, 99, 235, 0.3);
+        }
+        
+        .dark .type-btn.active {
+            background: rgba(37, 99, 235, 0.3);
+        }
+        
+        .panel-toggle-btn {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 29, 38, 0.9);
+            backdrop-filter: blur(12px);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            z-index: 35;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+        
+        .dark .panel-toggle-btn {
+            background: rgba(26, 29, 38, 0.9);
+        }
+        
+        .panel-toggle-btn:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+        
+        .panel-collapsed {
+            transform: translateY(calc(100% - 80px)) !important;
+        }
+        
+        .panel-collapsed .panel-content {
+            display: none;
+        }
+        
+        .panel-collapsed .panel-toggle-btn i {
+            transform: rotate(180deg);
+        }
+        
+        .order-spam-protection {
+            background: rgba(254, 243, 199, 0.15);
+            backdrop-filter: blur(8px);
+            color: #fbbf24;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .dark .order-spam-protection {
+            background: rgba(254, 243, 199, 0.1);
+            color: #fbbf24;
+        }
+        
+        .order-spam-timer {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .modal-overlay {
+            display: none !important;
+        }
+        
+        /* Cyber Glass Button */
+        .btn-cyber {
+            background: linear-gradient(135deg, #2563eb, #06cdd4);
+            transition: all 0.3s;
+        }
+        
+        .btn-cyber:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+        
+        /* DOROSphere Badge */
+        .doros-badge {
+            background: linear-gradient(135deg, #2563eb, #06cdd4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+        }
+        
+        .glass-input {
+            background: rgba(26, 29, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body class="relative">
+    <!-- Аутентификация -->
+    <div id="authScreen" class="absolute inset-0 bg-darkBg z-[3000] flex flex-col items-center justify-center p-6">
+        <div class="w-28 h-28 bg-gradient-to-br from-blue-500/20 to-cyan-400/20 rounded-full flex items-center justify-center mb-8 animate-bounce backdrop-blur-xl border border-blue-500/30">
+            <i class="fa-solid fa-boxes-packing text-5xl text-doros"></i>
+        </div>
+        <h1 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">DOROSgo</h1>
+        <p class="text-gray-400 mb-8 text-center">Экспресс-доставка | Логистика DOROSphere</p>
+        
+        <div class="w-full max-w-md space-y-4">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <i class="fa-solid fa-phone"></i>
+                </div>
+                <input type="tel" id="phoneInput" placeholder="+992 XXX XX XX" 
+                       class="w-full border-2 border-gray-700 rounded-2xl p-4 pl-12 text-lg outline-none focus:border-doros focus:ring-2 focus:ring-doros/20 bg-darkCard text-white transition-all"
+                       pattern="^\+992[0-9]{9}$" title="Формат: +992XXXXXXXXX">
+            </div>
+            <button onclick="login()" class="w-full bg-gradient-to-r from-doros to-dorosCyan text-white font-bold py-4 rounded-2xl shadow-lg shadow-doros/30 hover:shadow-doros/40 active:scale-[0.98] transition-all text-lg">
+                <i class="fa-solid fa-sign-in-alt mr-2"></i> Войти в DOROSgo
+            </button>
+        </div>
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>DOROSgo — Модуль Логистики Экосистемы DOROSphere</p>
+            <p class="text-xs mt-1">Интегрировано с DOROShop и DOROSpay</p>
+        </div>
+    </div>
+
+    <!-- Основной экран -->
+    <div id="appScreen" class="hidden w-full h-full relative">
+        <div id="map"></div>
+
+        <!-- Верхняя панель -->
+        <div class="absolute top-0 left-0 right-0 p-4 pt-safe flex justify-between z-10 pointer-events-none">
+            <div class="flex gap-3 pointer-events-auto">
+                <button onclick="toggleDarkMode()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 border border-doros/20">
+                    <i class="fa-solid fa-moon text-yellow-300 w-5 h-5"></i>
+                </button>
+                <button onclick="toggleHistory()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 relative border border-doros/20">
+                    <i class="fa-solid fa-clock-rotate-left text-white w-5 h-5"></i>
+                </button>
+                <button onclick="openMyAddresses()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 border border-doros/20">
+                    <i class="fa-solid fa-bookmark text-white w-5 h-5"></i>
+                </button>
+                <button id="editOrderBtn" onclick="openEditOrder()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 relative border border-doros/20 hidden">
+                    <i class="fa-solid fa-pen text-white w-5 h-5"></i>
+                    <span id="orderChangesBadge" class="notification-badge hidden">0</span>
+                </button>
+                <button id="detailsBtn" onclick="openDetails()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 relative border border-doros/20 hidden">
+                    <i class="fa-solid fa-info-circle text-white w-5 h-5"></i>
+                </button>
+                <button id="chatBtn" onclick="openChat()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 relative border border-doros/20 hidden">
+                    <i class="fa-solid fa-comment-dots text-white w-5 h-5"></i>
+                    <span id="chatBadge" class="notification-badge hidden">0</span>
+                </button>
+            </div>
+            <div class="flex flex-col items-end gap-2 pointer-events-auto">
+                <a href="tel:0220" class="bg-darkCard/80 backdrop-blur-xl px-5 py-3 rounded-2xl shadow-lg font-bold text-doros flex items-center gap-2 border border-doros/30 hover:scale-105 active:scale-95 transition-all">
+                    <i class="fa-solid fa-headset w-4 h-4"></i> Поддержка
+                </a>
+                <button onclick="locateMe()" class="bg-darkCard/80 backdrop-blur-xl p-3.5 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 border border-doros/20">
+                    <i class="fa-solid fa-location-crosshairs text-white w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Панель заказа -->
+        <div id="bookingPanel" class="bottom-panel">
+            <div class="w-full h-8 flex justify-center items-center cursor-pointer pt-2" onclick="toggleFullPanel()">
+                <div class="w-14 h-1.5 bg-doros/50 rounded-full"></div>
+            </div>
+            
+            <div class="px-5 scroll-area">
+                <div id="spamProtectionMessage" class="order-spam-protection">
+                    <i class="fa-solid fa-clock mr-2"></i>
+                    <span>Новый заказ через <span id="spamTimer" class="order-spam-timer">0:00</span></span>
+                </div>
+                
+                <div class="mb-5">
+                    <div class="relative mb-4">
+                        <div class="flex items-center glass-input rounded-2xl px-4 py-3 border-2 border-transparent focus-within:border-doros transition-colors">
+                            <i class="fa-solid fa-magnifying-glass text-gray-400 w-5 h-5"></i>
+                            <input type="text" id="addrInput" placeholder="Куда доставить? (Улица, место)" 
+                                   class="w-full bg-transparent p-2 pl-3 outline-none text-base text-white placeholder-gray-500" autocomplete="off">
+                            <i id="searchLoader" class="fa-solid fa-spinner text-doros animate-spin hidden w-5 h-5"></i>
+                            <button onclick="showMyAddressesForSelection()" class="ml-2 text-doros" title="Мои адреса">
+                                <i class="fa-solid fa-bookmark w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div id="searchResults" class="hidden absolute top-full left-0 right-0 bg-darkCard/95 backdrop-blur-xl shadow-2xl rounded-2xl mt-2 z-50 max-h-60 overflow-y-auto border border-doros/30"></div>
+                    </div>
+                    
+                    <div id="routeList" class="space-y-3 mb-3"></div>
+                    <div id="distancePriceBadge" class="distance-price-badge hidden"></div>
+                    <div class="text-xs text-center text-gray-500">Нажмите на карту или используйте поиск (до 6 точек)</div>
+                </div>
+
+                <div class="flex border-b border-doros/20 mb-5">
+                    <button onclick="setCategory('passenger')" id="tabPassenger" class="tab-btn active flex-1 py-3 text-sm uppercase tracking-wider font-semibold text-white">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Отправитель
+                    </button>
+                    <button onclick="setCategory('delivery')" id="tabDelivery" class="tab-btn flex-1 py-3 text-sm uppercase tracking-wider font-semibold text-white">
+                        <i class="fa-solid fa-box mr-2"></i> Доставка груза
+                    </button>
+                </div>
+
+                <div class="mb-6">
+                    <div id="passengerTariffs" class="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
+                        <div onclick="selectTariff('standart', 1.0)" class="tariff-card selected p-4 cursor-pointer text-center">
+                            <i class="fa-solid fa-person-walking text-3xl text-doros mb-2 block"></i>
+                            <div class="font-bold text-sm mb-1 text-white">Пеший курьер</div>
+                            <div class="text-xs text-gray-400">Документы, еда</div>
+                            <div class="text-xs text-cyan-400 mt-1">От 9 с.</div>
+                        </div>
+                        <div onclick="selectTariff('comfort', 1.15)" class="tariff-card p-4 cursor-pointer text-center">
+                            <i class="fa-solid fa-motorcycle text-3xl text-doros mb-2 block"></i>
+                            <div class="font-bold text-sm mb-1 text-white">Мото-доставка</div>
+                            <div class="text-xs text-gray-400">Экспресс по городу</div>
+                            <div class="text-xs text-cyan-400 mt-1">От 12 с.</div>
+                        </div>
+                        <div onclick="selectTariff('minivan', 1.15)" class="tariff-card p-4 cursor-pointer text-center">
+                            <i class="fa-solid fa-truck text-3xl text-doros mb-2 block"></i>
+                            <div class="font-bold text-sm mb-1 text-white">Грузовой DOROSgo</div>
+                            <div class="text-xs text-gray-400">Мебель, автозапчасти</div>
+                            <div class="text-xs text-cyan-400 mt-1">От 15 с.</div>
+                        </div>
+                    </div>
+
+                    <div id="deliveryTariffs" class="hidden flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
+                        <div onclick="selectTariff('delivery', 0.9)" class="tariff-card p-4 cursor-pointer text-center">
+                            <i class="fa-solid fa-boxes-packing text-3xl text-doros mb-2 block"></i>
+                            <div class="font-bold text-sm mb-1 text-white">Стандарт доставка</div>
+                            <div class="text-xs text-gray-400">Любые товары</div>
+                            <div class="text-xs text-cyan-400 mt-1">От 8 с.</div>
+                        </div>
+                        <div onclick="selectTariff('buy_and_deliver', 1.0)" class="tariff-card p-4 cursor-pointer text-center">
+                            <i class="fa-solid fa-basket-shopping text-3xl text-doros mb-2 block"></i>
+                            <div class="font-bold text-sm mb-1 text-white">Купим и доставим</div>
+                            <div class="text-xs text-gray-400">Полный сервис</div>
+                            <div class="text-xs text-cyan-400 mt-1">Договорная</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <div id="buyListContainer" class="hidden animate-fade-in">
+                        <textarea id="buyListInput" class="w-full p-3 glass-input rounded-2xl text-sm border border-doros/20 focus:border-doros outline-none text-white" 
+                                  rows="2" placeholder="Что нужно купить? (список товаров)"></textarea>
+                    </div>
+
+                    <div class="p-3 glass-input rounded-2xl flex justify-between items-center border border-doros/20">
+                        <span class="flex items-center gap-2 text-sm font-bold text-white">
+                            <i class="fa-solid fa-wallet text-gray-400 w-4 h-4"></i> Оплата
+                        </span>
+                        <select id="payMethod" class="bg-transparent text-sm font-bold text-doros outline-none text-right w-1/2">
+                            <option value="Наличные">Наличные</option>
+                            <option value="DC Wallet">DC Wallet</option>
+                            <option value="Alif Mobi">Alif Mobi</option>
+                            <option value="JuraBank">DOROSpay</option>
+                            <option value="Tcell">Tcell</option>
+                        </select>
+                    </div>
+                    
+                    <div class="p-3 glass-input rounded-2xl border border-doros/20">
+                        <div class="flex justify-between text-sm font-bold mb-2 text-white">
+                            <span class="flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-yellow-400 w-4 h-4"></i> Приоритетная доставка
+                            </span>
+                            <span class="text-doros">+<span id="tipVal">0</span> с.</span>
+                        </div>
+                        <input type="range" min="0" max="50" step="1" value="0" class="w-full input-range" oninput="document.getElementById('tipVal').innerText=this.value; updatePrice()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>0 с.</span>
+                            <span>50 с.</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center justify-between p-3 glass-input rounded-2xl border border-doros/20">
+                            <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                <i class="fa-solid fa-snowflake text-cyan-400 w-4 h-4"></i> Кондиционер (+10%)
+                            </span>
+                            <input type="checkbox" id="optAC" class="input-checkbox" onchange="updatePrice()">
+                        </label>
+                        <div class="p-3 glass-input rounded-2xl flex justify-between items-center border border-doros/20">
+                            <i class="fa-solid fa-cube text-gray-400 w-4 h-4"></i>
+                            <select id="optLuggage" onchange="updatePrice()" class="bg-transparent text-sm font-bold outline-none text-right w-full ml-2 text-white">
+                                <option value="0">Без груза</option>
+                                <option value="3">Малый груз (+3с)</option>
+                                <option value="5">Средний груз (+5с)</option>
+                                <option value="6">Крупный груз (+6с)</option>
+                            </select>
+                        </div>
+                        <label class="flex items-center justify-between p-3 glass-input rounded-2xl border border-doros/20">
+                            <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                <i class="fa-solid fa-paw text-orange-400 w-4 h-4"></i> Перевозка животных
+                            </span>
+                            <input type="checkbox" id="optPets" class="input-checkbox" onchange="updatePrice()">
+                        </label>
+                        <label class="flex items-center justify-between p-3 glass-input rounded-2xl border border-doros/20">
+                            <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                <i class="fa-solid fa-sign text-purple-400 w-4 h-4"></i> Табличка с номером
+                            </span>
+                            <input type="checkbox" id="optSign" class="input-checkbox" onchange="toggleSignboardInput()">
+                        </label>
+                    </div>
+
+                    <div id="signboardInputContainer" class="hidden animate-fade-in">
+                        <input type="text" id="optSignText" placeholder="Текст таблички (например, номер телефона)" 
+                               class="w-full p-3 glass-input rounded-2xl text-sm outline-none border border-doros/20 focus:border-doros text-white">
+                    </div>
+
+                    <input type="text" id="optMeetingPlace" placeholder="Место встречи с курьером (опционально)" 
+                           class="w-full p-3 glass-input rounded-2xl text-sm outline-none border border-doros/20 focus:border-doros text-white">
+                           
+                    <input type="text" id="optComment" placeholder="Комментарий для курьера..." 
+                           class="w-full p-3 glass-input rounded-2xl text-sm outline-none border border-doros/20 focus:border-doros text-white">
+                </div>
+                
+                <div id="preliminaryPrice" class="hidden mb-4 p-3 bg-blue-500/10 rounded-2xl border border-blue-500/30">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-sm font-bold text-blue-400">Примерная стоимость доставки</div>
+                        <div class="text-lg font-black text-blue-400"><span id="preliminaryPriceValue">0</span> с.</div>
+                    </div>
+                    <div class="text-xs text-blue-400/80">
+                        Цена указана без учёта пробок, ожидания и дополнительных факторов
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 p-5 bg-darkCard/95 backdrop-blur-xl border-t border-doros/20 z-20 pb-safe">
+                <button id="orderBtn" onclick="createOrder()" class="w-full btn-cyber text-white py-4 text-lg rounded-2xl shadow-lg shadow-doros/30 flex justify-between px-6 items-center hover:shadow-doros/40 active:scale-[0.98] transition-all font-bold">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-box"></i> ОФОРМИТЬ ДОСТАВКУ
+                    </span>
+                    <div class="flex items-baseline">
+                        <span id="crossedPrice" class="strike-price text-gray-500">0 с.</span>
+                        <span id="totalPrice" class="bg-white/10 px-3 py-1.5 rounded-lg text-sm font-mono font-black">~ 0 с.</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Панель активного заказа -->
+        <div id="activeOrderPanel" class="panel-base p-6 pb-10">
+            <div id="activeOrderPanelToggle" class="panel-toggle-btn" onclick="toggleActiveOrderPanel()">
+                <i class="fa-solid fa-chevron-up text-doros text-xl"></i>
+            </div>
+            
+            <div id="activeOrderContent" class="panel-content">
+                <div class="w-14 h-1.5 bg-doros/30 rounded-full mx-auto mb-6"></div>
+                
+                <div id="statusSearching" class="text-center py-8">
+                    <div class="w-24 h-24 bg-doros/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-slow relative backdrop-blur-xl border border-doros/30">
+                        <i class="fa-solid fa-spinner text-4xl text-doros spinner"></i>
+                        <div class="absolute inset-0 border-4 border-doros/20 rounded-full animate-ping"></div>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2 text-white">Ищем курьера...</h2>
+                    <p class="text-gray-400 text-sm mb-6">Это займет всего несколько секунд</p>
+                    <button onclick="cancelOrder()" class="text-red-400 font-bold bg-red-500/10 px-8 py-3 rounded-full text-sm hover:bg-red-500/20 transition border border-red-500/30">
+                        <i class="fa-solid fa-xmark mr-2"></i> Отменить поиск
+                    </button>
+                </div>
+
+                <div id="statusActive" class="hidden">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 id="orderStatusText" class="text-doros font-bold text-2xl mb-1">Курьер едет к вам</h2>
+                            <div id="waitBadge" class="hidden bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider animate-pulse w-max border border-red-500/30">
+                                <i class="fa-solid fa-clock mr-1"></i> Курьер ждет вас
+                            </div>
+                            <div id="signboardBadge" class="hidden bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-full text-xs font-bold mt-2 w-max border border-purple-500/30">
+                                <i class="fa-solid fa-sign mr-1"></i> Табличка: <span id="signboardTextDisplay"></span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div id="driverPlate" class="text-2xl font-black tracking-widest bg-darkCard px-3 py-2 rounded-xl border-2 border-doros/30 text-white">---</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-input p-5 rounded-2xl mb-6 border border-doros/20">
+                        <div class="flex items-center gap-5 mb-4">
+                            <div class="relative">
+                                <div id="driverPhotoContainer" class="relative">
+                                    <img id="driverPhoto" src="" 
+                                         class="w-20 h-20 rounded-full object-cover border-3 border-doros bg-darkCard"
+                                         onerror="this.src='https://ui-avatars.com/api/?name=Kuryer&background=2563eb&color=fff&size=128'">
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 bg-doros text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-box"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <div id="driverCar" class="font-bold text-xl leading-tight text-white">...</div>
+                                <div id="driverColor" class="text-sm text-gray-400 font-bold uppercase mt-1">...</div>
+                                <div id="driverName" class="text-sm text-gray-300 mt-1">
+                                    <i class="fa-solid fa-user mr-1"></i> ...
+                                </div>
+                            </div>
+                            <a id="btnCall" href="#" class="w-14 h-14 bg-doros/10 rounded-full flex items-center justify-center text-doros hover:scale-105 transition shadow border border-doros/30">
+                                <i class="fa-solid fa-phone text-xl"></i>
+                            </a>
+                        </div>
+                        
+                        <div id="tariffImageContainer" class="mt-4 text-center">
+                            <div id="currentTariffImage" class="w-40 h-30 object-contain mx-auto"></div>
+                            <div class="text-xs text-gray-400 mt-2">Тариф: <span id="currentTariffName"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6 bg-cyan-500/10 p-4 rounded-xl border border-cyan-500/30">
+                        <div class="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-money-bill-wave"></i> Текущая стоимость:
+                        </div>
+                        <div class="text-3xl font-black text-doros trip-meter"><span id="livePrice">0.00</span> с.</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="bg-blue-500/10 p-3 rounded-xl text-center border border-blue-500/30">
+                            <div class="text-xs text-gray-400 mb-1">Время в пути</div>
+                            <div class="text-xl font-bold trip-meter" id="tripTimerClient">00:00</div>
+                        </div>
+                        <div class="bg-purple-500/10 p-3 rounded-xl text-center border border-purple-500/30">
+                            <div class="text-xs text-gray-400 mb-1">Скорость</div>
+                            <div class="text-xl font-bold text-white" id="speedClient">0 км/ч</div>
+                        </div>
+                        <div class="bg-yellow-500/10 p-3 rounded-xl text-center border border-yellow-500/30">
+                            <div class="text-xs text-gray-400 mb-1">Расстояние</div>
+                            <div class="text-xl font-bold text-white" id="distanceClient">0.0 км</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="openGoogleMaps()" class="py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg active:scale-95 transition-all">
+                            <i class="fa-solid fa-map"></i> МАРШРУТ
+                        </button>
+                        <button onclick="cancelOrder()" class="py-4 border-2 border-red-500/30 text-red-400 font-bold rounded-xl hover:bg-red-500/10 active:scale-95 transition-all">
+                            <i class="fa-solid fa-xmark mr-1"></i> ОТМЕНИТЬ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель редактирования заказа -->
+        <div id="editOrderPanel" class="panel-base p-6 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-doros"></i> Редактировать заказ
+                </h2>
+                <button onclick="closeEditOrder()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl text-white"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6 overflow-y-auto flex-1">
+                <div>
+                    <div class="text-sm font-bold text-gray-300 mb-2">Добавить точку маршрута:</div>
+                    <div class="relative">
+                        <div class="flex items-center glass-input rounded-xl px-4 py-3 border-2 border-transparent focus-within:border-doros transition-colors mb-2">
+                            <i class="fa-solid fa-magnifying-glass text-gray-400 w-5 h-5"></i>
+                            <input type="text" id="editAddrInput" placeholder="Адрес новой точки" 
+                                   class="w-full bg-transparent p-2 pl-3 outline-none text-base text-white placeholder-gray-500" autocomplete="off">
+                            <i id="editSearchLoader" class="fa-solid fa-spinner text-doros animate-spin hidden w-5 h-5"></i>
+                        </div>
+                        <div id="editSearchResults" class="hidden absolute top-full left-0 right-0 bg-darkCard/95 backdrop-blur-xl shadow-2xl rounded-2xl mt-2 z-50 max-h-60 overflow-y-auto border border-doros/30"></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="addEditPoint()" class="flex-1 px-4 bg-doros text-white rounded-xl font-bold hover:bg-doros/80 py-3">
+                            <i class="fa-solid fa-plus mr-2"></i> Добавить
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 glass-input rounded-xl border border-doros/20">
+                        <div class="text-xs text-gray-400 mb-1">Груз</div>
+                        <select id="editLuggage" onchange="updateEditedPrice()" class="w-full bg-transparent text-sm font-bold outline-none text-white">
+                            <option value="0">Без груза</option>
+                            <option value="3">Малый груз (+3с)</option>
+                            <option value="5">Средний груз (+5с)</option>
+                            <option value="6">Крупный груз (+6с)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="p-3 glass-input rounded-xl border border-doros/20">
+                        <div class="text-xs text-gray-400 mb-1">Животные</div>
+                        <label class="flex items-center justify-between">
+                            <span class="text-sm font-bold text-white">Перевозка животных (+5с)</span>
+                            <input type="checkbox" id="editPets" class="input-checkbox" onchange="updateEditedPrice()">
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="p-3 glass-input rounded-xl border border-doros/20">
+                    <div class="text-xs text-gray-400 mb-1">Место встречи</div>
+                    <input type="text" id="editMeetingPlace" placeholder="Место встречи с курьером" 
+                           class="w-full bg-transparent outline-none text-sm text-white">
+                </div>
+                
+                <div class="p-3 glass-input rounded-xl border border-doros/20">
+                    <div class="text-xs text-gray-400 mb-1">Комментарий для курьера</div>
+                    <input type="text" id="editComment" placeholder="Дополнительный комментарий..." 
+                           class="w-full bg-transparent outline-none text-sm text-white">
+                </div>
+            </div>
+            
+            <div class="bg-yellow-500/10 p-4 rounded-xl border border-yellow-500/30 mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-exclamation-triangle text-yellow-400"></i>
+                    <div class="font-bold text-yellow-400">Новая стоимость доставки</div>
+                </div>
+                <div class="text-3xl font-black text-doros text-center"><span id="editedPrice">0.00</span> с.</div>
+                <div class="text-xs text-yellow-400 text-center mt-2">
+                    Курьер будет уведомлен об изменениях
+                </div>
+            </div>
+            
+            <button onclick="saveOrderChanges()" class="w-full btn-cyber text-white py-4 text-lg rounded-2xl shadow-lg shadow-doros/30 font-bold flex justify-center items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Сохранить изменения
+            </button>
+        </div>
+
+        <!-- Мои адреса -->
+        <div id="myAddressesPanel" class="panel-base">
+            <div class="p-5 border-b border-doros/20 flex justify-between items-center">
+                <h2 class="font-bold text-xl text-white flex items-center gap-2">
+                    <i class="fa-solid fa-bookmark"></i> Мои адреса
+                </h2>
+                <button onclick="closeMyAddresses()" class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="addressesList" class="flex-1 overflow-y-auto p-4 space-y-3">
+            </div>
+            <div class="p-4 border-t border-doros/20">
+                <button onclick="openAddAddress()" class="w-full bg-doros text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-doros/80">
+                    <i class="fa-solid fa-plus"></i> Добавить новый адрес
+                </button>
+            </div>
+        </div>
+
+        <!-- Добавление адреса -->
+        <div id="addAddressPanel" class="panel-base p-6 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-doros"></i> Добавить адрес
+                </h2>
+                <button onclick="closeAddAddress()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl text-white"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2">Название адреса</label>
+                    <input type="text" id="addressName" placeholder="Например: Дом, Работа, Офис" 
+                           class="w-full profile-input" maxlength="50">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2">Тип адреса</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectAddressType('home')" id="typeHome" class="type-btn active">
+                            <i class="fa-solid fa-house mb-1 block"></i> Дом
+                        </button>
+                        <button onclick="selectAddressType('work')" id="typeWork" class="type-btn">
+                            <i class="fa-solid fa-briefcase mb-1 block"></i> Работа
+                        </button>
+                        <button onclick="selectAddressType('other')" id="typeOther" class="type-btn">
+                            <i class="fa-solid fa-star mb-1 block"></i> Другое
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="address-search-container">
+                    <label class="block text-sm font-bold text-gray-300 mb-2">Адрес</label>
+                    <div class="flex items-center glass-input rounded-xl px-4 py-3 border-2 border-transparent focus-within:border-doros transition-colors">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400 w-5 h-5"></i>
+                        <input type="text" id="addressSearch" placeholder="Введите адрес или выберите на карте" 
+                               class="w-full bg-transparent p-2 pl-3 outline-none text-base text-white placeholder-gray-500" autocomplete="off">
+                        <button onclick="useCurrentLocationForAddress()" class="ml-2 text-doros" title="Мое местоположение">
+                            <i class="fa-solid fa-location-crosshairs w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div id="addressSearchResults" class="address-search-results"></div>
+                    <div class="text-xs text-gray-500 mt-2 text-center">
+                        Нажмите на карту для выбора местоположения
+                    </div>
+                </div>
+                
+                <div id="selectedAddressPreview" class="selected-address-preview">
+                    <div class="text-sm font-bold text-white mb-1">Выбранный адрес:</div>
+                    <div id="selectedAddressText" class="text-sm text-gray-400"></div>
+                    <div id="selectedAddressCoords" class="text-xs text-gray-500 mt-1"></div>
+                </div>
+            </div>
+            
+            <button onclick="saveAddress()" id="saveAddressBtn" class="w-full bg-doros hover:bg-doros/80 text-white py-4 text-lg rounded-2xl shadow-lg shadow-doros/30 font-bold flex justify-center items-center gap-2" disabled>
+                <i class="fa-solid fa-floppy-disk"></i> Сохранить адрес
+            </button>
+        </div>
+
+        <!-- История поездок -->
+        <div id="historyPanel" class="panel-base">
+            <div class="p-5 border-b border-doros/20 flex justify-between items-center">
+                <h2 class="font-bold text-xl text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i> История доставок
+                </h2>
+                <button onclick="toggleHistory()" class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+        </div>
+
+        <!-- Настройки -->
+        <div id="settingsPanel" class="panel-base">
+            <div class="p-5 border-b border-doros/20 flex justify-between items-center">
+                <h2 class="font-bold text-xl text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gear"></i> Настройки
+                </h2>
+                <button onclick="closeSettings()" class="text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <div class="settings-item" onclick="openProfile()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-doros/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-user text-doros"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">Профиль</div>
+                            <div class="text-sm text-gray-400">Имя, фамилия, телефон</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                </div>
+                
+                <div class="settings-item" onclick="openLanguages()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-language text-blue-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">Язык</div>
+                            <div class="text-sm text-gray-400">Русский, English, Тоҷикӣ, Oʻzbek</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                </div>
+                
+                <div class="settings-item" onclick="openAboutApp()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-circle-info text-cyan-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">О приложении</div>
+                            <div class="text-sm text-gray-400">Руководство по использованию</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                </div>
+                
+                <a href="https://jura.tj/driver" target="_blank" class="settings-item">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-truck text-purple-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">Стать курьером</div>
+                            <div class="text-sm text-gray-400">Присоединяйтесь к команде DOROSgo</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-external-link text-gray-400"></i>
+                </a>
+                
+                <a href="https://jura.tj/" id="partnersLink" target="_blank" class="settings-item">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-handshake text-yellow-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">Предложения партнёров</div>
+                            <div class="text-sm text-gray-400">Специальные предложения</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-external-link text-gray-400"></i>
+                </a>
+
+                <a href="https://t.me/jurataxibot" id="partnersLink1" target="_blank" class="settings-item">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-comment text-yellow-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">Чат поддержки</div>
+                            <div class="text-sm text-gray-400">Задайте нам свой вопрос</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-external-link text-gray-400"></i>
+                </a>
+
+                <a href="https://t.me/jura_taxi" id="partnersLink2" target="_blank" class="settings-item">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane text-orange-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">Наш Telegram-канал</div>
+                            <div class="text-sm text-gray-400">Будьте в курсе новостей</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-external-link text-gray-400"></i>
+                </a>
+                
+                <div class="settings-item" onclick="toggleDarkMode()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-moon text-yellow-300"></i>
+                        </div>
+                        <div class="font-bold text-white">Тёмная тема</div>
+                    </div>
+                    <div id="darkModeToggle" class="w-12 h-6 bg-gray-600 rounded-full relative">
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></div>
+                    </div>
+                </div>
+                
+                <div class="p-4 mt-4">
+                    <button onclick="logout()" class="w-full bg-red-500/80 hover:bg-red-600 text-white py-3 rounded-xl font-bold backdrop-blur-sm">
+                        <i class="fa-solid fa-sign-out-alt mr-2"></i> Выйти
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Профиль -->
+        <div id="profilePanel" class="panel-base p-6 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-circle text-doros"></i> Профиль
+                </h2>
+                <button onclick="closeProfile()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl text-white"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2">Имя</label>
+                    <input type="text" id="profileFirstName" placeholder="Ваше имя" 
+                           class="w-full profile-input">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2">Фамилия</label>
+                    <input type="text" id="profileLastName" placeholder="Ваша фамилия" 
+                           class="w-full profile-input">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2">Номер телефона</label>
+                    <input type="tel" id="profilePhone" placeholder="+992 XXX XX XX" 
+                           class="w-full profile-input" readonly>
+                </div>
+            </div>
+            
+            <button onclick="saveProfile()" class="w-full btn-cyber text-white py-4 text-lg rounded-2xl shadow-lg shadow-doros/30 font-bold flex justify-center items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Сохранить изменения
+            </button>
+        </div>
+
+        <!-- Языки -->
+        <div id="languagesPanel" class="panel-base p-6 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-language text-doros"></i> Выберите язык
+                </h2>
+                <button onclick="closeLanguages()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl text-white"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3">
+                <a href="#" id="langRussian" class="language-btn">
+                    <i class="fa-solid fa-flag mr-2"></i> Русский
+                </a>
+                <a href="#" id="langEnglish" class="language-btn">
+                    <i class="fa-solid fa-flag-usa mr-2"></i> English
+                </a>
+                <a href="#" id="langTajik" class="language-btn">
+                    <i class="fa-solid fa-flag mr-2"></i> Тоҷикӣ
+                </a>
+                <a href="#" id="langUzbek" class="language-btn">
+                    <i class="fa-solid fa-flag mr-2"></i> Oʻzbek
+                </a>
+            </div>
+        </div>
+
+        <!-- О приложении -->
+        <div id="aboutAppPanel" class="panel-base p-6 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-doros"></i> DOROSgo
+                </h2>
+                <button onclick="closeAboutApp()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl text-white"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6 overflow-y-auto flex-1">
+                <div class="guide-step">
+                    <h3 class="font-bold text-lg text-white mb-2">1. Как оформить доставку</h3>
+                    <p class="text-gray-400">Нажмите на карту или используйте поиск, чтобы добавить точки маршрута. Выберите тариф доставки и дополнительные опции, затем нажмите "ОФОРМИТЬ ДОСТАВКУ".</p>
+                </div>
+                
+                <div class="guide-step">
+                    <h3 class="font-bold text-lg text-white mb-2">2. Как выбрать точки маршрута</h3>
+                    <p class="text-gray-400">Нажмите на карту для добавления точки. Или используйте поиск по адресу. Можно добавить до 6 точек. Используйте "Мои адреса" для быстрого выбора.</p>
+                </div>
+                
+                <div class="guide-step">
+                    <h3 class="font-bold text-lg text-white mb-2">3. Как работает цена</h3>
+                    <p class="text-gray-400">Цена состоит из: стартового тарифа, стоимости по километражу, дополнительных опций и времени ожидания. Итоговая сумма показывается заранее.</p>
+                </div>
+                
+                <div class="guide-step">
+                    <h3 class="font-bold text-lg text-white mb-2">4. Как связаться с курьером</h3>
+                    <p class="text-gray-400">Во время доставки используйте кнопку телефона для звонка или чат для текстовых сообщений. Курьер всегда на связи.</p>
+                </div>
+                
+                <div class="guide-step">
+                    <h3 class="font-bold text-lg text-white mb-2">5. Безопасность и поддержка</h3>
+                    <p class="text-gray-400">Все курьеры проходят проверку. Маршрут отслеживается в реальном времени. Для экстренных случаев используйте кнопку вызова поддержки.</p>
+                </div>
+                
+                <div class="text-center pt-4">
+                    <p class="text-xs text-doros">DOROSgo — Модуль Логистики Экосистемы DOROSphere</p>
+                    <p class="text-xs text-cyan-400 mt-1">Интегрировано с DOROShop и DOROSpay</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Чек -->
+        <div id="receiptPanel" class="panel-base p-6 pb-10">
+            <div class="receipt-body w-full mb-6">
+                <div class="text-center font-bold text-2xl mb-4 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-boxes-packing text-doros"></i> ДЕТАЛЬНЫЙ ЧЕК DOROSgo
+                </div>
+                
+                <div class="flex justify-between border-b border-gray-700 pb-2 mb-2 text-sm">
+                    <span class="font-semibold">Дата:</span> <span id="rDate">...</span>
+                </div>
+                <div class="flex justify-between text-sm mb-2 border-b border-gray-700 pb-2">
+                    <span class="font-semibold">Тариф:</span> <span id="rTariff">...</span>
+                </div>
+                
+                <div id="priceBreakdown" class="space-y-1 my-4 text-sm border-b-2 border-dashed border-gray-700 pb-4">
+                </div>
+                
+                <div class="flex justify-between text-3xl font-black mt-4 pt-4 border-t border-gray-700">
+                    <span>ИТОГО:</span> <span id="rTotal" class="text-doros">0.00 с.</span>
+                </div>
+                
+                <div id="receiptPhotos" class="mt-4 space-y-3 hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400 mb-1">Курьер</div>
+                            <div class="relative w-16 h-16 mx-auto">
+                                <img id="receiptDriverPhoto" src="" class="w-16 h-16 rounded-full border-2 border-doros object-cover">
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400 mb-1">Тариф</div>
+                            <div class="relative w-16 h-16 mx-auto">
+                                <img id="receiptTariffImage" src="" class="w-16 h-16 rounded-lg border-2 border-doros/30 object-contain">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeReceipt()" class="w-full bg-white/10 text-white py-4 font-bold rounded-xl shadow-lg hover:bg-white/20 active:scale-95 transition-all backdrop-blur-sm">
+                <i class="fa-solid fa-check mr-2"></i> Закрыть
+            </button>
+        </div>
+        
+        <!-- Модальное окно деталей -->
+        <div id="detailsModal" class="panel-base p-6 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-info-circle text-doros"></i> Детали доставки
+                </h2>
+                <button onclick="closeDetails()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-xl text-white"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6 overflow-y-auto flex-1">
+                <div id="detailsTariffImageContainer" class="text-center">
+                    <img id="detailsTariffImage" src="" class="w-40 h-30 object-contain mx-auto mb-4">
+                    <div class="text-lg font-bold text-white" id="detailsTariffName"></div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div id="detailsPets" class="hidden p-3 bg-red-500/10 rounded-xl border border-red-500/30">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-paw text-red-400"></i>
+                            <span class="font-bold text-red-400">Перевозка животных</span>
+                        </div>
+                    </div>
+                    
+                    <div id="detailsSignboard" class="hidden p-3 bg-purple-500/10 rounded-xl border border-purple-500/30">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-sign text-purple-400"></i>
+                            <span class="font-bold text-purple-400">Табличка</span>
+                        </div>
+                        <div class="text-sm text-gray-300" id="detailsSignboardText"></div>
+                    </div>
+                    
+                    <div id="detailsLuggage" class="hidden p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/30">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-cube text-yellow-400"></i>
+                            <span class="font-bold text-yellow-400">Груз: <span id="detailsLuggageValue"></span></span>
+                        </div>
+                    </div>
+                    
+                    <div id="detailsMeetingPlace" class="hidden p-3 bg-blue-500/10 rounded-xl border border-blue-500/30">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-map-marker-alt text-blue-400"></i>
+                            <span class="font-bold text-blue-400">Место встречи</span>
+                        </div>
+                        <div class="text-sm text-gray-300 mt-1" id="detailsMeetingPlaceText"></div>
+                    </div>
+                    
+                    <div id="detailsComment" class="hidden p-3 bg-cyan-500/10 rounded-xl border border-cyan-500/30">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-comment text-cyan-400"></i>
+                            <span class="font-bold text-cyan-400">Комментарий</span>
+                        </div>
+                        <div class="text-sm text-gray-300 mt-1" id="detailsCommentText"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="closeDetails()" class="w-full btn-cyber text-white py-4 text-lg rounded-2xl shadow-lg shadow-doros/30 font-bold flex justify-center items-center gap-2">
+                <i class="fa-solid fa-check mr-2"></i> Закрыть
+            </button>
+        </div>
+        
+        <!-- Чат -->
+        <div id="chatContainer" class="chat-container">
+            <div class="chat-header">
+                <button onclick="closeChat()" class="p-2 rounded-full hover:bg-white/10">
+                    <i class="fa-solid fa-arrow-left text-xl text-white"></i>
+                </button>
+                <div class="flex-1 text-center">
+                    <h2 class="font-bold text-lg text-white">Чат с курьером</h2>
+                    <div class="text-xs text-gray-400" id="chatOrderStatus"></div>
+                </div>
+                <div class="w-10"></div>
+            </div>
+            
+            <div id="chatMessages" class="chat-messages">
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fa-solid fa-comments text-4xl mb-4"></i>
+                    <div class="font-medium">Начните общение</div>
+                    <div class="text-sm mt-1">Напишите сообщение курьеру</div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="flex gap-2">
+                    <input type="text" id="chatMessageInput" placeholder="Введите сообщение..." 
+                           class="flex-1 border-2 border-gray-700 rounded-full px-4 py-3 outline-none focus:border-doros bg-darkCard text-white"
+                           autocomplete="off" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                    <button onclick="sendChatMessage()" class="w-12 h-12 bg-doros text-white rounded-full flex items-center justify-center hover:bg-doros/80">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопка настроек -->
+    <button onclick="openSettings()" class="fixed bottom-20 right-5 bg-darkCard/80 backdrop-blur-xl p-4 rounded-2xl shadow-lg z-40 hover:scale-105 transition-all border border-doros/20">
+        <i class="fa-solid fa-gear text-white w-5 h-5"></i>
+    </button>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeAllPanels()"></div>
+
+    <script type="module">
+        // [ВСЯ СУЩЕСТВУЮЩАЯ JAVASCRIPT ЛОГИКА ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ]
+        // Импорты и функционал полностью сохранены
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, serverTimestamp, updateDoc, query, where, getDocs, writeBatch, getDoc, runTransaction, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqtMRcJA5gurig6CzzyNQ8ni2-uCnLJ5I",
+            authDomain: "jura-ff5cb.firebaseapp.com",
+            projectId: "jura-ff5cb",
+            storageBucket: "jura-ff5cb.appspot.com",
+            messagingSenderId: "614549502826",
+            appId: "1:614549502826:web:dbfe3a690a523f5e9ec313"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let map, userPhone, activeOrderId, orderUnsub, restoreAttempted = false;
+        let waypoints = [], markers = [], routeLayer = null, driverMarker = null, clientMarker = null, driverRouteLayer = null;
+        let currentTariff = { id: 'standart', mult: 1.0, type: 'passenger' };
+        let mapInitialized = false;
+        let searchController = null;
+        let editSearchController = null;
+        let addressSearchController = null;
+        let watchId = null;
+        let lastPosition = null;
+        let gpsThrottleTimer = null;
+        let listeners = [];
+        let tripTimerInterval = null;
+        let tripStartTime = null;
+        let currentSpeed = 0;
+        let totalDistance = 0;
+        let waitingTime = 0;
+        let trafficTime = 0;
+        let drivingTime = 0;
+        let serverSideTimer = null;
+        let serverTimerUpdateInterval = null;
+        let orderStatus = null;
+        let chatUnsub = null;
+        let unreadMessagesCount = 0;
+        let searchDebounceTimer = null;
+        let editSearchDebounceTimer = null;
+        let addressSearchDebounceTimer = null;
+        let selectedAddressType = 'home';
+        let selectedAddressCoords = null;
+        let selectedAddressText = '';
+        let selectingAddressForRoute = false;
+        let orderBlocked = false;
+        let lastOrderTime = null;
+        let spamTimerInterval = null;
+        let activeOrderPanelCollapsed = false;
+        
+        const PRICES = {
+            START: 10.0,
+            PER_KM: 2.5,
+            PER_MINUTE_WAIT: 0.5,
+            PER_MINUTE_TRAFFIC: 1.0,
+            PER_MINUTE_DRIVING: 0.2,
+            ADDON_PETS: 5,
+            ADDON_SIGN: 5,
+            ADDON_LUGGAGE_SMALL: 3,
+            ADDON_LUGGAGE_MEDIUM: 5,
+            ADDON_LUGGAGE_LARGE: 6
+        };
+
+        window.onload = () => {
+            if(localStorage.getItem('jura_dark') === 'true') {
+                document.documentElement.classList.add('dark');
+                updateDarkModeToggle();
+            }
+            
+            userPhone = localStorage.getItem('jura_phone');
+            if(userPhone) {
+                initApp();
+            } else {
+                document.getElementById('authScreen').classList.remove('hidden');
+            }
+            
+            const lastOrderTimeStr = localStorage.getItem('jura_last_order_time');
+            if(lastOrderTimeStr) {
+                lastOrderTime = new Date(lastOrderTimeStr);
+                updateSpamProtection();
+            }
+        };
+
+        window.login = () => {
+            const phoneInput = document.getElementById('phoneInput');
+            const phone = phoneInput.value.trim();
+            
+            if(!phone.match(/^\+992[0-9]{9}$/)) {
+                alert('Введите корректный номер телефона в формате +992XXXXXXXXX');
+                phoneInput.focus();
+                return;
+            }
+            
+            localStorage.setItem('jura_phone', phone);
+            userPhone = phone;
+            document.getElementById('authScreen').classList.add('hidden');
+            initApp();
+        };
+
+        function initApp() {
+            document.getElementById('appScreen').classList.remove('hidden');
+            loadProfile();
+            setTimeout(() => {
+                initMap();
+                setupSearch();
+                setupEditSearch();
+                setupAddressSearch();
+                updatePrice();
+                restoreActiveOrder();
+                startLocationTracking();
+                loadMyAddresses();
+                updateLanguageLinks();
+                updatePartnerLink();
+                updateDarkModeToggle();
+                startSpamTimer();
+            }, 100);
+        }
+
+        function loadProfile() {
+            const profile = JSON.parse(localStorage.getItem('jura_profile') || '{}');
+            if (profile.firstName) document.getElementById('profileFirstName').value = profile.firstName;
+            if (profile.lastName) document.getElementById('profileLastName').value = profile.lastName;
+            if (userPhone) document.getElementById('profilePhone').value = userPhone;
+        }
+
+        window.saveProfile = () => {
+            const profile = {
+                firstName: document.getElementById('profileFirstName').value.trim(),
+                lastName: document.getElementById('profileLastName').value.trim(),
+                phone: userPhone,
+                updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem('jura_profile', JSON.stringify(profile));
+            alert('Профиль сохранен!');
+            closeProfile();
+        };
+
+        window.toggleDarkMode = () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('jura_dark', document.documentElement.classList.contains('dark'));
+            updateDarkModeToggle();
+        };
+
+        function updateDarkModeToggle() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const toggle = document.getElementById('darkModeToggle');
+            if (toggle) {
+                const thumb = toggle.querySelector('div');
+                if (isDark) {
+                    thumb.style.transform = 'translateX(24px)';
+                } else {
+                    thumb.style.transform = 'translateX(0)';
+                }
+            }
+        }
+
+        window.logout = () => {
+            if(confirm('Вы уверены, что хотите выйти?')) {
+                localStorage.removeItem('jura_phone');
+                localStorage.removeItem('jura_profile');
+                localStorage.removeItem('jura_last_order_time');
+                window.location.reload();
+            }
+        };
+
+        window.openSettings = () => {
+            document.getElementById('settingsPanel').classList.add('panel-visible');
+            document.getElementById('modalOverlay').classList.add('active');
+        };
+
+        window.closeSettings = () => {
+            document.getElementById('settingsPanel').classList.remove('panel-visible');
+            document.getElementById('modalOverlay').classList.remove('active');
+        };
+
+        window.openProfile = () => {
+            document.getElementById('profilePanel').classList.add('panel-visible');
+        };
+
+        window.closeProfile = () => {
+            document.getElementById('profilePanel').classList.remove('panel-visible');
+        };
+
+        window.openLanguages = () => {
+            document.getElementById('languagesPanel').classList.add('panel-visible');
+        };
+
+        window.closeLanguages = () => {
+            document.getElementById('languagesPanel').classList.remove('panel-visible');
+        };
+
+        window.openAboutApp = () => {
+            document.getElementById('aboutAppPanel').classList.add('panel-visible');
+        };
+
+        window.closeAboutApp = () => {
+            document.getElementById('aboutAppPanel').classList.remove('panel-visible');
+        };
+
+        function updateLanguageLinks() {
+            document.getElementById('langRussian').href = '#';
+            document.getElementById('langEnglish').href = '#';
+            document.getElementById('langTajik').href = '#';
+            document.getElementById('langUzbek').href = '#';
+        }
+
+        function updatePartnerLink() {
+            const link = localStorage.getItem('jura_partners_link') || 'https://jura.tj/';
+            document.getElementById('partnersLink').href = link;
+        }
+
+        window.openMyAddresses = () => {
+            document.getElementById('myAddressesPanel').classList.add('panel-visible');
+            document.getElementById('modalOverlay').classList.add('active');
+            loadAddressesList();
+        };
+
+        window.closeMyAddresses = () => {
+            document.getElementById('myAddressesPanel').classList.remove('panel-visible');
+            document.getElementById('modalOverlay').classList.remove('active');
+            selectingAddressForRoute = false;
+        };
+
+        window.showMyAddressesForSelection = () => {
+            selectingAddressForRoute = true;
+            openMyAddresses();
+        };
+
+        function selectAddressForRoute(address) {
+            if (selectingAddressForRoute) {
+                addWaypoint({
+                    lat: address.lat,
+                    lng: address.lng
+                }, address.name);
+                closeMyAddresses();
+                selectingAddressForRoute = false;
+            }
+        }
+
+        function loadAddressesList() {
+            const addresses = JSON.parse(localStorage.getItem('jura_my_addresses') || '[]');
+            const list = document.getElementById('addressesList');
+            
+            if (addresses.length === 0) {
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <i class="fa-solid fa-bookmark text-4xl mb-4"></i>
+                        <p>Список адресов пуст</p>
+                        <p class="text-sm mt-1">Добавьте часто используемые адреса</p>
+                    </div>`;
+                return;
+            }
+            
+            list.innerHTML = addresses.map((address, index) => `
+                <div class="address-item" onclick="${selectingAddressForRoute ? `selectAddressForRoute(${JSON.stringify(address)})` : ''}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="font-bold text-white flex items-center">
+                                ${address.name}
+                                <span class="address-type-badge ${address.type}-badge">
+                                    ${address.type === 'home' ? 'Дом' : address.type === 'work' ? 'Работа' : 'Другое'}
+                                </span>
+                            </div>
+                            <div class="text-sm text-gray-400 truncate mt-1">${address.address}</div>
+                        </div>
+                        ${!selectingAddressForRoute ? `
+                            <div class="flex gap-2">
+                                <button onclick="event.stopPropagation(); editAddress(${index})" class="text-blue-400 hover:text-blue-300 p-1">
+                                    <i class="fa-solid fa-pen text-sm"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteAddress(${index})" class="text-red-400 hover:text-red-300 p-1">
+                                    <i class="fa-solid fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.openAddAddress = () => {
+            document.getElementById('addAddressPanel').classList.add('panel-visible');
+            document.getElementById('myAddressesPanel').classList.remove('panel-visible');
+            resetAddressForm();
+        };
+
+        window.closeAddAddress = () => {
+            document.getElementById('addAddressPanel').classList.remove('panel-visible');
+            document.getElementById('myAddressesPanel').classList.add('panel-visible');
+        };
+
+        function resetAddressForm() {
+            document.getElementById('addressName').value = '';
+            selectAddressType('home');
+            document.getElementById('addressSearch').value = '';
+            document.getElementById('addressSearchResults').classList.remove('active');
+            document.getElementById('selectedAddressPreview').classList.remove('active');
+            document.getElementById('selectedAddressText').textContent = '';
+            document.getElementById('selectedAddressCoords').textContent = '';
+            selectedAddressCoords = null;
+            selectedAddressText = '';
+            document.getElementById('saveAddressBtn').disabled = true;
+        }
+
+        window.selectAddressType = (type) => {
+            selectedAddressType = type;
+            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+            const selectedBtn = document.getElementById(`type${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            selectedBtn.classList.add('active');
+        };
+
+        window.useCurrentLocationForAddress = () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        selectedAddressCoords = latlng;
+                        try {
+                            const addr = await getAddress(latlng);
+                            selectedAddressText = addr;
+                            document.getElementById('selectedAddressText').textContent = addr;
+                            document.getElementById('selectedAddressCoords').textContent = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+                            document.getElementById('selectedAddressPreview').classList.add('active');
+                            if (document.getElementById('addressName').value.trim() === '') {
+                                document.getElementById('addressName').value = 'Мое местоположение';
+                            }
+                            updateSaveAddressButton();
+                        } catch (e) { console.error('Geocoding error:', e); }
+                    },
+                    (error) => { alert('Не удалось получить ваше местоположение'); }
+                );
+            }
+        };
+
+        function setupAddressSearch() {
+            const inp = document.getElementById('addressSearch');
+            inp.addEventListener('input', (e) => {
+                if (addressSearchDebounceTimer) clearTimeout(addressSearchDebounceTimer);
+                if (addressSearchController) addressSearchController.abort();
+                if (e.target.value.length < 2) {
+                    document.getElementById('addressSearchResults').classList.remove('active');
+                    return;
+                }
+                addressSearchDebounceTimer = setTimeout(async () => {
+                    try {
+                        addressSearchController = new AbortController();
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(e.target.value)}&addressdetails=1&limit=6&countrycodes=tj&bounded=1&viewbox=68.5,38.3,69.1,38.8`, { signal: addressSearchController.signal });
+                        const data = await res.json();
+                        const div = document.getElementById('addressSearchResults');
+                        div.innerHTML = '';
+                        if (data.length === 0) {
+                            div.innerHTML = `<div class="p-4 text-center text-gray-500">Ничего не найдено</div>`;
+                            div.classList.add('active');
+                            return;
+                        }
+                        data.forEach(it => {
+                            let display = it.display_name || "";
+                            if (display.length > 60) display = display.substring(0, 60) + '...';
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item dark:text-white';
+                            item.innerHTML = `<div class="flex items-start gap-3"><i class="fa-solid fa-map-marker-alt text-gray-400 mt-0.5"></i><div class="flex-1"><div class="font-semibold">${escapeHtml(display.split(',')[0])}</div><div class="text-xs text-gray-500 truncate">${escapeHtml(display)}</div></div></div>`;
+                            item.addEventListener('click', () => { selectAddressFromSearch(it.lat, it.lon, it.display_name); });
+                            div.appendChild(item);
+                        });
+                        div.classList.add('active');
+                    } catch (e) { if (e.name !== 'AbortError') console.error("Address search error:", e); }
+                }, 600);
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#addressSearchResults') && !e.target.closest('#addressSearch')) {
+                    document.getElementById('addressSearchResults').classList.remove('active');
+                }
+            });
+        }
+
+        function selectAddressFromSearch(lat, lon, displayName) {
+            selectedAddressCoords = { lat: parseFloat(lat), lng: parseFloat(lon) };
+            selectedAddressText = displayName;
+            document.getElementById('addressSearch').value = displayName;
+            document.getElementById('addressSearchResults').classList.remove('active');
+            document.getElementById('selectedAddressText').textContent = displayName;
+            document.getElementById('selectedAddressCoords').textContent = `${lat}, ${lon}`;
+            document.getElementById('selectedAddressPreview').classList.add('active');
+            if (document.getElementById('addressName').value.trim() === '') {
+                const firstPart = displayName.split(',')[0];
+                document.getElementById('addressName').value = firstPart.substring(0, 30);
+            }
+            updateSaveAddressButton();
+        }
+
+        function updateSaveAddressButton() {
+            const name = document.getElementById('addressName').value.trim();
+            const btn = document.getElementById('saveAddressBtn');
+            btn.disabled = !(name && selectedAddressCoords);
+        }
+
+        document.getElementById('addressName').addEventListener('input', updateSaveAddressButton);
+
+        window.saveAddress = () => {
+            const name = document.getElementById('addressName').value.trim();
+            if (!name) { alert('Введите название адреса'); return; }
+            if (!selectedAddressCoords) { alert('Выберите местоположение адреса'); return; }
+            const addresses = JSON.parse(localStorage.getItem('jura_my_addresses') || '[]');
+            const isDuplicate = addresses.some(addr => addr.name === name && Math.abs(addr.lat - selectedAddressCoords.lat) < 0.0001 && Math.abs(addr.lng - selectedAddressCoords.lng) < 0.0001);
+            if (isDuplicate) { alert('Такой адрес уже существует'); return; }
+            addresses.push({ name: name, type: selectedAddressType, address: selectedAddressText, lat: selectedAddressCoords.lat, lng: selectedAddressCoords.lng, createdAt: new Date().toISOString() });
+            localStorage.setItem('jura_my_addresses', JSON.stringify(addresses));
+            alert('Адрес сохранен!');
+            closeAddAddress();
+            loadAddressesList();
+        };
+
+        window.editAddress = (index) => {
+            const addresses = JSON.parse(localStorage.getItem('jura_my_addresses') || '[]');
+            const address = addresses[index];
+            if (!address) return;
+            document.getElementById('addressName').value = address.name;
+            selectAddressType(address.type);
+            selectedAddressCoords = { lat: address.lat, lng: address.lng };
+            selectedAddressText = address.address;
+            document.getElementById('addressSearch').value = address.address;
+            document.getElementById('selectedAddressText').textContent = address.address;
+            document.getElementById('selectedAddressCoords').textContent = `${address.lat.toFixed(6)}, ${address.lng.toFixed(6)}`;
+            document.getElementById('selectedAddressPreview').classList.add('active');
+            document.getElementById('saveAddressBtn').disabled = false;
+            document.getElementById('saveAddressBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Обновить адрес';
+            document.getElementById('saveAddressBtn').onclick = () => updateAddress(index);
+            openAddAddress();
+        };
+
+        function updateAddress(index) {
+            const name = document.getElementById('addressName').value.trim();
+            if (!name) { alert('Введите название адреса'); return; }
+            if (!selectedAddressCoords) { alert('Выберите местоположение адреса'); return; }
+            const addresses = JSON.parse(localStorage.getItem('jura_my_addresses') || '[]');
+            addresses[index] = { name: name, type: selectedAddressType, address: selectedAddressText, lat: selectedAddressCoords.lat, lng: selectedAddressCoords.lng, createdAt: addresses[index].createdAt, updatedAt: new Date().toISOString() };
+            localStorage.setItem('jura_my_addresses', JSON.stringify(addresses));
+            alert('Адрес обновлен!');
+            closeAddAddress();
+            loadAddressesList();
+        }
+
+        window.deleteAddress = (index) => {
+            if (confirm('Удалить этот адрес?')) {
+                const addresses = JSON.parse(localStorage.getItem('jura_my_addresses') || '[]');
+                addresses.splice(index, 1);
+                localStorage.setItem('jura_my_addresses', JSON.stringify(addresses));
+                loadAddressesList();
+            }
+        };
+
+        function loadMyAddresses() {
+            if (!localStorage.getItem('jura_my_addresses')) {
+                localStorage.setItem('jura_my_addresses', JSON.stringify([]));
+            }
+        }
+
+        window.closeAllPanels = () => {
+            document.querySelectorAll('.panel-base').forEach(panel => panel.classList.remove('panel-visible'));
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('chatContainer').classList.remove('visible');
+            selectingAddressForRoute = false;
+        };
+
+        function initMap() {
+            if(mapInitialized) return;
+            map = L.map('map', { zoomControl: false, zoomSnap: 0.5, zoomDelta: 0.5 }).setView([38.5598, 68.7870], 14);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© OpenStreetMap, © CartoDB' }).addTo(map);
+            map.on('click', async (e) => { 
+                if(!activeOrderId && waypoints.length < 6) {
+                    if (document.getElementById('addAddressPanel').classList.contains('panel-visible')) {
+                        selectedAddressCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+                        try {
+                            const addr = await getAddress(e.latlng);
+                            selectedAddressText = addr;
+                            document.getElementById('selectedAddressText').textContent = addr;
+                            document.getElementById('selectedAddressCoords').textContent = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+                            document.getElementById('selectedAddressPreview').classList.add('active');
+                            if (document.getElementById('addressName').value.trim() === '') {
+                                const firstPart = addr.split(',')[0];
+                                document.getElementById('addressName').value = firstPart.substring(0, 30);
+                            }
+                            updateSaveAddressButton();
+                        } catch (error) { console.error('Geocoding error:', error); }
+                    } else {
+                        await addWaypoint(e.latlng);
+                    }
+                }
+            });
+            locateMe();
+            mapInitialized = true;
+        }
+
+        async function getAddress(latlng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=18&addressdetails=1`);
+                const data = await res.json();
+                if(data.error) return "Координаты";
+                let address = data.display_name || "Точка на карте";
+                if(data.address) {
+                    const parts = [];
+                    if(data.address.road) parts.push(data.address.road);
+                    if(data.address.house_number) parts.push(data.address.house_number);
+                    if(parts.length > 0) address = parts.join(', ');
+                }
+                return address.substring(0, 60);
+            } catch(e) { console.error("Geocoding error:", e); return "Координаты"; }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function restoreActiveOrder() {
+            if (restoreAttempted || !userPhone) return;
+            restoreAttempted = true;
+            try {
+                const q = query(collection(db, 'orders'), where('clientPhone', '==', userPhone), where('status', 'in', ['pending', 'accepted', 'arrived', 'waiting', 'in_progress']));
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    const orderDoc = snapshot.docs[0];
+                    activeOrderId = orderDoc.id;
+                    const orderData = orderDoc.data();
+                    orderStatus = orderData.status;
+                    if (!mapInitialized) initMap();
+                    document.getElementById('bookingPanel').style.transform = "translateY(150%)";
+                    document.getElementById('activeOrderPanel').classList.add('panel-visible');
+                    subscribeToOrder(activeOrderId);
+                    if (orderData.status !== 'pending') {
+                        document.getElementById('statusSearching').classList.add('hidden');
+                        document.getElementById('statusActive').classList.remove('hidden');
+                        updateOrderUI(orderData);
+                        updateTariffImage(orderData.tariff.id);
+                        if (orderData.points) {
+                            waypoints = orderData.points;
+                            updateMarkers();
+                            buildRoute();
+                        }
+                        if (orderData.status === 'in_progress' || orderData.status === 'waiting') startTripTimerFromServer(orderData);
+                    }
+                    document.getElementById('editOrderBtn').classList.remove('hidden');
+                    document.getElementById('detailsBtn').classList.remove('hidden');
+                    document.getElementById('chatBtn').classList.remove('hidden');
+                }
+            } catch (error) { console.error("Restore error:", error); restoreAttempted = false; }
+        }
+
+        function addListener(unsub) { listeners.push(unsub); }
+        function cleanupListeners() { listeners.forEach(unsub => { if (unsub && typeof unsub === 'function') unsub(); }); listeners = []; }
+        function cleanupTimers() {
+            if (tripTimerInterval) { clearInterval(tripTimerInterval); tripTimerInterval = null; }
+            if (serverTimerUpdateInterval) { clearInterval(serverTimerUpdateInterval); serverTimerUpdateInterval = null; }
+            if (searchDebounceTimer) { clearTimeout(searchDebounceTimer); searchDebounceTimer = null; }
+            if (editSearchDebounceTimer) { clearTimeout(editSearchDebounceTimer); editSearchDebounceTimer = null; }
+            if (addressSearchDebounceTimer) { clearTimeout(addressSearchDebounceTimer); addressSearchDebounceTimer = null; }
+            if (gpsThrottleTimer) { clearTimeout(gpsThrottleTimer); gpsThrottleTimer = null; }
+            if (spamTimerInterval) { clearInterval(spamTimerInterval); spamTimerInterval = null; }
+        }
+
+        function startLocationTracking() {
+            if (!navigator.geolocation) return;
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude, speed } = position.coords;
+                    lastPosition = { lat: latitude, lng: longitude };
+                    currentSpeed = (speed || 0) * 3.6;
+                    document.getElementById('speedClient').textContent = Math.round(currentSpeed) + ' км/ч';
+                    if (activeOrderId) updateClientLocation(latitude, longitude);
+                    updateClientMarker(latitude, longitude);
+                    if (waypoints.length >= 2) calculatePreliminaryPrice();
+                    if (activeOrderId && orderStatus && orderStatus !== 'pending') updateDistance(latitude, longitude);
+                },
+                (error) => { console.error('Location tracking error:', error); },
+                { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+            );
+        }
+
+        function updateClientMarker(lat, lng) {
+            if (!map) return;
+            if (!clientMarker) {
+                const clientIcon = L.divIcon({ html: `<div class="client-icon"><i class="fa-solid fa-user text-cyan-400"></i></div>`, iconSize: [32, 32], className: 'client-marker' });
+                clientMarker = L.marker([lat, lng], { icon: clientIcon }).addTo(map);
+            } else { clientMarker.setLatLng([lat, lng]); }
+        }
+
+        async function updateDistance(lat, lng) {
+            if (!lastPosition) { lastPosition = { lat, lng }; return; }
+            const distance = calculateDistance(lastPosition.lat, lastPosition.lng, lat, lng);
+            if (distance > 0.01) {
+                totalDistance += distance;
+                document.getElementById('distanceClient').textContent = totalDistance.toFixed(1) + ' км';
+                if (Math.floor(totalDistance * 10) % 5 === 0) await updateDoc(doc(db, 'orders', activeOrderId), { distance: totalDistance, updatedAt: serverTimestamp() });
+                lastPosition = { lat, lng };
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        async function updateClientLocation(lat, lng) {
+            if (gpsThrottleTimer) clearTimeout(gpsThrottleTimer);
+            gpsThrottleTimer = setTimeout(async () => {
+                try { await updateDoc(doc(db, 'orders', activeOrderId), { clientLocation: { lat: lat, lng: lng, speed: currentSpeed, updatedAt: serverTimestamp() } }); }
+                catch (error) { console.error('Error updating client location:', error); }
+            }, 3000);
+        }
+
+        async function addWaypoint(latlng, name = null) {
+            if(waypoints.length >= 6) { alert("Максимум 6 точек маршрута"); return; }
+            waypoints.push({ lat: latlng.lat, lng: latlng.lng, address: name || "..." });
+            updateMarkers();
+            if(!name) {
+                const addr = await getAddress(latlng);
+                waypoints[waypoints.length-1].address = addr;
+                updateMarkers();
+            }
+        }
+
+        window.removePoint = (index) => {
+            if(activeOrderId) return;
+            waypoints.splice(index, 1);
+            updateMarkers();
+        };
+
+        function updateMarkers() {
+            markers.forEach(m => { if (map && m) map.removeLayer(m); });
+            markers = [];
+            const list = document.getElementById('routeList');
+            list.innerHTML = '';
+            if(waypoints.length === 0) {
+                list.innerHTML = `<div class="p-4 bg-blue-500/10 rounded-xl text-center text-blue-400 text-sm backdrop-blur-sm border border-blue-500/30"><i class="fa-solid fa-map-pin mr-2"></i> Нажмите на карту для добавления точек маршрута</div>`;
+                document.getElementById('distancePriceBadge').classList.add('hidden');
+                return;
+            }
+            waypoints.forEach((pt, i) => {
+                const label = i + 1;
+                const markerIcon = L.divIcon({ html: `<div class="w-10 h-10 ${i === 0 ? 'bg-black' : i === waypoints.length-1 ? 'bg-doros' : 'bg-blue-500'} text-white rounded-full flex items-center justify-center font-bold border-2 border-white shadow-lg transition-transform hover:scale-110">${label}</div>`, iconSize: [40, 40], className: 'marker-icon' });
+                const marker = L.marker([pt.lat, pt.lng], { icon: markerIcon }).addTo(map);
+                markers.push(marker);
+                const popupContent = `<div class="map-popup"><div class="font-bold mb-1">Точка ${label}</div><div class="text-sm mb-2">${escapeHtml(pt.address)}</div></div>`;
+                marker.bindPopup(popupContent);
+                list.innerHTML += `<div class="flex items-center justify-between p-3 bg-darkCard/70 backdrop-blur-sm rounded-xl border-l-4 ${i === 0 ? 'border-black' : i === waypoints.length-1 ? 'border-doros' : 'border-blue-500'} animate-fade-in shadow-sm relative"><div class="flex items-center gap-3 overflow-hidden flex-1"><div class="w-8 h-8 ${i === 0 ? 'bg-black' : i === waypoints.length-1 ? 'bg-doros' : 'bg-blue-500'} text-white rounded-full flex items-center justify-center font-bold text-xs shrink-0">${label}</div><div class="truncate"><div class="font-medium text-white text-sm">${escapeHtml(pt.address)}</div></div></div><div class="flex gap-1"><button onclick="removePoint(${i})" class="text-red-400 hover:text-red-300 p-2"><i class="fa-solid fa-trash text-sm"></i></button></div></div>`;
+            });
+            buildRoute();
+            updatePrice();
+            if(waypoints.length >= 2) calculatePreliminaryPrice();
+        }
+
+        async function buildRoute() {
+            if(routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+            if(waypoints.length < 2) return;
+            const str = waypoints.map(p => `${p.lng},${p.lat}`).join(';');
+            try {
+                const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${str}?overview=full&geometries=polyline`);
+                const data = await res.json();
+                if(data.routes && data.routes[0]) {
+                    const pts = polyline.decode(data.routes[0].geometry);
+                    routeLayer = L.polyline(pts, { color: '#2563eb', weight: 5, opacity: 0.8, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds(), { padding: [50, 50], maxZoom: 16 });
+                }
+            } catch(e) { console.error("Routing error:", e); }
+        }
+
+        function calculatePreliminaryPrice() {
+            if(waypoints.length < 2 || currentTariff.id === 'buy_and_deliver') {
+                document.getElementById('preliminaryPrice').classList.add('hidden');
+                return;
+            }
+            const startPoint = waypoints[0];
+            const endPoint = waypoints[waypoints.length - 1];
+            const distance = calculateDistance(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+            let price = PRICES.START * currentTariff.mult;
+            if(waypoints.length > 2) price += (waypoints.length - 2) * 3;
+            if(distance > 4) price += (distance - 4) * PRICES.PER_KM;
+            price = Math.max(price, 10);
+            document.getElementById('preliminaryPriceValue').textContent = price.toFixed(2);
+            document.getElementById('preliminaryPrice').classList.remove('hidden');
+            const badge = document.getElementById('distancePriceBadge');
+            badge.textContent = `~ ${price.toFixed(2)} с.`;
+            badge.classList.remove('hidden');
+        }
+
+        window.updatePrice = () => {
+            let base = PRICES.START * currentTariff.mult;
+            if(waypoints.length > 2) base += (waypoints.length - 2) * 3;
+            if(document.getElementById('optPets')?.checked) base += PRICES.ADDON_PETS;
+            if(document.getElementById('optSign')?.checked) base += PRICES.ADDON_SIGN;
+            const luggageValue = parseInt(document.getElementById('optLuggage')?.value || 0);
+            base += luggageValue;
+            const tipValue = parseInt(document.getElementById('tipVal')?.innerText || 0);
+            base += tipValue;
+            if(document.getElementById('optAC')?.checked) base = base * 1.1;
+            if(waypoints.length >= 2) {
+                const startPoint = waypoints[0];
+                const endPoint = waypoints[waypoints.length - 1];
+                const distance = calculateDistance(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+                if(distance > 4) base += (distance - 4) * PRICES.PER_KM;
+            }
+            const realPrice = Math.round(base * 100) / 100;
+            const fakePrice = Math.round(realPrice * 1.15 * 100) / 100;
+            document.getElementById('totalPrice').innerText = `~ ${realPrice.toFixed(2)} с.`;
+            document.getElementById('crossedPrice').innerText = `${fakePrice.toFixed(2)} с.`;
+            return realPrice;
+        };
+
+        window.updateEditedPrice = () => {
+            let base = PRICES.START * currentTariff.mult;
+            const luggageValue = parseInt(document.getElementById('editLuggage')?.value || 0);
+            const petsValue = document.getElementById('editPets')?.checked ? PRICES.ADDON_PETS : 0;
+            base += luggageValue + petsValue;
+            const realPrice = Math.round(base * 100) / 100;
+            document.getElementById('editedPrice').innerText = realPrice.toFixed(2);
+            return realPrice;
+        };
+
+        function startSpamTimer() {
+            if (spamTimerInterval) clearInterval(spamTimerInterval);
+            spamTimerInterval = setInterval(updateSpamProtection, 1000);
+            updateSpamProtection();
+        }
+
+        function updateSpamProtection() {
+            const now = new Date();
+            let timeRemaining = 0;
+            if (lastOrderTime) {
+                const timeSinceLastOrder = (now - lastOrderTime) / 1000;
+                timeRemaining = Math.max(0, 300 - timeSinceLastOrder);
+            }
+            const spamProtection = document.getElementById('spamProtectionMessage');
+            const orderBtn = document.getElementById('orderBtn');
+            const timerElement = document.getElementById('spamTimer');
+            if (timeRemaining > 0) {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = Math.floor(timeRemaining % 60);
+                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                spamProtection.style.display = 'block';
+                orderBtn.disabled = true;
+                orderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                spamProtection.style.display = 'none';
+                orderBtn.disabled = false;
+                orderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        window.createOrder = async () => {
+            const now = new Date();
+            if (lastOrderTime) {
+                const timeSinceLastOrder = (now - lastOrderTime) / 1000;
+                if (timeSinceLastOrder < 300) { alert("Вы можете сделать новый заказ только через " + Math.ceil(300 - timeSinceLastOrder) + " секунд"); return; }
+            }
+            if(waypoints.length < 2) { alert("Для заказа нужно минимум 2 точки маршрута"); return; }
+            if(!userPhone) { alert("Ошибка авторизации. Пожалуйста, войдите заново."); window.location.reload(); return; }
+            const estPrice = updatePrice();
+            if(estPrice <= 0) { alert("Некорректная цена заказа"); return; }
+            const orderBtn = document.getElementById('orderBtn');
+            orderBtn.disabled = true;
+            orderBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-2"></i> СОЗДАЁМ...';
+            const orderData = {
+                clientPhone: userPhone, status: 'pending', createdAt: serverTimestamp(),
+                points: waypoints.map((pt, index) => ({ ...pt, type: index === 0 ? 'pickup' : index === waypoints.length - 1 ? 'destination' : 'intermediate' })),
+                tariff: currentTariff, estPrice: estPrice, currentPrice: estPrice, tip: parseInt(document.getElementById('tipVal').innerText),
+                paymentMethod: document.getElementById('payMethod').value,
+                options: { pets: document.getElementById('optPets').checked, signboard: document.getElementById('optSign').checked, signboardText: document.getElementById('optSignText').value || "", luggage: parseInt(document.getElementById('optLuggage').value), ac: document.getElementById('optAC').checked, comment: document.getElementById('optComment').value, buyList: document.getElementById('buyListInput')?.value || "", meetingPlace: document.getElementById('optMeetingPlace').value || "" },
+                history: [], clientLocation: lastPosition ? { lat: lastPosition.lat, lng: lastPosition.lng, speed: currentSpeed, updatedAt: serverTimestamp() } : null,
+                timers: { tripStart: null, waitStart: null, trafficStart: null, lastUpdate: serverTimestamp() }, distance: 0, waitTime: 0, trafficTime: 0, drivingTime: 0
+            };
+            try {
+                const ref = await addDoc(collection(db, 'orders'), orderData);
+                activeOrderId = ref.id;
+                lastOrderTime = new Date();
+                localStorage.setItem('jura_last_order_time', lastOrderTime.toISOString());
+                updateSpamProtection();
+                document.getElementById('bookingPanel').style.transform = "translateY(150%)";
+                document.getElementById('activeOrderPanel').classList.add('panel-visible');
+                document.getElementById('editOrderBtn').classList.remove('hidden');
+                document.getElementById('detailsBtn').classList.remove('hidden');
+                document.getElementById('chatBtn').classList.remove('hidden');
+                subscribeToOrder(activeOrderId);
+            } catch(error) {
+                console.error("Order creation error:", error);
+                alert("Ошибка при создании заказа. Пожалуйста, попробуйте еще раз.");
+                orderBtn.disabled = false;
+                orderBtn.innerHTML = `<span class="flex items-center gap-2"><i class="fa-solid fa-taxi"></i> ЗАКАЗАТЬ</span><div class="flex items-baseline"><span id="crossedPrice" class="strike-price text-gray-500">0 с.</span><span id="totalPrice" class="bg-white/10 px-3 py-1.5 rounded-lg text-sm font-mono font-black">~ 0 с.</span></div>`;
+            }
+        };
+
+        function subscribeToOrder(orderId) {
+            if(orderUnsub) orderUnsub();
+            orderUnsub = onSnapshot(doc(db, 'orders', orderId), (snap) => {
+                const order = snap.data();
+                if(!order) { console.error("Order not found"); resetApp(); return; }
+                orderStatus = order.status;
+                if(order.status === 'pending') {
+                    document.getElementById('statusSearching').classList.remove('hidden');
+                    document.getElementById('statusActive').classList.add('hidden');
+                } else {
+                    document.getElementById('statusSearching').classList.add('hidden');
+                    document.getElementById('statusActive').classList.remove('hidden');
+                    updateOrderUI(order);
+                    updateTariffImage(order.tariff.id);
+                    if(order.timers?.tripStart) updateTripTimer(order.timers.tripStart.toDate());
+                    if(order.distance) { totalDistance = order.distance; document.getElementById('distanceClient').textContent = totalDistance.toFixed(1) + ' км'; }
+                    if (order.points && JSON.stringify(waypoints) !== JSON.stringify(order.points)) { waypoints = order.points; updateMarkers(); buildRoute(); }
+                }
+                if(order.status === 'completed') { showReceipt(order); saveToHistory(order); setTimeout(() => resetApp(), 3000); }
+                if(order.status === 'cancelled') { alert("Заказ отменен"); resetApp(); }
+                checkForChanges(order);
+                if (order.status !== 'pending' && order.status !== 'cancelled' && order.status !== 'completed') subscribeToChat(orderId);
+                else stopChat();
+            }, (error) => { console.error("Order subscription error:", error); if(error.code === 'permission-denied') { alert("Ошибка доступа к заказу. Возможно, он был удален."); resetApp(); } });
+            addListener(orderUnsub);
+        }
+
+        function subscribeToChat(orderId) {
+            if (chatUnsub) chatUnsub();
+            const chatRef = collection(db, 'orders', orderId, 'chat');
+            chatUnsub = onSnapshot(chatRef, (snapshot) => {
+                const messages = [];
+                let newUnreadCount = 0;
+                snapshot.forEach((doc) => { const message = doc.data(); message.id = doc.id; messages.push(message); if (message.sender === 'driver' && !message.read) newUnreadCount++; });
+                messages.sort((a, b) => a.createdAt?.toMillis() - b.createdAt?.toMillis());
+                if (newUnreadCount !== unreadMessagesCount) { unreadMessagesCount = newUnreadCount; updateChatBadge(); }
+                if (document.getElementById('chatContainer').classList.contains('visible')) { displayChatMessages(messages); markMessagesAsRead(messages); }
+            }, (error) => { console.error("Chat subscription error:", error); });
+            addListener(chatUnsub);
+        }
+
+        function stopChat() { if (chatUnsub) { chatUnsub(); chatUnsub = null; } unreadMessagesCount = 0; updateChatBadge(); }
+        function updateChatBadge() { const badge = document.getElementById('chatBadge'); if (unreadMessagesCount > 0) { badge.textContent = unreadMessagesCount > 99 ? '99+' : unreadMessagesCount; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
+        function displayChatMessages(messages) {
+            const container = document.getElementById('chatMessages');
+            if (messages.length === 0) { container.innerHTML = `<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-comments text-4xl mb-4"></i><div class="font-medium">Начните общение</div><div class="text-sm mt-1">Напишите сообщение курьеру</div></div>`; return; }
+            container.innerHTML = messages.map(msg => { const isClient = msg.sender === 'client'; const time = msg.createdAt?.toDate() || new Date(); const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); return `<div class="message ${isClient ? 'message-sent' : 'message-received'}"><div class="message-text">${escapeHtml(msg.text)}</div><div class="message-time">${timeStr}</div></div>`; }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+        async function markMessagesAsRead(messages) {
+            const unreadDriverMessages = messages.filter(msg => msg.sender === 'driver' && !msg.read);
+            if (unreadDriverMessages.length === 0) return;
+            const batch = writeBatch(db);
+            unreadDriverMessages.forEach(msg => { const msgRef = doc(db, 'orders', activeOrderId, 'chat', msg.id); batch.update(msgRef, { read: true }); });
+            try { await batch.commit(); unreadMessagesCount = 0; updateChatBadge(); } catch (error) { console.error("Error marking messages as read:", error); }
+        }
+        window.openChat = () => { document.getElementById('chatContainer').classList.add('visible'); document.getElementById('chatOrderStatus').textContent = getOrderStatusText(); loadChatMessages(); if (activeOrderId) markAllMessagesAsRead(); };
+        window.closeChat = () => { document.getElementById('chatContainer').classList.remove('visible'); };
+        function getOrderStatusText() { switch(orderStatus) { case 'accepted': return 'Курьер принял заказ'; case 'arrived': return 'Курьер на месте'; case 'waiting': return 'Курьер ждет вас'; case 'in_progress': return 'В пути'; default: return 'Заказ активен'; } }
+        async function loadChatMessages() { if (!activeOrderId) return; try { const chatRef = collection(db, 'orders', activeOrderId, 'chat'); const q = query(chatRef); const snapshot = await getDocs(q); const messages = []; snapshot.forEach((doc) => { const message = doc.data(); message.id = doc.id; messages.push(message); }); messages.sort((a, b) => a.createdAt?.toMillis() - b.createdAt?.toMillis()); displayChatMessages(messages); } catch (error) { console.error("Error loading chat messages:", error); } }
+        async function markAllMessagesAsRead() { if (!activeOrderId) return; try { const chatRef = collection(db, 'orders', activeOrderId, 'chat'); const q = query(chatRef, where('sender', '==', 'driver'), where('read', '==', false)); const snapshot = await getDocs(q); const batch = writeBatch(db); snapshot.forEach((doc) => { batch.update(doc.ref, { read: true }); }); if (snapshot.size > 0) { await batch.commit(); unreadMessagesCount = 0; updateChatBadge(); } } catch (error) { console.error("Error marking all messages as read:", error); } }
+        window.sendChatMessage = async () => { const input = document.getElementById('chatMessageInput'); const messageText = input.value.trim(); if (!messageText) return; if (!activeOrderId) { alert('Нет активного заказа'); return; } if (orderStatus === 'completed' || orderStatus === 'cancelled') { alert('Чат недоступен для завершенного заказа'); return; } const message = { sender: 'client', text: messageText, createdAt: serverTimestamp(), read: false }; try { await addDoc(collection(db, 'orders', activeOrderId, 'chat'), message); input.value = ''; input.focus(); } catch (error) { console.error("Error sending message:", error); alert('Ошибка отправки сообщения'); } };
+        function checkForChanges(order) { if (!order.history || order.history.length === 0) return; const recentChanges = order.history.filter(change => { const changeTime = change.timestamp?.toDate(); const now = new Date(); return changeTime && (now - changeTime) < 60000; }); if (recentChanges.length > 0) { const badge = document.getElementById('orderChangesBadge'); badge.classList.remove('hidden'); badge.textContent = recentChanges.length; const lastChange = recentChanges[recentChanges.length - 1]; if (lastChange.changedBy === 'driver') showNotification(`Курьер изменил заказ. Новая цена: ${order.currentPrice.toFixed(2)} сомони`); } }
+        function showNotification(message) { if (Notification.permission === 'granted') { new Notification('DOROSgo', { body: message, icon: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png' }); } else if (Notification.permission !== 'denied') { Notification.requestPermission().then(permission => { if (permission === 'granted') { new Notification('DOROSgo', { body: message, icon: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png' }); } }); } if (!('Notification' in window)) alert(message); }
+        function updateOrderUI(order) {
+            orderStatus = order.status;
+            document.getElementById('driverCar').innerText = order.driverCar || "Информация о машине";
+            document.getElementById('driverColor').innerText = order.driverColor || "";
+            document.getElementById('driverPlate').innerText = order.driverPlate || "---";
+            document.getElementById('driverName').innerText = order.driverName || "Курьер";
+            if(order.driverPhoto) { const driverPhoto = document.getElementById('driverPhoto'); driverPhoto.src = order.driverPhoto; driverPhoto.classList.remove('hidden'); const receiptDriverPhoto = document.getElementById('receiptDriverPhoto'); if(receiptDriverPhoto) receiptDriverPhoto.src = order.driverPhoto; }
+            const phoneLink = document.getElementById('btnCall'); if(order.driverPhone) phoneLink.href = "tel:" + order.driverPhone;
+            if(order.currentPrice) document.getElementById('livePrice').innerText = parseFloat(order.currentPrice).toFixed(2);
+            else document.getElementById('livePrice').innerText = order.estPrice?.toFixed(2) || "0.00";
+            const waitBadge = document.getElementById('waitBadge'); if(order.status === 'waiting') waitBadge.classList.remove('hidden'); else waitBadge.classList.add('hidden');
+            const signboardBadge = document.getElementById('signboardBadge'); const signboardTextDisplay = document.getElementById('signboardTextDisplay'); if(order.options?.signboard && order.options?.signboardText) { signboardBadge.classList.remove('hidden'); signboardTextDisplay.innerText = order.options.signboardText; } else { signboardBadge.classList.add('hidden'); }
+            const statusText = document.getElementById('orderStatusText');
+            switch(order.status) {
+                case 'accepted': statusText.innerText = "Курьер принял заказ"; break;
+                case 'arrived': statusText.innerText = "Курьер на месте"; startTripTimerFromServer(order); break;
+                case 'waiting': statusText.innerText = "Курьер ждет вас"; startTripTimerFromServer(order); break;
+                case 'in_progress': statusText.innerText = "В пути"; startTripTimerFromServer(order); break;
+                default: statusText.innerText = "Курьер едет к вам";
+            }
+            if(order.driverLocation) { updateDriverOnMap(order.driverLocation); if(order.clientLocation) updateDriverRoute(order.driverLocation, order.clientLocation); }
+            updateTariffImage(order.tariff.id);
+        }
+        function updateDriverRoute(driverLocation, clientLocation) { if (!driverLocation || !clientLocation) return; if (driverRouteLayer) map.removeLayer(driverRouteLayer); const str = `${driverLocation.lng},${driverLocation.lat};${clientLocation.lng},${clientLocation.lat}`; fetch(`https://router.project-osrm.org/route/v1/driving/${str}?overview=full&geometries=polyline`).then(response => response.json()).then(data => { if(data.routes && data.routes[0]) { const pts = polyline.decode(data.routes[0].geometry); driverRouteLayer = L.polyline(pts, { color: '#e74c3c', weight: 4, opacity: 0.7, lineCap: 'round', lineJoin: 'round', dashArray: '10, 10' }).addTo(map); } }).catch(e => console.error("Driver route error:", e)); }
+        function startTripTimerFromServer(order) { cleanupTimers(); if (order.timers?.tripStart) { tripStartTime = order.timers.tripStart.toDate(); tripTimerInterval = setInterval(() => { updateTripTimer(tripStartTime); }, 1000); serverTimerUpdateInterval = setInterval(async () => { if (activeOrderId) { try { const now = new Date(); const elapsed = Math.floor((now - tripStartTime) / 1000); await updateDoc(doc(db, 'orders', activeOrderId), { 'timers.lastUpdate': serverTimestamp(), drivingTime: Math.floor(elapsed / 60) }); } catch (error) { console.error('Error updating timer:', error); } } }, 30000); } }
+        function updateTripTimer(startTime) { if (!startTime) return; const now = new Date(); const elapsed = Math.floor((now - startTime) / 1000); const minutes = Math.floor(elapsed / 60); const seconds = elapsed % 60; document.getElementById('tripTimerClient').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`; }
+        function updateTariffImage(tariffId) {
+            const imageElement = document.getElementById('currentTariffImage');
+            const nameElement = document.getElementById('currentTariffName');
+            const receiptImage = document.getElementById('receiptTariffImage');
+            const detailsImage = document.getElementById('detailsTariffImage');
+            const detailsName = document.getElementById('detailsTariffName');
+            let imageSrc = 'tarif/standard.png'; let name = 'Стандарт';
+            switch(tariffId) {
+                case 'standart': imageSrc = 'tarif/standard.png'; name = 'Стандарт'; break;
+                case 'comfort': imageSrc = 'tarif/comfort.png'; name = 'Комфорт'; break;
+                case 'minivan': imageSrc = 'tarif/miniven.png'; name = 'Минивэн'; break;
+                case 'delivery': case 'buy_and_deliver': imageSrc = 'tarif/moped.png'; name = tariffId === 'delivery' ? 'Доставка' : 'Купим и доставим'; break;
+            }
+            if(imageElement) imageElement.src = imageSrc;
+            if(nameElement) nameElement.textContent = name;
+            if(receiptImage) receiptImage.src = imageSrc;
+            if(detailsImage) detailsImage.src = imageSrc;
+            if(detailsName) detailsName.textContent = name;
+        }
+        function updateDriverOnMap(location) {
+            if(!driverMarker) { const driverIcon = L.divIcon({ html: `<div class="driver-icon"><i class="fa-solid fa-truck text-doros text-xl"></i></div>`, iconSize: [44, 44], className: 'driver-marker' }); driverMarker = L.marker([location.lat, location.lng], { icon: driverIcon }).addTo(map); } else { driverMarker.setLatLng([location.lat, location.lng]); }
+            if(map && driverMarker) { const driverLatLng = driverMarker.getLatLng(); const bounds = map.getBounds(); if(!bounds.contains(driverLatLng)) map.panTo(driverLatLng, { animate: true, duration: 0.5 }); }
+        }
+        window.cancelOrder = async () => { if(!confirm("Вы уверены, что хотите отменить заказ?")) return; if(activeOrderId) { try { await updateDoc(doc(db, 'orders', activeOrderId), { status: 'cancelled', cancelledAt: serverTimestamp() }); } catch(error) { console.error("Cancel order error:", error); } } resetApp(); };
+        function resetApp() {
+            cleanupListeners(); cleanupTimers(); stopChat();
+            if (orderUnsub) { orderUnsub(); orderUnsub = null; }
+            if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+            activeOrderId = null; orderStatus = null; restoreAttempted = false; tripStartTime = null; currentSpeed = 0; totalDistance = 0; waitingTime = 0; trafficTime = 0; drivingTime = 0; activeOrderPanelCollapsed = false;
+            if (map) { map.remove(); map = null; mapInitialized = false; setTimeout(() => initMap(), 100); }
+            if(driverMarker) { map.removeLayer(driverMarker); driverMarker = null; }
+            if(driverRouteLayer) { map.removeLayer(driverRouteLayer); driverRouteLayer = null; }
+            document.getElementById('bookingPanel').style.transform = "";
+            document.getElementById('activeOrderPanel').classList.remove('panel-visible');
+            document.getElementById('activeOrderPanel').classList.remove('panel-collapsed');
+            document.getElementById('editOrderPanel').classList.remove('panel-visible');
+            document.getElementById('detailsModal').classList.remove('panel-visible');
+            document.getElementById('chatContainer').classList.remove('visible');
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('editOrderBtn').classList.add('hidden');
+            document.getElementById('detailsBtn').classList.add('hidden');
+            document.getElementById('chatBtn').classList.add('hidden');
+            document.getElementById('statusSearching').classList.remove('hidden');
+            document.getElementById('statusActive').classList.add('hidden');
+            document.getElementById('orderChangesBadge').classList.add('hidden');
+            waypoints = []; updateMarkers(); updatePrice();
+        }
+        window.openGoogleMaps = () => { if(waypoints.length > 0) { const destination = waypoints[waypoints.length-1]; window.open(`https://www.google.com/maps/search/?api=1&query=${destination.lat},${destination.lng}`); } };
+        window.toggleFullPanel = () => { const panel = document.getElementById('bookingPanel'); if(panel.style.transform === "" || panel.style.transform === "translateY(0%)") panel.style.transform = "translateY(calc(100% - 120px))"; else panel.style.transform = ""; };
+        window.toggleHistory = () => { const panel = document.getElementById('historyPanel'); panel.classList.toggle('panel-visible'); if(panel.classList.contains('panel-visible')) { const list = document.getElementById('historyList'); const history = JSON.parse(localStorage.getItem('jura_history') || '[]'); if(history.length === 0) { list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-gray-400"><i class="fa-solid fa-clock text-4xl mb-4"></i><p>История доставок пуста</p></div>`; return; } list.innerHTML = history.map((trip, index) => `<div class="bg-darkCard/70 backdrop-blur-sm p-4 rounded-2xl border-l-4 border-doros shadow-sm animate-fade-in" style="animation-delay: ${index * 50}ms"><div class="flex justify-between items-center mb-2"><div class="font-bold text-white">${new Date(trip.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div><div class="font-black text-doros text-lg">${trip.price} с.</div></div><div class="text-sm text-gray-400 mb-1"><i class="fa-solid fa-${trip.tariff === 'standart' ? 'person-walking' : trip.tariff === 'comfort' ? 'motorcycle' : 'truck'} mr-2"></i>${trip.tariff === 'standart' ? 'Пеший курьер' : trip.tariff === 'comfort' ? 'Мото-доставка' : 'Грузовой DOROSgo'}</div><div class="text-xs text-gray-500 truncate">${trip.points && trip.points[1] ? trip.points[1].address.substring(0, 50) : 'Доставка'}</div></div>`).join(''); } };
+        window.toggleActiveOrderPanel = () => { const panel = document.getElementById('activeOrderPanel'); const content = document.getElementById('activeOrderContent'); if (activeOrderPanelCollapsed) { panel.classList.remove('panel-collapsed'); content.style.display = 'block'; activeOrderPanelCollapsed = false; } else { panel.classList.add('panel-collapsed'); content.style.display = 'none'; activeOrderPanelCollapsed = true; } };
+        window.openEditOrder = () => { document.getElementById('editOrderPanel').classList.add('panel-visible'); document.getElementById('editOrderBtn').classList.add('hidden'); updateEditedPrice(); };
+        window.closeEditOrder = () => { document.getElementById('editOrderPanel').classList.remove('panel-visible'); document.getElementById('editOrderBtn').classList.remove('hidden'); document.getElementById('editSearchResults').classList.add('hidden'); };
+        window.openDetails = () => { document.getElementById('detailsModal').classList.add('panel-visible'); document.getElementById('modalOverlay').classList.add('active'); loadOrderDetails(); };
+        window.closeDetails = () => { document.getElementById('detailsModal').classList.remove('panel-visible'); document.getElementById('modalOverlay').classList.remove('active'); };
+        async function loadOrderDetails() { if(!activeOrderId) return; try { const orderSnap = await getDoc(doc(db, 'orders', activeOrderId)); if(!orderSnap.exists()) return; const order = orderSnap.data(); if(order.options?.pets) document.getElementById('detailsPets').classList.remove('hidden'); else document.getElementById('detailsPets').classList.add('hidden'); if(order.options?.signboard && order.options?.signboardText) { document.getElementById('detailsSignboard').classList.remove('hidden'); document.getElementById('detailsSignboardText').textContent = order.options.signboardText; } else document.getElementById('detailsSignboard').classList.add('hidden'); if(order.options?.luggage > 0) { document.getElementById('detailsLuggage').classList.remove('hidden'); document.getElementById('detailsLuggageValue').textContent = order.options.luggage + ' с.'; } else document.getElementById('detailsLuggage').classList.add('hidden'); if(order.options?.meetingPlace) { document.getElementById('detailsMeetingPlace').classList.remove('hidden'); document.getElementById('detailsMeetingPlaceText').textContent = order.options.meetingPlace; } else document.getElementById('detailsMeetingPlace').classList.add('hidden'); if(order.options?.comment) { document.getElementById('detailsComment').classList.remove('hidden'); document.getElementById('detailsCommentText').textContent = order.options.comment; } else document.getElementById('detailsComment').classList.add('hidden'); updateTariffImage(order.tariff.id); } catch(error) { console.error("Error loading order details:", error); } }
+        window.addEditPoint = async () => { const input = document.getElementById('editAddrInput'); const address = input.value.trim(); if (!address) { alert('Введите адрес'); return; } try { const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=tj`); const data = await res.json(); if (data.length === 0) { alert('Адрес не найден'); return; } const point = data[0]; const newPoint = { lat: parseFloat(point.lat), lng: parseFloat(point.lon), address: point.display_name, type: 'intermediate' }; const orderRef = doc(db, 'orders', activeOrderId); const orderSnap = await getDoc(orderRef); const order = orderSnap.data(); const historyEntry = { timestamp: Timestamp.now(), changedBy: 'client', field: 'points', action: 'added', description: `Добавлена точка: ${point.display_name.substring(0, 30)}...`, oldValue: order.points.length, newValue: order.points.length + 1 }; const updateData = { points: [...order.points, newPoint], currentPrice: (order.currentPrice || order.estPrice || PRICES.START) + 3, updatedAt: serverTimestamp(), history: [...(order.history || []), historyEntry] }; await updateDoc(orderRef, updateData); input.value = ''; document.getElementById('editSearchResults').classList.add('hidden'); alert('Точка добавлена. Курьер будет уведомлен.'); waypoints = [...order.points, newPoint]; updateMarkers(); buildRoute(); } catch (error) { console.error('Error adding point:', error); alert('Ошибка при добавлении точки: ' + error.message); } };
+        window.saveOrderChanges = async () => { if (!activeOrderId) return; try { const luggageValue = parseInt(document.getElementById('editLuggage').value); const petsValue = document.getElementById('editPets').checked; const meetingPlaceValue = document.getElementById('editMeetingPlace').value.trim(); const commentValue = document.getElementById('editComment').value.trim(); const orderRef = doc(db, 'orders', activeOrderId); const orderSnap = await getDoc(orderRef); if (!orderSnap.exists()) { alert('Заказ не найден'); return; } const order = orderSnap.data(); const changes = []; const updateData = {}; const currentLuggage = order.options?.luggage || 0; const currentPets = order.options?.pets || false; const currentMeetingPlace = order.options?.meetingPlace || ''; const currentComment = order.options?.comment || ''; if (luggageValue !== currentLuggage) { changes.push({ timestamp: Timestamp.now(), changedBy: 'client', field: 'options.luggage', action: 'changed', description: `Груз изменен: ${currentLuggage} → ${luggageValue} сомони`, oldValue: currentLuggage, newValue: luggageValue }); updateData['options.luggage'] = luggageValue; } if (petsValue !== currentPets) { changes.push({ timestamp: Timestamp.now(), changedBy: 'client', field: 'options.pets', action: petsValue ? 'added' : 'removed', description: petsValue ? 'Добавлены животные' : 'Убраны животные', oldValue: currentPets, newValue: petsValue }); updateData['options.pets'] = petsValue; } if (meetingPlaceValue && meetingPlaceValue !== currentMeetingPlace) { changes.push({ timestamp: Timestamp.now(), changedBy: 'client', field: 'options.meetingPlace', action: 'updated', description: 'Обновлено место встречи', oldValue: currentMeetingPlace, newValue: meetingPlaceValue }); updateData['options.meetingPlace'] = meetingPlaceValue; } if (commentValue && commentValue !== currentComment) { changes.push({ timestamp: Timestamp.now(), changedBy: 'client', field: 'options.comment', action: 'updated', description: 'Обновлен комментарий', oldValue: currentComment, newValue: commentValue }); updateData['options.comment'] = currentComment ? `${currentComment}\n${commentValue}` : commentValue; } if (changes.length === 0) { alert('Нет изменений для сохранения'); return; } let newPrice = order.currentPrice || order.estPrice || PRICES.START; changes.forEach(change => { if (change.field === 'options.luggage') newPrice += (change.newValue - change.oldValue); else if (change.field === 'options.pets') { if (change.newValue && !change.oldValue) newPrice += PRICES.ADDON_PETS; else if (!change.newValue && change.oldValue) newPrice -= PRICES.ADDON_PETS; } }); if (order.options?.ac) newPrice = newPrice * 1.1; updateData.currentPrice = Math.max(newPrice, PRICES.START); updateData.updatedAt = serverTimestamp(); const currentHistory = order.history || []; const updatedHistory = [...currentHistory, ...changes]; if (updatedHistory.length !== currentHistory.length) updateData.history = updatedHistory; await updateDoc(orderRef, updateData); alert('Изменения сохранены! Курьер будет уведомлен.'); closeEditOrder(); } catch (error) { console.error('Error saving changes:', error); alert('Ошибка при сохранении изменений: ' + error.message); } };
+        function saveToHistory(order) { const history = JSON.parse(localStorage.getItem('jura_history') || '[]'); history.unshift({ date: new Date().toISOString(), price: order.finalPrice || order.estPrice, tariff: order.tariff.id, points: order.points, distance: order.distance || 0, duration: order.drivingTime || 0 }); localStorage.setItem('jura_history', JSON.stringify(history.slice(0, 50))); }
+        function showReceipt(order) { document.getElementById('receiptPanel').classList.add('panel-visible'); document.getElementById('rDate').innerText = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }); document.getElementById('rTariff').innerText = order.tariff.id.toUpperCase(); const breakdown = document.getElementById('priceBreakdown'); breakdown.innerHTML = ''; breakdown.innerHTML += `<div class="flex justify-between"><span>Стартовый тариф:</span><span>10.00 с.</span></div>`; if(order.distance && order.distance > 4) { const distancePrice = (order.distance - 4) * PRICES.PER_KM; breakdown.innerHTML += `<div class="flex justify-between"><span>Расстояние (${order.distance.toFixed(1)}км):</span><span>${distancePrice.toFixed(2)} с.</span></div>`; } if(order.points && order.points.length > 2) { const extraPoints = order.points.length - 2; breakdown.innerHTML += `<div class="flex justify-between"><span>Доп. точки (${extraPoints} × 3с):</span><span>${(extraPoints * 3).toFixed(2)} с.</span></div>`; } if(order.waitTime && order.waitTime > 0) breakdown.innerHTML += `<div class="flex justify-between"><span>Ожидание (${order.waitTime.toFixed(1)} мин × 0.5с):</span><span>${(order.waitTime * PRICES.PER_MINUTE_WAIT).toFixed(2)} с.</span></div>`; if(order.trafficTime && order.trafficTime > 0) breakdown.innerHTML += `<div class="flex justify-between"><span>Пробки (${order.trafficTime.toFixed(1)} мин × 1.0с):</span><span>${(order.trafficTime * PRICES.PER_MINUTE_TRAFFIC).toFixed(2)} с.</span></div>`; if(order.drivingTime && order.drivingTime > 0) breakdown.innerHTML += `<div class="flex justify-between"><span>В пути (${order.drivingTime.toFixed(1)} мин × 0.2с):</span><span>${(order.drivingTime * PRICES.PER_MINUTE_DRIVING).toFixed(2)} с.</span></div>`; if(order.options) { if(order.options.pets) breakdown.innerHTML += `<div class="flex justify-between"><span>Животные:</span><span>5.00 с.</span></div>`; if(order.options.signboard) breakdown.innerHTML += `<div class="flex justify-between"><span>Табличка:</span><span>5.00 с.</span></div>`; if(order.options.luggage > 0) breakdown.innerHTML += `<div class="flex justify-between"><span>Груз:</span><span>${order.options.luggage.toFixed(2)} с.</span></div>`; if(order.options.ac) { const acPrice = ((order.finalPrice || order.estPrice) - (order.tip || 0)) * 0.1; breakdown.innerHTML += `<div class="flex justify-between"><span>Кондиционер (+10%):</span><span>+${acPrice.toFixed(2)} с.</span></div>`; } } if(order.tip && order.tip > 0) breakdown.innerHTML += `<div class="flex justify-between text-green-400 font-bold"><span>Чаевые:</span><span>+${order.tip.toFixed(2)} с.</span></div>`; const total = order.finalPrice || order.estPrice || 0; document.getElementById('rTotal').innerText = total.toFixed(2) + " с."; updateTariffImage(order.tariff.id); document.getElementById('receiptPhotos').classList.remove('hidden'); }
+        window.closeReceipt = () => { document.getElementById('receiptPanel').classList.remove('panel-visible'); };
+        function setupSearch() { const inp = document.getElementById('addrInput'); function handleSearchInput(e) { if(searchDebounceTimer) clearTimeout(searchDebounceTimer); if(searchController) searchController.abort(); if(e.target.value.length < 2) { document.getElementById('searchResults').classList.add('hidden'); return; } document.getElementById('searchLoader').classList.remove('hidden'); searchDebounceTimer = setTimeout(async () => { try { searchController = new AbortController(); const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(e.target.value)}&addressdetails=1&limit=6&countrycodes=tj&bounded=1&viewbox=68.5,38.3,69.1,38.8`, { signal: searchController.signal }); const data = await res.json(); const div = document.getElementById('searchResults'); div.innerHTML = ''; document.getElementById('searchLoader').classList.add('hidden'); if(data.length === 0) { div.innerHTML = `<div class="p-4 text-center text-gray-500">Ничего не найдено</div>`; div.classList.remove('hidden'); return; } data.forEach(it => { let display = it.display_name || ""; if(display.length > 60) display = display.substring(0, 60) + '...'; const item = document.createElement('div'); item.className = 'search-result-item dark:text-white'; item.innerHTML = `<div class="flex items-start gap-3"><i class="fa-solid fa-map-marker-alt text-gray-400 mt-0.5"></i><div class="flex-1"><div class="font-semibold">${escapeHtml(display.split(',')[0])}</div><div class="text-xs text-gray-500 truncate">${escapeHtml(display)}</div></div></div>`; item.addEventListener('click', () => { pickAddr(it.lat, it.lon, it.display_name); }); div.appendChild(item); }); div.classList.remove('hidden'); } catch(e) { if(e.name !== 'AbortError') { console.error("Search error:", e); document.getElementById('searchLoader').classList.add('hidden'); } } }, 600); } function handleSearchClickOutside(e) { if(!e.target.closest('#searchResults') && !e.target.closest('#addrInput')) document.getElementById('searchResults').classList.add('hidden'); } inp.removeEventListener('input', handleSearchInput); document.removeEventListener('click', handleSearchClickOutside); inp.addEventListener('input', handleSearchInput); document.addEventListener('click', handleSearchClickOutside); }
+        function setupEditSearch() { const inp = document.getElementById('editAddrInput'); function handleSearchInput(e) { if(editSearchDebounceTimer) clearTimeout(editSearchDebounceTimer); if(editSearchController) editSearchController.abort(); if(e.target.value.length < 2) { document.getElementById('editSearchResults').classList.add('hidden'); return; } document.getElementById('editSearchLoader').classList.remove('hidden'); editSearchDebounceTimer = setTimeout(async () => { try { editSearchController = new AbortController(); const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(e.target.value)}&addressdetails=1&limit=6&countrycodes=tj&bounded=1&viewbox=68.5,38.3,69.1,38.8`, { signal: editSearchController.signal }); const data = await res.json(); const div = document.getElementById('editSearchResults'); div.innerHTML = ''; document.getElementById('editSearchLoader').classList.add('hidden'); if(data.length === 0) { div.innerHTML = `<div class="p-4 text-center text-gray-500">Ничего не найдено</div>`; div.classList.remove('hidden'); return; } data.forEach(it => { let display = it.display_name || ""; if(display.length > 60) display = display.substring(0, 60) + '...'; const item = document.createElement('div'); item.className = 'search-result-item dark:text-white'; item.innerHTML = `<div class="flex items-start gap-3"><i class="fa-solid fa-map-marker-alt text-gray-400 mt-0.5"></i><div class="flex-1"><div class="font-semibold">${escapeHtml(display.split(',')[0])}</div><div class="text-xs text-gray-500 truncate">${escapeHtml(display)}</div></div></div>`; item.addEventListener('click', () => { document.getElementById('editAddrInput').value = it.display_name; document.getElementById('editSearchResults').classList.add('hidden'); }); div.appendChild(item); }); div.classList.remove('hidden'); } catch(e) { if(e.name !== 'AbortError') { console.error("Edit search error:", e); document.getElementById('editSearchLoader').classList.add('hidden'); } } }, 600); } function handleSearchClickOutside(e) { if(!e.target.closest('#editSearchResults') && !e.target.closest('#editAddrInput')) document.getElementById('editSearchResults').classList.add('hidden'); } inp.removeEventListener('input', handleSearchInput); document.removeEventListener('click', handleSearchClickOutside); inp.addEventListener('input', handleSearchInput); document.addEventListener('click', handleSearchClickOutside); }
+        window.pickAddr = (lat, lon, name) => { document.getElementById('searchResults').classList.add('hidden'); document.getElementById('addrInput').value = ''; if(map) map.setView([lat, lon], 16); addWaypoint({lat, lng: lon}, name); };
+        window.setCategory = (cat) => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(cat === 'passenger') { document.getElementById('tabPassenger').classList.add('active'); document.getElementById('passengerTariffs').classList.remove('hidden'); document.getElementById('deliveryTariffs').classList.add('hidden'); document.getElementById('buyListContainer').classList.add('hidden'); selectTariff('standart', 1.0, 'passenger'); } else { document.getElementById('tabDelivery').classList.add('active'); document.getElementById('passengerTariffs').classList.add('hidden'); document.getElementById('deliveryTariffs').classList.remove('hidden'); selectTariff('delivery', 0.9, 'delivery'); } };
+        window.selectTariff = (id, mult, type = 'passenger') => { const target = event.currentTarget; document.querySelectorAll('.tariff-card').forEach(e => e.classList.remove('selected')); target.classList.add('selected'); currentTariff = { id, mult, type }; if(id === 'buy_and_deliver') { document.getElementById('buyListContainer').classList.remove('hidden'); document.getElementById('preliminaryPrice').classList.add('hidden'); } else { document.getElementById('buyListContainer').classList.add('hidden'); if(waypoints.length >= 2 && id !== 'buy_and_deliver') document.getElementById('preliminaryPrice').classList.remove('hidden'); } updatePrice(); calculatePreliminaryPrice(); };
+        window.toggleSignboardInput = () => { const checkbox = document.getElementById('optSign'); const container = document.getElementById('signboardInputContainer'); const input = document.getElementById('optSignText'); if(checkbox.checked) { container.classList.remove('hidden'); input.focus(); } else { container.classList.add('hidden'); input.value = ''; } updatePrice(); };
+        window.locateMe = () => { if(navigator.geolocation) { navigator.geolocation.getCurrentPosition( pos => { const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude }; if(map) map.setView(latlng, 16); if(waypoints.length === 0 && !activeOrderId) addWaypoint(latlng, "Мое местоположение"); }, error => { console.log('Geolocation error:', error); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } ); } };
+        selectAddressType('home');
+    </script>
+</body>
+</html>

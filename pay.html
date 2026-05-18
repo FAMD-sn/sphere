@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DOROSpay · Финтех-Ядро DOROSphere</title>
+  <!-- Шрифты: Syne (заголовки) + Manrope (текст) — далеко от банального Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- QR-код библиотеки (сохранены из оригинала) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
+  <!-- Firebase SDK 8 (сохранена оригинальная структура) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+  <style>
+    /* ================================================================
+       DOROSpay · ULTRA-PREMIUM CYBER-GLASSMORPHISM UI
+       Redesigned for DOROSphere SuperApp · Tajikistan 2025
+    ================================================================ */
+
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    :root {
+      /* === Основная палитра === */
+      --cosmos: #080a0f;
+      --deep: #0f1117;
+      --surface: #13161f;
+      --card: #191d29;
+      --electric: #2563eb;
+      --electric-glow: rgba(37,99,235,0.45);
+      --cyan: #06cdd4;
+      --cyan-soft: rgba(6,205,212,0.15);
+      --cyan-glow: rgba(6,205,212,0.4);
+      --amber: #f59e0b;        /* холд/заморозка */
+      --amber-glow: rgba(245,158,11,0.3);
+      --success: #10b981;
+      --success-glow: rgba(16,185,129,0.35);
+      --danger: #ef4444;
+      --text: #f0f4ff;
+      --text-sec: #8892aa;
+      --text-muted: #4a5270;
+      --border: rgba(255,255,255,0.06);
+      --border-bright: rgba(255,255,255,0.14);
+      /* === Стекло (glassmorphism) === */
+      --glass: rgba(19,22,31,0.72);
+      --glass-card: rgba(25,29,41,0.85);
+      --blur: blur(16px);
+      /* === Скругления === */
+      --r-xl: 32px;
+      --r-lg: 24px;
+      --r-md: 16px;
+      --r-sm: 12px;
+      --r-pill: 999px;
+      /* === Тени === */
+      --shadow-card: 0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+      --shadow-electric: 0 0 24px var(--electric-glow), 0 8px 32px rgba(37,99,235,0.2);
+      --shadow-cyan: 0 0 24px var(--cyan-glow);
+      --shadow-amber: 0 0 20px var(--amber-glow);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--cosmos);
+      color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Анимированный фоновый градиент — атмосфера */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 10%, rgba(37,99,235,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 80%, rgba(6,205,212,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hidden { display: none !important; }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ====================================================
+       ЭКРАН АВТОРИЗАЦИИ
+    ==================================================== */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Декоративная сетка на фоне авторизации */
+    #auth-screen::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .auth-card {
+      background: var(--glass-card);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border-radius: 40px;
+      padding: 56px 48px;
+      width: 100%;
+      max-width: 520px;
+      border: 1px solid var(--border-bright);
+      box-shadow: var(--shadow-card);
+      animation: authAppear 0.55s cubic-bezier(0.16,1,0.3,1) both;
+      position: relative;
+      z-index: 2;
+    }
+
+    @keyframes authAppear {
+      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Логотип на экране авторизации */
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .auth-logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--electric), var(--cyan));
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: var(--shadow-electric);
+    }
+    .auth-logo-icon .material-icons { font-size: 36px; color: white; }
+    .auth-logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px; font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .auth-logo p {
+      font-size: 13px; color: var(--text-muted); margin-top: 4px; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .auth-tabs {
+      display: flex; gap: 8px;
+      background: rgba(255,255,255,0.04);
+      padding: 5px; border-radius: 60px;
+      margin-bottom: 36px;
+      border: 1px solid var(--border);
+    }
+    .auth-tab {
+      flex: 1; padding: 13px; text-align: center;
+      border-radius: 60px; cursor: pointer;
+      color: var(--text-muted); font-weight: 600;
+      font-size: 14px; transition: all 0.25s;
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, var(--electric), #1d4ed8);
+      color: white;
+      box-shadow: var(--shadow-electric);
+    }
+
+    .auth-input {
+      width: 100%; padding: 17px 24px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--r-pill);
+      font-size: 15px; color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      margin-bottom: 16px; transition: 0.2s;
+    }
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--electric);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+      background: rgba(37,99,235,0.05);
+    }
+    .auth-input::placeholder { color: var(--text-muted); }
+
+    .auth-btn {
+      width: 100%; padding: 18px;
+      background: linear-gradient(135deg, var(--electric), #1d4ed8);
+      border: none; border-radius: var(--r-pill);
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700; font-size: 16px; color: white;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 10px;
+      transition: 0.2s; margin: 20px 0 14px;
+      box-shadow: var(--shadow-electric);
+    }
+    .auth-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+    .auth-link { text-align: center; color: var(--text-muted); font-size: 14px; }
+    .auth-link a { color: var(--cyan); text-decoration: none; font-weight: 600; }
+
+    /* ====================================================
+       ENTERPRISE BADGE
+    ==================================================== */
+    .enterprise-badge-auth {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 28px; padding: 10px 20px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: var(--r-pill);
+      font-size: 12px; color: #10b981; font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ====================================================
+       ХЕДЕР ПРИЛОЖЕНИЯ
+    ==================================================== */
+    .app-header {
+      background: var(--glass);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .header-row {
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+
+    /* Логотип в хедере */
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--electric), var(--cyan));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-electric);
+      flex-shrink: 0;
+    }
+    .logo-icon .material-icons { font-size: 22px; color: white; }
+    .logo-text h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .logo-text p {
+      font-size: 10px; color: var(--text-muted);
+      letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;
+    }
+
+    /* Маркетинговый слоган в хедере для жюри */
+    .header-tagline {
+      font-size: 12px; color: var(--text-muted); font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .header-tagline span {
+      color: var(--cyan); font-weight: 700;
+    }
+
+    .user-menu { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .user-name { font-weight: 600; font-size: 15px; color: var(--text-sec); }
+    .admin-badge {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f1117; padding: 5px 16px;
+      border-radius: var(--r-pill); font-weight: 700; font-size: 12px;
+    }
+    .logout-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-sec); padding: 10px 20px;
+      border-radius: var(--r-pill);
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; transition: 0.2s; font-family: 'Manrope', sans-serif;
+      font-size: 14px; font-weight: 600;
+    }
+    .logout-btn:hover { border-color: var(--electric); color: white; }
+
+    /* ====================================================
+       ОСНОВНОЙ ЛЕЙАУТ
+    ==================================================== */
+    .app-wrapper {
+      display: flex; gap: 28px; padding: 32px 0;
+      align-items: flex-start;
+      position: relative; z-index: 1;
+    }
+
+    /* === САЙДБАР === */
+    .sidebar { width: 260px; flex-shrink: 0; }
+    .nav-menu {
+      background: var(--glass-card);
+      backdrop-filter: var(--blur);
+      border-radius: var(--r-xl);
+      padding: 16px 10px;
+      position: sticky; top: 88px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; border-radius: 18px;
+      color: var(--text-muted); transition: 0.2s; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .nav-item .material-icons { font-size: 22px; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(6,205,212,0.1));
+      color: white;
+      border: 1px solid rgba(37,99,235,0.35);
+      box-shadow: inset 0 0 20px rgba(37,99,235,0.1);
+    }
+    .nav-item.active .material-icons { color: var(--cyan); }
+
+    /* === ОСНОВНОЙ КОНТЕНТ === */
+    .main-content { flex: 1; min-width: 0; }
+
+    /* ====================================================
+       БАЛАНС + КАРТА (Dashboard)
+    ==================================================== */
+
+    /* Виджет баланса */
+    .balance-widget {
+      background: var(--glass-card);
+      backdrop-filter: var(--blur);
+      border-radius: var(--r-xl);
+      padding: 32px 36px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      position: relative; overflow: hidden;
+    }
+    .balance-widget::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(37,99,235,0.12), transparent 70%);
+      pointer-events: none;
+    }
+
+    .balance-info h3 {
+      font-size: 11px; color: var(--text-muted); font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+    }
+
+    /* Анимированный счётчик баланса */
+    .balance-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 52px; font-weight: 800;
+      background: linear-gradient(135deg, #fff 40%, var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1; margin-bottom: 10px;
+      transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .balance-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .active-card-badge {
+      background: rgba(37,99,235,0.2);
+      border: 1px solid rgba(37,99,235,0.4);
+      color: var(--cyan);
+      padding: 4px 14px; border-radius: var(--r-pill);
+      font-size: 12px; font-weight: 700;
+    }
+    .enterprise-badge-inline {
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: #10b981;
+      padding: 4px 14px; border-radius: var(--r-pill);
+      font-size: 11px; font-weight: 600;
+    }
+
+    .balance-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* Кнопки действий */
+    .btn-round {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      padding: 13px 24px;
+      border-radius: var(--r-pill);
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700; font-size: 14px;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; transition: 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    .btn-round .material-icons { font-size: 18px; }
+    .btn-round:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.1);
+      border-color: var(--cyan);
+    }
+    .btn-round.primary {
+      background: linear-gradient(135deg, var(--electric), #1d4ed8);
+      border-color: transparent; color: white;
+      box-shadow: var(--shadow-electric);
+    }
+    .btn-round.primary:hover { filter: brightness(1.12); }
+    .btn-round.amber {
+      background: linear-gradient(135deg, var(--amber), #d97706);
+      border-color: transparent; color: #0f1117;
+      box-shadow: var(--shadow-amber);
+    }
+    .btn-round.sm {
+      padding: 9px 18px; font-size: 13px;
+    }
+    .btn-round.sm .material-icons { font-size: 16px; }
+
+    /* === 3D ВИРТУАЛЬНАЯ КАРТА (с CSS Tilt при наведении) === */
+    .virtual-card-wrapper {
+      perspective: 1200px;
+      margin-bottom: 24px;
+    }
+
+    .virtual-card {
+      background: linear-gradient(135deg, #1a2342 0%, #0f1730 40%, #162038 70%, #0d1625 100%);
+      border-radius: 28px;
+      padding: 30px 36px;
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 32px 64px -16px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.06),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      position: relative; overflow: hidden;
+      transform-style: preserve-3d;
+      /* 3D tilt управляется через JS */
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      cursor: default;
+    }
+
+    /* Голографический блик на карте */
+    .virtual-card::before {
+      content: '';
+      position: absolute; top: -40%; right: -10%;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .virtual-card::after {
+      content: '';
+      position: absolute; bottom: -30%; left: -10%;
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, rgba(6,205,212,0.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .card-chip {
+      width: 44px; height: 32px;
+      background: linear-gradient(135deg, #d4a853, #b8851e);
+      border-radius: 6px; margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      position: relative; z-index: 2;
+    }
+
+    .card-left { z-index: 2; }
+    .card-type-label {
+      font-size: 11px; color: rgba(255,255,255,0.5);
+      letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .card-number {
+      font-family: 'Courier New', monospace;
+      font-size: 22px; font-weight: 600;
+      letter-spacing: 3px; color: white;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    }
+    .card-holder {
+      font-size: 14px; color: rgba(255,255,255,0.75);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-top: 16px;
+    }
+    .card-right { z-index: 2; text-align: right; }
+    .card-logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .card-expiry { font-size: 16px; color: rgba(255,255,255,0.65); margin-top: 12px; }
+    .card-expiry small { font-size: 10px; display: block; letter-spacing: 1px; color: rgba(255,255,255,0.4); }
+
+    /* === БЫСТРЫЕ ДЕЙСТВИЯ === */
+    .quick-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 24px;
+    }
+    .quick-item {
+      background: var(--glass-card);
+      backdrop-filter: blur(12px);
+      border-radius: 20px; padding: 24px 16px;
+      text-align: center; transition: 0.25s; cursor: pointer;
+      border: 1px solid var(--border);
+    }
+    .quick-item:hover {
+      transform: translateY(-5px);
+      border-color: rgba(37,99,235,0.4);
+      box-shadow: var(--shadow-electric);
+    }
+    .quick-item .material-icons {
+      font-size: 32px; color: var(--cyan); margin-bottom: 10px; display: block;
+    }
+    .quick-item span:last-child { font-size: 13px; font-weight: 700; color: var(--text-sec); }
+
+    /* === ТРАНЗАКЦИИ === */
+    .section-card {
+      background: var(--glass-card);
+      backdrop-filter: var(--blur);
+      border-radius: var(--r-xl); padding: 28px 32px;
+      margin-bottom: 20px; border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .section-header h2 {
+      font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .transaction {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 0; border-bottom: 1px solid var(--border);
+      transition: 0.15s;
+    }
+    .transaction:last-child { border-bottom: none; }
+    .transaction:hover { background: rgba(255,255,255,0.02); border-radius: 12px; padding-left: 8px; padding-right: 8px; }
+
+    .tx-info { display: flex; align-items: center; gap: 14px; }
+    .tx-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .tx-icon.shop    { background: rgba(37,99,235,0.15); }
+    .tx-icon.auto    { background: rgba(6,205,212,0.1); }
+    .tx-icon.service { background: rgba(245,158,11,0.12); }
+    .tx-icon.go      { background: rgba(16,185,129,0.12); }
+    .tx-icon.in      { background: rgba(16,185,129,0.12); }
+    .tx-icon.out     { background: rgba(239,68,68,0.12); }
+    .tx-icon.deposit { background: rgba(37,99,235,0.15); }
+
+    .tx-label { font-size: 15px; font-weight: 600; }
+    .tx-meta  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .tx-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 10px;
+      border-radius: var(--r-pill); margin-left: 8px;
+    }
+    .tag-shop    { background: rgba(37,99,235,0.15); color: #60a5fa; }
+    .tag-auto    { background: rgba(6,205,212,0.12); color: var(--cyan); }
+    .tag-service { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .tag-go      { background: rgba(16,185,129,0.12); color: var(--success); }
+
+    .tx-amount { font-size: 17px; font-weight: 800; }
+    .positive { color: var(--success); }
+    .negative { color: var(--danger); }
+    .neutral  { color: var(--amber); }
+
+    /* ====================================================
+       НОВЫЕ SUPER-APP МОДУЛИ
+    ==================================================== */
+
+    /* === ЭСКРОУ / БЕЗОПАСНЫЕ СДЕЛКИ === */
+    .escrow-section {
+      background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.03));
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: var(--r-xl); padding: 28px 32px;
+      margin-bottom: 20px;
+    }
+    .escrow-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    }
+    .escrow-header .material-icons { font-size: 28px; color: var(--amber); }
+    .escrow-header h3 {
+      font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--amber);
+    }
+    .escrow-item {
+      background: rgba(245,158,11,0.06);
+      border: 1px solid rgba(245,158,11,0.18);
+      border-radius: var(--r-lg); padding: 20px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 12px;
+    }
+    .escrow-item:last-child { margin-bottom: 0; }
+    .escrow-info { display: flex; align-items: center; gap: 14px; }
+    .escrow-icon { font-size: 28px; }
+    .escrow-label { font-size: 15px; font-weight: 600; }
+    .escrow-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .escrow-amount { font-size: 20px; font-weight: 800; color: var(--amber); }
+    .hold-badge {
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.3);
+      color: var(--amber); padding: 4px 14px;
+      border-radius: var(--r-pill); font-size: 11px; font-weight: 700;
+    }
+
+    /* === КАЛЬКУЛЯТОР ПОПУТЧИКОВ === */
+    .rideshare-calc {
+      background: linear-gradient(135deg, rgba(6,205,212,0.07), rgba(6,205,212,0.02));
+      border: 1px solid rgba(6,205,212,0.2);
+      border-radius: var(--r-xl); padding: 28px 32px;
+      margin-bottom: 20px;
+    }
+    .rideshare-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    }
+    .rideshare-header .material-icons { font-size: 28px; color: var(--cyan); }
+    .rideshare-header h3 {
+      font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--cyan);
+    }
+    .rideshare-inputs {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+    }
+    .calc-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
+    .calc-input {
+      width: 100%; padding: 14px 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md); color: var(--text);
+      font-family: 'Manrope', sans-serif; font-size: 15px; font-weight: 600;
+    }
+    .calc-input:focus { outline: none; border-color: var(--cyan); }
+    .calc-result {
+      background: rgba(6,205,212,0.08);
+      border: 1px solid rgba(6,205,212,0.2);
+      border-radius: var(--r-md); padding: 20px 24px;
+      text-align: center; display: none;
+      margin-top: 16px;
+    }
+    .calc-result-amount {
+      font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--cyan);
+    }
+    .calc-result-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    #rideshare-qr-output { margin-top: 16px; text-align: center; }
+
+    /* === ДОРОС-ШОП БЛОК === */
+    .doroshop-block {
+      background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.03));
+      border: 1px solid rgba(37,99,235,0.25);
+      border-radius: var(--r-xl); padding: 24px 28px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .doroshop-info { display: flex; align-items: center; gap: 14px; }
+    .doroshop-info .shop-emoji { font-size: 36px; }
+    .doroshop-info h4 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+    .doroshop-info p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    .doroshop-cart-total { font-size: 22px; font-weight: 800; color: var(--electric); margin: 4px 0; }
+
+    /* === СПИСОК КАРТ === */
+    #cards-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px; margin: 20px 0;
+    }
+    .card-item-preview {
+      background: var(--glass-card);
+      border-radius: 20px; padding: 24px;
+      border: 1px solid var(--border); transition: 0.2s; cursor: pointer;
+    }
+    .card-item-preview:hover { border-color: rgba(37,99,235,0.4); transform: scale(1.02); }
+
+    /* === МАГАЗИН КАРТ === */
+    .shop-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .shop-item {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(8px);
+      border-radius: var(--r-xl); padding: 32px 20px;
+      text-align: center; border: 1px solid var(--border); transition: 0.25s;
+    }
+    .shop-item:hover { border-color: rgba(37,99,235,0.4); box-shadow: var(--shadow-electric); }
+    .shop-item .material-icons { font-size: 56px; color: var(--cyan); }
+    .shop-item h4 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin: 14px 0 8px; }
+    .card-price { font-size: 32px; font-weight: 800; color: var(--electric); margin: 16px 0; }
+    .btn-shop {
+      background: transparent; border: 1px solid var(--electric); color: white;
+      padding: 13px 28px; border-radius: var(--r-pill); font-weight: 700;
+      font-family: 'Manrope', sans-serif; width: 100%; cursor: pointer; transition: 0.2s;
+    }
+    .btn-shop:hover { background: var(--electric); box-shadow: var(--shadow-electric); }
+
+    /* === QR === */
+    .qr-panel { text-align: center; padding: 24px; }
+    #qrcode-display canvas, #qrcode-modal canvas {
+      border-radius: 24px; background: white; padding: 14px;
+      margin: 20px auto; box-shadow: 0 20px 48px rgba(0,0,0,0.7);
+    }
+    #qr-reader-area { background: rgba(255,255,255,0.02); border-radius: var(--r-xl); padding: 24px; margin-top: 16px; }
+    #qr-reader { width: 100%; border-radius: 20px; overflow: hidden; }
+    #qr-reader button {
+      background: var(--electric); border: none; padding: 10px 20px;
+      border-radius: var(--r-pill); color: white; font-weight: 600;
+      font-family: 'Manrope', sans-serif; margin: 8px; cursor: pointer;
+    }
+
+    /* === СЕРВИСЫ === */
+    .services-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px; margin-top: 20px;
+    }
+    .service-card {
+      background: linear-gradient(145deg, rgba(25,29,41,0.9), rgba(15,17,23,0.9));
+      border-radius: var(--r-xl); padding: 24px;
+      border: 1px solid var(--border); transition: 0.3s; cursor: pointer;
+      position: relative; overflow: hidden;
+    }
+    .service-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(37,99,235,0.4);
+      box-shadow: var(--shadow-electric);
+    }
+    .service-card .badge {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(37,99,235,0.2); border: 1px solid rgba(37,99,235,0.4);
+      color: var(--cyan); padding: 4px 12px;
+      border-radius: var(--r-pill); font-weight: 700; font-size: 11px;
+    }
+    .service-icon { font-size: 40px; color: var(--cyan); margin-bottom: 16px; }
+    .service-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .service-desc { color: var(--text-sec); margin-bottom: 20px; line-height: 1.6; font-size: 14px; }
+    .service-link { display: inline-flex; align-items: center; gap: 8px; color: var(--cyan); font-weight: 700; font-size: 14px; }
+
+    /* === АНАЛИТИКА === */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; }
+    .analytics-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 20px; padding: 24px;
+      border: 1px solid var(--border);
+    }
+    .analytics-card .material-icons { font-size: 40px; margin-bottom: 8px; display: block; }
+
+    /* ====================================================
+       МОДАЛЬНЫЕ ОКНА
+    ==================================================== */
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2000; padding: 20px;
+    }
+    .modal-content {
+      background: var(--glass-card);
+      backdrop-filter: var(--blur);
+      border-radius: 36px; padding: 40px;
+      width: 100%; max-width: 560px;
+      border: 1px solid var(--border-bright);
+      box-shadow: var(--shadow-card);
+      animation: modalIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.88) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .modal-header h3 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; }
+    .modal-close {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text-muted); width: 40px; height: 40px;
+      border-radius: 50%; cursor: pointer; font-size: 22px;
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.2s;
+    }
+    .modal-close:hover { background: rgba(239,68,68,0.15); border-color: var(--danger); color: var(--danger); }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block; margin-bottom: 8px; color: var(--text-sec);
+      font-size: 13px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .form-control {
+      width: 100%; padding: 15px 22px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: var(--r-md);
+      color: var(--text); font-size: 15px; font-family: 'Manrope', sans-serif;
+      transition: 0.2s;
+    }
+    .form-control:focus { outline: none; border-color: var(--electric); background: rgba(37,99,235,0.05); }
+
+    .alert {
+      padding: 14px 20px; border-radius: var(--r-md);
+      margin: 16px 0; display: flex; align-items: center; gap: 10px;
+      font-size: 14px; font-weight: 600;
+    }
+    .alert-success { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+    .alert-danger  { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+    .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; }
+
+    /* ====================================================
+       ФУТЕР С МАРКЕТИНГОВЫМ СООБЩЕНИЕМ ДЛЯ ЖЮРИ
+    ==================================================== */
+    .app-footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0;
+      margin-top: 20px;
+      position: relative; z-index: 1;
+    }
+    .footer-jury-text {
+      text-align: center; color: var(--text-muted); font-size: 13px;
+      max-width: 720px; margin: 0 auto; line-height: 1.8;
+    }
+    .footer-jury-text strong { color: var(--cyan); }
+    .footer-logo-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 20px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .footer-eco-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      padding: 5px 14px; border-radius: var(--r-pill); font-size: 12px; color: var(--text-muted);
+    }
+
+    /* ====================================================
+       АДАПТИВ
+    ==================================================== */
+    @media (max-width: 1024px) {
+      .app-wrapper { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .nav-menu { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; }
+      .nav-item { flex: 1; justify-content: center; min-width: 120px; padding: 10px 12px; }
+      .quick-grid { grid-template-columns: repeat(2,1fr); }
+      .shop-grid { grid-template-columns: 1fr; }
+      .rideshare-inputs { grid-template-columns: 1fr; }
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .balance-amount { font-size: 36px; }
+      .auth-card { padding: 36px 24px; }
+      .container { padding: 0 16px; }
+      .header-tagline { display: none; }
+      .virtual-card { padding: 22px 24px; }
+      .card-number { font-size: 16px; }
+    }
+
+    /* === ВСПОМОГАТЕЛЬНЫЕ УТИЛИТЫ === */
+    .text-muted { color: var(--text-muted); }
+    .text-cyan  { color: var(--cyan); }
+    .text-amber { color: var(--amber); }
+    .fw-700 { font-weight: 700; }
+    .mt-8  { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-16 { margin-bottom: 16px; }
+
+    /* Пульсирующий индикатор на эскроу-статусе */
+    @keyframes pulse-amber {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(245,158,11,0); }
+    }
+    .pulse-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--amber); display: inline-block;
+      animation: pulse-amber 2s infinite;
+    }
+
+    /* Анимация появления секций при переходе */
+    .tab-content { animation: fadeSlide 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Сканер QR — выглядит красиво */
+    #qr-reader select, #qr-reader input { background: var(--surface); color: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: 'Manrope', sans-serif; }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     ЭКРАН АВТОРИЗАЦИИ
+============================================================ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><span class="material-icons">bolt</span></div>
+      <h1>DOROSpay</h1>
+      <p>Финтех-Ядро Вселенной DOROSphere</p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login">Вход</div>
+      <div class="auth-tab" id="tab-reg">Регистрация</div>
+    </div>
+
+    <!-- Форма входа -->
+    <div id="login-form">
+      <input type="email" id="login-email" class="auth-input" placeholder="Электронная почта">
+      <input type="password" id="login-password" class="auth-input" placeholder="Пароль">
+      <button id="login-btn" class="auth-btn">
+        <span class="material-icons">login</span> Войти в DOROSpay
+      </button>
+      <p class="auth-link"><a href="#" id="show-register">Создать аккаунт DOROSphere →</a></p>
+    </div>
+
+    <!-- Форма регистрации -->
+    <div id="register-form" style="display:none;">
+      <input type="text" id="register-fullname" class="auth-input" placeholder="Полное имя">
+      <input type="tel" id="register-phone" class="auth-input" placeholder="Номер телефона">
+      <input type="email" id="register-email" class="auth-input" placeholder="Электронная почта">
+      <input type="password" id="register-password" class="auth-input" placeholder="Пароль (мин. 6 символов)">
+      <button id="register-btn" class="auth-btn">
+        <span class="material-icons">person_add</span> Создать аккаунт
+      </button>
+      <p class="auth-link"><a href="#" id="show-login">Уже есть аккаунт →</a></p>
+    </div>
+
+    <div id="auth-message" class="alert hidden"></div>
+
+    <!-- Бейдж безопасности -->
+    <div class="enterprise-badge-auth">
+      🔒 Безопасность Enterprise-уровня · Google Firebase Protected
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ОСНОВНОЙ ИНТЕРФЕЙС
+============================================================ -->
+<div id="bank-screen" class="hidden">
+
+  <!-- Хедер -->
+  <header class="app-header">
+    <div class="container header-row">
+      <div class="logo">
+        <div class="logo-icon"><span class="material-icons">bolt</span></div>
+        <div class="logo-text">
+          <h2>DOROSpay</h2>
+          <p>Финтех-Ядро DOROSphere</p>
+        </div>
+      </div>
+
+      <!-- Слоган для жюри -->
+      <div class="header-tagline">
+        <span>DOROSphere</span> · Единое цифровое пространство Таджикистана
+      </div>
+
+      <div class="user-menu">
+        <span class="user-name" id="user-display-name"></span>
+        <span id="admin-badge" class="admin-badge hidden">АДМИН</span>
+        <button id="logout-btn" class="logout-btn">
+          <span class="material-icons">logout</span> Выйти
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Основной лейаут -->
+  <div class="container app-wrapper">
+
+    <!-- Сайдбар-навигация -->
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <div class="nav-item active" data-tab="dashboard">
+          <span class="material-icons">space_dashboard</span> Главная
+        </div>
+        <div class="nav-item" data-tab="my-cards">
+          <span class="material-icons">credit_card</span> Мои карты
+        </div>
+        <div class="nav-item" data-tab="buy-cards">
+          <span class="material-icons">shopping_bag</span> Магазин карт
+        </div>
+        <div class="nav-item" data-tab="escrow">
+          <span class="material-icons">lock_clock</span> Безопасные сделки
+        </div>
+        <div class="nav-item" data-tab="rideshare">
+          <span class="material-icons">directions_car</span> DOROSauto
+        </div>
+        <div class="nav-item" data-tab="qr-generator">
+          <span class="material-icons">qr_code_2</span> Мой QR
+        </div>
+        <div class="nav-item" data-tab="qr-scanner">
+          <span class="material-icons">qr_code_scanner</span> Сканер QR
+        </div>
+        <div class="nav-item" data-tab="services">
+          <span class="material-icons">apps</span> Все сервисы
+        </div>
+        <div class="nav-item" data-tab="analytics">
+          <span class="material-icons">analytics</span> Аналитика
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+
+      <!-- ====== DASHBOARD ====== -->
+      <div id="dashboard-tab" class="tab-content">
+
+        <!-- Виджет баланса -->
+        <div class="balance-widget">
+          <div class="balance-info">
+            <h3>Единый баланс DOROSphere</h3>
+            <div class="balance-amount" id="balance">0 TJS</div>
+            <div class="balance-meta">
+              <span id="active-card-badge" class="active-card-badge">Основная карта</span>
+              <span class="enterprise-badge-inline">🔒 Enterprise-защита</span>
+            </div>
+          </div>
+          <div class="balance-actions">
+            <button class="btn-round primary" onclick="openModal('deposit-modal')">
+              <span class="material-icons">add</span> Пополнить
+            </button>
+            <button class="btn-round" onclick="openModal('transfer-modal')">
+              <span class="material-icons">send</span> Перевести
+            </button>
+            <button class="btn-round" onclick="showMyQR()">
+              <span class="material-icons">qr_code</span> Мой QR
+            </button>
+          </div>
+        </div>
+
+        <!-- Виртуальная 3D карта -->
+        <div class="virtual-card-wrapper">
+          <div class="virtual-card" id="active-card-display" id="main-virtual-card">
+            <div class="card-left">
+              <div class="card-chip"></div>
+              <div class="card-type-label" id="active-card-type-label">Дебетовая карта</div>
+              <div class="card-number" id="active-card-number">•••• •••• •••• ••••</div>
+              <div class="card-holder" id="active-card-name">ВЛАДЕЛЕЦ</div>
+            </div>
+            <div class="card-right">
+              <div class="card-logo-text">DOROSpay</div>
+              <div class="card-expiry">
+                <small>VALID THRU</small>
+                <span id="active-card-expiry">∞/∞</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="quick-grid">
+          <div class="quick-item" onclick="openModal('deposit-modal')">
+            <span class="material-icons">account_balance_wallet</span>
+            <span>Пополнить</span>
+          </div>
+          <div class="quick-item" onclick="openModal('transfer-modal')">
+            <span class="material-icons">swap_horiz</span>
+            <span>Перевести</span>
+          </div>
+          <div class="quick-item" onclick="showMyQR()">
+            <span class="material-icons">qr_code_scanner</span>
+            <span>Мой QR</span>
+          </div>
+          <div class="quick-item" onclick="showAllTransactions()">
+            <span class="material-icons">history</span>
+            <span>История</span>
+          </div>
+        </div>
+
+        <!-- DOROShop: быстрая оплата корзины -->
+        <div class="doroshop-block">
+          <div class="doroshop-info">
+            <div class="shop-emoji">🛍️</div>
+            <div>
+              <h4>DOROShop — Быстрая оплата</h4>
+              <p>В вашей корзине ожидает оплата</p>
+              <div class="doroshop-cart-total" id="doroshop-cart-amount">1 240 TJS</div>
+            </div>
+          </div>
+          <button class="btn-round primary" onclick="payDOROShopCart()">
+            <span class="material-icons">shopping_cart_checkout</span>
+            Оплатить корзину
+          </button>
+        </div>
+
+        <!-- Последние транзакции -->
+        <div class="section-card">
+          <div class="section-header">
+            <h2>Последние операции</h2>
+            <button id="view-all-btn" class="btn-round sm">
+              <span class="material-icons">history</span> Вся история
+            </button>
+          </div>
+          <div id="recent-transactions">
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">Нет операций</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== МОИ КАРТЫ ====== -->
+      <div id="my-cards-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header">
+            <h2>Мои карты DOROSpay</h2>
+            <button id="add-card-btn" class="btn-round primary sm">
+              <span class="material-icons">add</span> Выпустить карту
+            </button>
+          </div>
+          <div id="cards-list"></div>
+        </div>
+      </div>
+
+      <!-- ====== МАГАЗИН КАРТ ====== -->
+      <div id="buy-cards-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>Приобрести карту</h2></div>
+          <div class="shop-grid" id="shop-cards-container"></div>
+        </div>
+      </div>
+
+      <!-- ====== БЕЗОПАСНЫЕ СДЕЛКИ (ESCROW) ====== -->
+      <div id="escrow-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header">
+            <h2>Безопасные сделки</h2>
+            <span style="font-size:13px;color:var(--text-muted);">Защита от мошенничества</span>
+          </div>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;line-height:1.7;">
+            Когда вы заказываете услугу в <strong style="color:var(--cyan)">DOROService</strong> или автоконсьержа в
+            <strong style="color:var(--cyan)">DOROSauto</strong>, деньги замораживаются и не уходят исполнителю сразу.
+            Оплата производится только после вашего подтверждения.
+          </p>
+        </div>
+
+        <!-- Активные холды -->
+        <div class="escrow-section" id="escrow-items-section">
+          <div class="escrow-header">
+            <span class="material-icons">lock_clock</span>
+            <h3>Замороженные средства</h3>
+            <span class="pulse-dot" style="margin-left:auto;"></span>
+          </div>
+
+          <div class="escrow-item" id="escrow-1">
+            <div class="escrow-info">
+              <div class="escrow-icon">🛠️</div>
+              <div>
+                <div class="escrow-label">DOROService · Ремонт смартфона</div>
+                <div class="escrow-sub">Мастер: Алишер К. · Исполнение: сегодня до 18:00</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div>
+                <div class="escrow-amount">350 TJS</div>
+                <div style="text-align:right;margin-top:4px;"><span class="hold-badge">В холде</span></div>
+              </div>
+              <button class="btn-round primary sm" onclick="confirmEscrow('escrow-1', 350, 'DOROService · Ремонт смартфона')">
+                <span class="material-icons">check_circle</span> Подтвердить выполнение
+              </button>
+            </div>
+          </div>
+
+          <div class="escrow-item" id="escrow-2">
+            <div class="escrow-info">
+              <div class="escrow-icon">🚗</div>
+              <div>
+                <div class="escrow-label">DOROSauto · Автоконсьерж (мойка + ТО)</div>
+                <div class="escrow-sub">Водитель: Баходур М. · Автомобиль забран в 10:30</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div>
+                <div class="escrow-amount">580 TJS</div>
+                <div style="text-align:right;margin-top:4px;"><span class="hold-badge">В холде</span></div>
+              </div>
+              <button class="btn-round primary sm" onclick="confirmEscrow('escrow-2', 580, 'DOROSauto · Автоконсьерж')">
+                <span class="material-icons">check_circle</span> Подтвердить выполнение
+              </button>
+            </div>
+          </div>
+
+          <div id="escrow-message" class="alert hidden" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Кнопка Автоконсьерж -->
+        <div class="section-card" style="margin-top:0;">
+          <div class="section-header"><h2>Быстрый чек · Автоконсьерж</h2></div>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">
+            Мгновенная авторизация платежа от 50 TJS — передайте автомобиль автоконсьержу DOROSauto без наличных.
+          </p>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <input type="number" id="autoconcierge-amount" class="calc-input" placeholder="Сумма (мин. 50 TJS)" style="max-width:220px;" value="50">
+            <button class="btn-round amber" onclick="authAutoConсierge()">
+              <span class="material-icons">car_repair</span> Авторизовать платёж
+            </button>
+          </div>
+          <div id="autoconcierge-message" class="alert hidden" style="margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <!-- ====== DOROSauto: КАЛЬКУЛЯТОР ПОПУТЧИКОВ ====== -->
+      <div id="rideshare-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>DOROSauto · Модуль</h2></div>
+        </div>
+
+        <div class="rideshare-calc">
+          <div class="rideshare-header">
+            <span class="material-icons">group</span>
+            <h3>Разделить поездку</h3>
+          </div>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">
+            Вводите общую стоимость бензина и количество попутчиков — DOROSpay рассчитает долю каждого и сгенерирует QR-код для перевода водителю.
+          </p>
+          <div class="rideshare-inputs">
+            <div>
+              <div class="calc-label">💸 Сумма (бензин, TJS)</div>
+              <input type="number" id="rideshare-total" class="calc-input" placeholder="Например: 800">
+            </div>
+            <div>
+              <div class="calc-label">👥 Попутчиков (включая водителя)</div>
+              <input type="number" id="rideshare-count" class="calc-input" placeholder="Например: 4" min="2">
+            </div>
+          </div>
+          <div class="rideshare-inputs" style="grid-template-columns:1fr;">
+            <div>
+              <div class="calc-label">📍 Маршрут (необязательно)</div>
+              <input type="text" id="rideshare-route" class="calc-input" placeholder="Например: Худжанд — Душанбе">
+            </div>
+          </div>
+          <button class="btn-round" style="background:rgba(6,205,212,0.15);border-color:rgba(6,205,212,0.3);color:var(--cyan);margin-top:4px;" onclick="calcRideShare()">
+            <span class="material-icons">calculate</span> Рассчитать и создать QR
+          </button>
+
+          <div class="calc-result" id="rideshare-result">
+            <div class="calc-result-label">Доля каждого попутчика</div>
+            <div class="calc-result-amount" id="rideshare-share">0 TJS</div>
+            <div class="calc-result-label" id="rideshare-route-label" style="margin-top:4px;"></div>
+            <div id="rideshare-qr-output" style="margin-top:16px;"></div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">
+              Отсканируйте QR-код для мгновенного перевода водителю через DOROSpay
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== ГЕНЕРАТОР QR ====== -->
+      <div id="qr-generator-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>QR-код для перевода</h2></div>
+          <div style="max-width:480px;margin:auto;">
+            <div class="form-group">
+              <label>Карта</label>
+              <select id="qr-card-select" class="form-control"></select>
+            </div>
+            <div class="form-group">
+              <label>Сумма (необязательно)</label>
+              <input type="number" id="qr-amount" class="form-control" placeholder="Например 500">
+            </div>
+            <button id="generate-qr-btn" class="btn-round primary" style="width:100%;">
+              <span class="material-icons">qr_code_2</span> Сгенерировать QR
+            </button>
+            <div id="qr-code-result" style="display:none;margin-top:28px;text-align:center;">
+              <div id="qrcode-display"></div>
+              <div id="qr-display-card-number" style="margin-top:12px;font-family:monospace;font-size:18px;color:var(--cyan);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== СКАНЕР QR ====== -->
+      <div id="qr-scanner-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>Сканировать QR-код</h2></div>
+          <p style="color:var(--text-muted);margin-bottom:16px;">Наведите камеру на QR-код получателя</p>
+          <div id="qr-reader-area"><div id="qr-reader"></div></div>
+          <div id="scan-result" style="margin-top:20px;"></div>
+        </div>
+      </div>
+
+      <!-- ====== ВСЕ СЕРВИСЫ ====== -->
+      <div id="services-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>Экосистема DOROSphere</h2></div>
+          <div class="services-grid" id="services-container"></div>
+        </div>
+      </div>
+
+      <!-- ====== АНАЛИТИКА ====== -->
+      <div id="analytics-tab" class="tab-content hidden">
+        <div class="section-card">
+          <div class="section-header"><h2>Финансовая сводка</h2></div>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <span class="material-icons" style="color:var(--success);">trending_up</span>
+              <div style="font-size:14px;color:var(--text-muted);font-weight:600;">Доходы</div>
+              <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--success);" id="total-income">0 TJS</div>
+            </div>
+            <div class="analytics-card">
+              <span class="material-icons" style="color:var(--danger);">trending_down</span>
+              <div style="font-size:14px;color:var(--text-muted);font-weight:600;">Расходы</div>
+              <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--danger);" id="total-expense">0 TJS</div>
+            </div>
+          </div>
+          <div style="color:var(--text-muted);font-size:14px;">Всего операций: <strong id="tx-count" style="color:var(--cyan);">0</strong></div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /.app-wrapper -->
+
+  <!-- Футер с маркетинговым текстом для жюри -->
+  <footer class="app-footer">
+    <div class="container">
+      <div class="footer-logo-row">
+        <div class="footer-eco-badge">🛍️ DOROShop</div>
+        <div class="footer-eco-badge">🚗 DOROSauto</div>
+        <div class="footer-eco-badge">🛠️ DOROService</div>
+        <div class="footer-eco-badge">🚚 DOROSgo</div>
+      </div>
+      <div class="footer-jury-text">
+        <strong>DOROSpay</strong> обеспечивает бесшовную монетизацию, безопасные транзакции и мгновенные расчёты между
+        пользователями, водителями, продавцами и курьерами внутри единого цифрового пространства Таджикистана.
+        Финтех-ядро вселенной <strong>DOROSphere</strong>.
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /#bank-screen -->
+
+<!-- ============================================================
+     МОДАЛЬНЫЕ ОКНА
+============================================================ -->
+
+<!-- Пополнение -->
+<div id="deposit-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Пополнение баланса</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Сумма (TJS)</label><input type="number" id="deposit-amount" class="form-control" placeholder="100"></div>
+      <div class="form-group"><label>PIN карты</label><input type="password" id="deposit-pin" class="form-control" maxlength="4" placeholder="••••"></div>
+      <div id="deposit-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-round close-modal">Отмена</button>
+      <button id="confirm-deposit" class="btn-round primary">Пополнить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Перевод -->
+<div id="transfer-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Перевод средств</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Номер карты получателя</label><input type="text" id="recipient-card" class="form-control" placeholder="0000 0000 0000 0000"></div>
+      <div class="form-group"><label>Сумма (TJS)</label><input type="number" id="transfer-amount" class="form-control" placeholder="500"></div>
+      <div class="form-group"><label>Ваш PIN</label><input type="password" id="transfer-pin" class="form-control" maxlength="4" placeholder="••••"></div>
+      <div class="form-group"><label>Комментарий</label><input type="text" id="transfer-comment" class="form-control" placeholder="Назначение платежа"></div>
+      <div id="transfer-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-round close-modal">Отмена</button>
+      <button id="confirm-transfer" class="btn-round primary">Перевести</button>
+    </div>
+  </div>
+</div>
+
+<!-- Добавить карту -->
+<div id="add-card-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Выпуск карты DOROSpay</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Тип карты</label>
+        <select id="new-card-type" class="form-control">
+          <option value="debit">Дебетовая (0 TJS)</option>
+          <option value="gold">Gold (500 TJS)</option>
+          <option value="platinum">Platinum (1000 TJS)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Название карты</label><input type="text" id="new-card-name" class="form-control" placeholder="Моя карта"></div>
+      <div id="add-card-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-round close-modal">Отмена</button>
+      <button id="confirm-add-card" class="btn-round primary">Выпустить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Показ QR -->
+<div id="qr-modal" class="modal hidden">
+  <div class="modal-content" style="max-width:480px;text-align:center;">
+    <div class="modal-header" style="justify-content:space-between;">
+      <h3>Ваш QR-код</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div id="qrcode-modal"></div>
+    <div id="qr-modal-card-number" style="font-size:18px;margin:16px 0;font-family:monospace;color:var(--cyan);"></div>
+  </div>
+</div>
+
+<!-- Перевод по скану QR -->
+<div id="scan-transfer-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Перевод по QR</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Карта получателя</label><input type="text" id="scan-recipient-card" class="form-control" readonly></div>
+      <div class="form-group"><label>Сумма (TJS)</label><input type="number" id="scan-transfer-amount" class="form-control" placeholder="Введите сумму"></div>
+      <div class="form-group"><label>Ваш PIN</label><input type="password" id="scan-transfer-pin" class="form-control" maxlength="4" placeholder="••••"></div>
+      <div class="form-group"><label>Комментарий</label><input type="text" id="scan-transfer-comment" class="form-control" placeholder="..."></div>
+      <div id="scan-transfer-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-round close-modal">Отмена</button>
+      <button id="confirm-scan-transfer" class="btn-round primary">Перевести</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT — вся логика
+============================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  // ===========================
+  // FIREBASE ИНИЦИАЛИЗАЦИЯ
+  // (структура сохранена без изменений)
+  // ===========================
+  const firebaseConfig = {
+    apiKey: "AIzaSyB7DP0EZfTQE78CUj8N-_aPyfEf5MvAc5g",
+    authDomain: "doroscoin.firebaseapp.com",
+    databaseURL: "https://doroscoin-default-rtdb.firebaseio.com",
+    projectId: "doroscoin",
+    storageBucket: "doroscoin.appspot.com",
+    messagingSenderId: "372256789289",
+    appId: "1:372256789289:web:48d518bd16c0c5fa6e5d38"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth     = firebase.auth();
+  const database = firebase.database();
+
+  // ===========================
+  // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+  // ===========================
+  let currentUser    = null;
+  let userData       = null;
+  let userCards      = [];
+  let activeCardIndex = 0;
+  const ADMIN_EMAIL  = "doros@bank.tj";
+
+  // Имитация суммы корзины DOROShop
+  let doroshopCartAmount = 1240;
+
+  // ===========================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ===========================
+
+  // Форматирование валюты
+  const formatAmount = (amt) =>
+    new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'TJS', minimumFractionDigits: 0 }).format(amt || 0);
+
+  // Генерация случайного номера карты
+  const generateCardNumber = () => {
+    let num = '';
+    for (let i = 0; i < 16; i++) {
+      num += Math.floor(Math.random() * 10);
+      if ((i + 1) % 4 === 0 && i < 15) num += ' ';
+    }
+    return num;
+  };
+
+  // Показ уведомления в элементе
+  const showMessage = (el, text, success) => {
+    el.textContent = text;
+    el.className = `alert ${success ? 'alert-success' : 'alert-danger'}`;
+    el.classList.remove('hidden');
+    if (success) setTimeout(() => el.classList.add('hidden'), 3500);
+  };
+
+  // Открытие / закрытие модальных окон
+  window.openModal = (id) => document.getElementById(id)?.classList.remove('hidden');
+  const closeAllModals = () =>
+    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+
+  // ===========================
+  // 3D TILT ЭФФЕКТ НА КАРТЕ
+  // ===========================
+  function initCardTilt() {
+    const card = document.querySelector('.virtual-card');
+    if (!card) return;
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / (rect.width / 2);
+      const dy = (e.clientY - cy) / (rect.height / 2);
+      const rotX = -dy * 8;
+      const rotY = dx * 12;
+      card.style.transform = `perspective(1200px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.02)`;
+      card.style.boxShadow = `${-rotY * 2}px ${rotX * 2}px 40px rgba(37,99,235,0.4), 0 32px 64px -16px rgba(0,0,0,0.7)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1200px) rotateX(0) rotateY(0) scale(1)';
+      card.style.boxShadow = '';
+    });
+  }
+
+  // ===========================
+  // АНИМАЦИЯ СЧЁТЧИКА БАЛАНСА
+  // ===========================
+  function animateBalance(targetEl, fromAmt, toAmt, duration = 600) {
+    const start = performance.now();
+    const update = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Easing: ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = fromAmt + (toAmt - fromAmt) * eased;
+      targetEl.textContent = formatAmount(current);
+      if (progress < 1) requestAnimationFrame(update);
+      else targetEl.textContent = formatAmount(toAmt);
+    };
+    requestAnimationFrame(update);
+  }
+
+  let lastBalance = 0;
+
+  // ===========================
+  // ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ
+  // (сохранена оригинальная структура users/${uid})
+  // ===========================
+  function loadUserData(uid) {
+    database.ref(`users/${uid}`).once('value').then(snap => {
+      userData = snap.val() || {};
+
+      // Если нет карт — создаём дефолтную
+      if (!userData.cards || userData.cards.length === 0) {
+        const firstCard = {
+          id: 'card_' + Date.now(),
+          type: 'debit',
+          number: generateCardNumber(),
+          name: 'Основная карта',
+          balance: 5000,
+          isPrimary: true,
+          pin: '1234',
+          expiry: '12/28'
+        };
+        userData.cards       = [firstCard];
+        userData.transactions = userData.transactions || [];
+        userData.credits      = userData.credits || [];
+        database.ref(`users/${uid}`).set(userData);
+      }
+
+      userCards       = userData.cards || [];
+      activeCardIndex = userCards.findIndex(c => c.isPrimary);
+      if (activeCardIndex === -1 && userCards.length) activeCardIndex = 0;
+
+      updateUI();
+    });
+  }
+
+  // ===========================
+  // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+  // ===========================
+  function updateUI() {
+    // Имя пользователя
+    document.getElementById('user-display-name').textContent =
+      userData?.fullName || currentUser?.email || '';
+
+    // Бейдж администратора
+    document.getElementById('admin-badge').classList.toggle(
+      'hidden', currentUser?.email !== ADMIN_EMAIL
+    );
+
+    if (userCards.length) {
+      const card = userCards[activeCardIndex] || userCards[0];
+
+      // Тип карты
+      document.getElementById('active-card-type-label').textContent =
+        card.type === 'gold' ? 'Gold Card DOROSpay'
+        : card.type === 'platinum' ? 'Platinum Card DOROSpay'
+        : 'Дебетовая карта';
+
+      document.getElementById('active-card-number').textContent = card.number;
+      document.getElementById('active-card-name').textContent =
+        (card.name || 'Владелец').toUpperCase();
+      document.getElementById('active-card-expiry').textContent = card.expiry;
+
+      // Анимируем баланс
+      const balEl = document.getElementById('balance');
+      animateBalance(balEl, lastBalance, card.balance);
+      lastBalance = card.balance;
+      document.getElementById('active-card-badge').textContent = card.name || 'Основная';
+    }
+
+    // Список карт
+    const cardsDiv = document.getElementById('cards-list');
+    if (cardsDiv) {
+      cardsDiv.innerHTML = userCards.map((c, i) => `
+        <div class="card-item-preview" onclick="setActiveCard(${i})">
+          ${c.isPrimary
+            ? '<span style="background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);color:var(--cyan);padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;">✓ Основная</span>'
+            : ''}
+          <div style="font-size:16px;font-weight:700;margin:12px 0;">${c.name}</div>
+          <div style="font-family:monospace;font-size:14px;color:var(--text-muted);">${c.number}</div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-top:12px;color:var(--cyan);">${formatAmount(c.balance)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Селект для QR-генератора
+    const qrSelect = document.getElementById('qr-card-select');
+    if (qrSelect) {
+      qrSelect.innerHTML = userCards.map((c, i) =>
+        `<option value="${i}">${c.name} — ${c.number}</option>`
+      ).join('');
+    }
+
+    // Рендер транзакций с экосистемными тегами
+    renderTransactions();
+
+    // Аналитика
+    if (userData.transactions) {
+      let inc = 0, exp = 0;
+      userData.transactions.forEach(t => {
+        if (t.type === 'deposit' || t.type === 'transfer_in') inc += t.amount;
+        else if (t.type === 'transfer_out' || t.type === 'purchase') exp += t.amount;
+      });
+      document.getElementById('total-income').textContent  = formatAmount(inc);
+      document.getElementById('total-expense').textContent = formatAmount(exp);
+      document.getElementById('tx-count').textContent      = userData.transactions.length;
+    }
+  }
+
+  // ===========================
+  // РЕНДЕР ТРАНЗАКЦИЙ
+  // С экосистемными тегами DOROSphere
+  // ===========================
+  function renderTransactions(all = false) {
+    const txs     = (userData.transactions || []);
+    const toShow  = all ? txs : txs.slice(0, 7);
+    const recentDiv = document.getElementById('recent-transactions');
+    if (!recentDiv) return;
+
+    if (!toShow.length) {
+      recentDiv.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Нет операций</div>';
+      return;
+    }
+
+    // Функция определяет экосистемный тег транзакции
+    const getEcoTag = (t) => {
+      if (t.eco === 'doroshop')  return `<span class="tx-tag tag-shop">🛍️ DOROShop</span>`;
+      if (t.eco === 'dorosauto') return `<span class="tx-tag tag-auto">🚗 DOROSauto</span>`;
+      if (t.eco === 'doroservice') return `<span class="tx-tag tag-service">🛠️ DOROService</span>`;
+      if (t.eco === 'dorosgo')   return `<span class="tx-tag tag-go">🚚 DOROSgo</span>`;
+      return '';
+    };
+
+    const getIconClass = (t) => {
+      if (t.eco === 'doroshop')    return 'shop';
+      if (t.eco === 'dorosauto')   return 'auto';
+      if (t.eco === 'doroservice') return 'service';
+      if (t.eco === 'dorosgo')     return 'go';
+      if (t.type === 'deposit' || t.type === 'transfer_in') return 'deposit';
+      if (t.type === 'transfer_out') return 'out';
+      return 'deposit';
+    };
+
+    const getIcon = (t) => {
+      if (t.eco === 'doroshop')    return '🛍️';
+      if (t.eco === 'dorosauto')   return '🚗';
+      if (t.eco === 'doroservice') return '🛠️';
+      if (t.eco === 'dorosgo')     return '🚚';
+      if (t.type === 'deposit')    return '⬆️';
+      if (t.type === 'transfer_in') return '💚';
+      return '💸';
+    };
+
+    const getLabel = (t) => {
+      if (t.item) return t.item;
+      if (t.type === 'deposit')      return 'Пополнение баланса';
+      if (t.type === 'transfer_out') return `Перевод → ${t.to ? t.to.slice(-4) : ''}`;
+      if (t.type === 'transfer_in')  return `Получен перевод`;
+      if (t.type === 'purchase')     return `Покупка карты`;
+      return 'Операция';
+    };
+
+    const isPositive = (t) =>
+      t.type === 'deposit' || t.type === 'transfer_in';
+
+    recentDiv.innerHTML = toShow.map(t => `
+      <div class="transaction">
+        <div class="tx-info">
+          <div class="tx-icon ${getIconClass(t)}">${getIcon(t)}</div>
+          <div>
+            <div class="tx-label">${getLabel(t)} ${getEcoTag(t)}</div>
+            <div class="tx-meta">${new Date(t.timestamp).toLocaleString('ru-RU')}</div>
+          </div>
+        </div>
+        <div class="tx-amount ${isPositive(t) ? 'positive' : 'negative'}">
+          ${isPositive(t) ? '+' : '-'}${formatAmount(t.amount)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Показать все транзакции
+  window.showAllTransactions = () => renderTransactions(true);
+
+  // Переключение активной карты
+  window.setActiveCard = (index) => {
+    if (index >= 0 && index < userCards.length) {
+      activeCardIndex = index;
+      updateUI();
+    }
+  };
+
+  // Показать QR текущей карты
+  window.showMyQR = () => {
+    if (!userCards.length) return alert('Нет доступных карт');
+    const card = userCards[activeCardIndex] || userCards[0];
+    const link = `${window.location.origin}${window.location.pathname}?card=${card.number.replace(/\s/g, '')}`;
+    document.getElementById('qrcode-modal').innerHTML = '';
+    new QRCode(document.getElementById('qrcode-modal'), { text: link, width: 240, height: 240 });
+    document.getElementById('qr-modal-card-number').textContent = card.number;
+    document.getElementById('qr-modal').classList.remove('hidden');
+  };
+
+  // ===========================
+  // DOROShop: ОПЛАТА КОРЗИНЫ
+  // ===========================
+  window.payDOROShopCart = () => {
+    if (!userCards.length) return;
+    const card = userCards[activeCardIndex] || userCards[0];
+    if (card.balance < doroshopCartAmount) {
+      alert('Недостаточно средств для оплаты корзины DOROShop');
+      return;
+    }
+    if (!confirm(`Оплатить корзину DOROShop на сумму ${formatAmount(doroshopCartAmount)} с карты "${card.name}"?`)) return;
+
+    card.balance -= doroshopCartAmount;
+    if (!userData.transactions) userData.transactions = [];
+    userData.transactions.unshift({
+      id: Date.now(),
+      type: 'purchase',
+      amount: doroshopCartAmount,
+      item: 'Покупка в DOROShop',
+      eco: 'doroshop',        // экосистемный тег
+      timestamp: new Date().toISOString()
+    });
+
+    database.ref(`users/${currentUser.uid}`).set(userData).then(() => {
+      // Обновляем сумму корзины (имитация — сбрасываем)
+      doroshopCartAmount = Math.floor(Math.random() * 1500 + 300);
+      document.getElementById('doroshop-cart-amount').textContent = formatAmount(doroshopCartAmount);
+      updateUI();
+      alert(`✅ Оплачено! Ваш заказ DOROShop принят.`);
+    });
+  };
+
+  // ===========================
+  // ЭСКРОУ: ПОДТВЕРЖДЕНИЕ ВЫПОЛНЕНИЯ
+  // ===========================
+  window.confirmEscrow = (itemId, amount, label) => {
+    if (!userCards.length) return;
+    const card = userCards[activeCardIndex] || userCards[0];
+
+    if (!confirm(`Подтвердить выполнение «${label}»? Средства (${formatAmount(amount)}) будут переведены исполнителю.`)) return;
+
+    // Списываем с баланса (деньги уже были "заморожены")
+    if (card.balance < amount) {
+      showMessage(document.getElementById('escrow-message'), 'Недостаточно средств', false);
+      return;
+    }
+    card.balance -= amount;
+
+    if (!userData.transactions) userData.transactions = [];
+
+    // Определяем экосистемный тег по label
+    const eco = label.includes('DOROSauto') ? 'dorosauto' : 'doroservice';
+
+    userData.transactions.unshift({
+      id: Date.now(),
+      type: 'transfer_out',
+      amount,
+      item: label + ' (Эскроу)',
+      eco,
+      timestamp: new Date().toISOString()
+    });
+
+    database.ref(`users/${currentUser.uid}`).set(userData).then(() => {
+      // Скрываем элемент эскроу
+      const el = document.getElementById(itemId);
+      if (el) {
+        el.style.transition = 'opacity 0.4s, transform 0.4s';
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(20px)';
+        setTimeout(() => el.remove(), 400);
+      }
+      showMessage(document.getElementById('escrow-message'),
+        `✅ Оплата ${formatAmount(amount)} подтверждена. Исполнитель получит средства.`, true);
+      updateUI();
+    });
+  };
+
+  // ===========================
+  // АВТОКОНСЬЕРЖ: АВТОРИЗАЦИЯ ПЛАТЕЖА
+  // ===========================
+  window.authAutoConсierge = () => {
+    const amount = parseFloat(document.getElementById('autoconcierge-amount').value);
+    const msg    = document.getElementById('autoconcierge-message');
+    if (!amount || amount < 50) {
+      return showMessage(msg, 'Минимальная сумма авторизации — 50 TJS', false);
+    }
+    const card = userCards[activeCardIndex];
+    if (!card) return;
+    if (card.balance < amount) {
+      return showMessage(msg, 'Недостаточно средств', false);
+    }
+    // Замораживаем (не списываем) — имитация
+    showMessage(msg, `🚗 Платёж ${formatAmount(amount)} авторизован для DOROSauto. Автомобиль можно передавать!`, true);
+  };
+
+  // ===========================
+  // КАЛЬКУЛЯТОР ПОПУТЧИКОВ
+  // ===========================
+  window.calcRideShare = () => {
+    const total   = parseFloat(document.getElementById('rideshare-total').value);
+    const count   = parseInt(document.getElementById('rideshare-count').value);
+    const route   = document.getElementById('rideshare-route').value.trim();
+    const result  = document.getElementById('rideshare-result');
+    const shareEl = document.getElementById('rideshare-share');
+    const routeEl = document.getElementById('rideshare-route-label');
+    const qrOut   = document.getElementById('rideshare-qr-output');
+
+    if (!total || total <= 0 || !count || count < 2) {
+      alert('Введите сумму и количество попутчиков (минимум 2)');
+      return;
+    }
+
+    const share = Math.ceil(total / count);
+    shareEl.textContent = formatAmount(share);
+    routeEl.textContent = route ? `Маршрут: ${route}` : '';
+    result.style.display = 'block';
+
+    // Генерируем QR для перевода водителю
+    qrOut.innerHTML = '';
+    const card = userCards.length ? userCards[activeCardIndex] || userCards[0] : null;
+    if (card) {
+      const link = `${window.location.origin}${window.location.pathname}?card=${card.number.replace(/\s/g,'')}&amount=${share}&note=${encodeURIComponent('Попутчик' + (route ? ' · ' + route : ''))}`;
+      new QRCode(qrOut, { text: link, width: 200, height: 200 });
+    } else {
+      qrOut.textContent = 'Нет доступных карт для генерации QR';
+    }
+  };
+
+  // ===========================
+  // ПОПОЛНЕНИЕ БАЛАНСА
+  // ===========================
+  document.getElementById('confirm-deposit')?.addEventListener('click', () => {
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    const pin    = document.getElementById('deposit-pin').value;
+    const msg    = document.getElementById('deposit-message');
+
+    if (!amount || amount <= 0) return showMessage(msg, 'Введите корректную сумму', false);
+    const card = userCards[activeCardIndex];
+    if (!card) return;
+    if (pin !== card.pin) return showMessage(msg, 'Неверный PIN', false);
+
+    card.balance += amount;
+    if (!userData.transactions) userData.transactions = [];
+    userData.transactions.unshift({
+      id: Date.now(),
+      type: 'deposit',
+      amount,
+      timestamp: new Date().toISOString()
+    });
+
+    database.ref(`users/${currentUser.uid}`).set(userData).then(() => {
+      showMessage(msg, `✅ Пополнено на ${formatAmount(amount)}`, true);
+      setTimeout(closeAllModals, 1500);
+      updateUI();
+    });
+  });
+
+  // ===========================
+  // ПЕРЕВОД СРЕДСТВ
+  // (сохранена оригинальная Firebase-логика)
+  // ===========================
+document.getElementById('confirm-transfer')?.addEventListener('click', () => {
+  const toCardRaw = document.getElementById('recipient-card').value.replace(/\s/g, '');
+  const amount    = parseFloat(document.getElementById('transfer-amount').value);
+  const pin       = document.getElementById('transfer-pin').value;
+  const comment   = document.getElementById('transfer-comment').value;
+  const msg       = document.getElementById('transfer-message');
+
+  if (!toCardRaw || toCardRaw.length !== 16) return showMessage(msg, 'Неверный номер карты (16 цифр)', false);
+  if (!amount || amount <= 0) return showMessage(msg, 'Введите сумму', false);
+
+  const senderCard = userCards[activeCardIndex];
+  if (pin !== senderCard.pin) return showMessage(msg, 'Неверный PIN', false);
+
+  const fee   = amount * 0.01;
+  const total = amount + fee;
+  if (total > senderCard.balance) return showMessage(msg, `Недостаточно средств (нужно ${formatAmount(total)} с комиссией)`, false);
+
+  database.ref('users').once('value').then(snap => {
+    let recipientUid = null, recipientCard = null, recipientData = null;
+    
+    // Получаем все данные как объект
+    const users = snap.val();
+    if (!users) {
+      return showMessage(msg, 'Нет пользователей в системе', false);
+    }
+    
+    // Перебираем всех пользователей в объекте
+    for (const uid in users) {
+      const u = users[uid];
+      // Проверяем, что u.cards существует и является массивом
+      if (u && u.cards && Array.isArray(u.cards)) {
+        const found = u.cards.find(c => c && c.number && c.number.replace(/\s/g, '') === toCardRaw);
+        if (found) {
+          recipientUid = uid;
+          recipientCard = found;
+          recipientData = u;
+          break;
+        }
+      }
+    }
+
+    if (!recipientUid) return showMessage(msg, 'Получатель не найден в системе DOROSpay', false);
+    if (recipientUid === currentUser.uid) return showMessage(msg, 'Самоперевод запрещён', false);
+
+    // Находим индекс карты получателя
+    const recipientCardIndex = recipientData.cards.findIndex(c => c.number === recipientCard.number);
+    
+    senderCard.balance    -= total;
+    recipientData.cards[recipientCardIndex].balance += amount;
+
+    const outTx = { 
+      id: Date.now(),   
+      type: 'transfer_out', 
+      amount, 
+      to: toCardRaw, 
+      fee, 
+      comment, 
+      timestamp: new Date().toISOString() 
+    };
+    const inTx  = { 
+      id: Date.now()+1, 
+      type: 'transfer_in',  
+      amount, 
+      from: senderCard.number, 
+      comment, 
+      timestamp: new Date().toISOString() 
+    };
+
+    if (!userData.transactions)      userData.transactions      = [];
+    if (!recipientData.transactions) recipientData.transactions = [];
+    userData.transactions.unshift(outTx);
+    recipientData.transactions.unshift(inTx);
+
+    const updates = {};
+    updates[`users/${currentUser.uid}`] = userData;
+    updates[`users/${recipientUid}`]    = recipientData;
+    
+    database.ref().update(updates).then(() => {
+      showMessage(msg, `✅ Переведено ${formatAmount(amount)} (комиссия ${formatAmount(fee)})`, true);
+      setTimeout(() => { 
+        closeAllModals(); 
+        updateUI();
+        // Обновляем локальные данные
+        loadUserData(currentUser.uid);
+      }, 2000);
+    }).catch(err => {
+      console.error('Update error:', err);
+      showMessage(msg, 'Ошибка: ' + err.message, false);
+    });
+  }).catch(err => {
+    console.error('Read error:', err);
+    showMessage(msg, 'Ошибка доступа к базе: ' + err.message, false);
+  });
+});
+
+  // ===========================
+  // QR-СКАНЕР
+  // ===========================
+  let html5QrCode = null;
+
+  function startScanner() {
+    if (!document.getElementById('qr-scanner-tab').classList.contains('hidden')) {
+      const qrDiv = document.getElementById('qr-reader');
+      if (!qrDiv) return;
+      if (html5QrCode) { html5QrCode.stop().catch(() => {}); html5QrCode = null; }
+
+      html5QrCode = new Html5Qrcode('qr-reader');
+      html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: 240 },
+        (decodedText) => {
+          html5QrCode.stop();
+          try {
+            const url        = new URL(decodedText);
+            const cardParam  = url.searchParams.get('card');
+            const amountParam = url.searchParams.get('amount');
+            if (cardParam && cardParam.length === 16) {
+              document.getElementById('scan-recipient-card').value = cardParam.match(/.{1,4}/g).join(' ');
+              document.getElementById('scan-transfer-amount').value = amountParam || '';
+              closeAllModals();
+              document.getElementById('scan-transfer-modal').classList.remove('hidden');
+            } else {
+              alert('Некорректный QR-код DOROSpay');
+            }
+          } catch {
+            alert('Не удалось распознать QR-код');
+          }
+        },
+        () => {}
+      );
+    }
+  }
+
+  // Перевод по сканированному QR (логика сохранена)
+document.getElementById('confirm-scan-transfer')?.addEventListener('click', () => {
+  const toCardRaw = document.getElementById('scan-recipient-card').value.replace(/\s/g, '');
+  const amount    = parseFloat(document.getElementById('scan-transfer-amount').value);
+  const pin       = document.getElementById('scan-transfer-pin').value;
+  const comment   = document.getElementById('scan-transfer-comment').value;
+  const msg       = document.getElementById('scan-transfer-message');
+
+  if (!toCardRaw || toCardRaw.length !== 16) return showMessage(msg, 'Ошибка карты', false);
+  if (!amount || amount <= 0) return showMessage(msg, 'Введите сумму', false);
+
+  const senderCard = userCards[activeCardIndex];
+  if (pin !== senderCard.pin) return showMessage(msg, 'Неверный PIN', false);
+
+  const fee   = amount * 0.01;
+  const total = amount + fee;
+  if (total > senderCard.balance) return showMessage(msg, `Недостаточно (нужно ${formatAmount(total)})`, false);
+
+  database.ref('users').once('value').then(snap => {
+    let recipientUid = null, recipientCard = null, recipientData = null;
+    
+    const users = snap.val();
+    if (!users) {
+      return showMessage(msg, 'Нет пользователей в системе', false);
+    }
+    
+    for (const uid in users) {
+      const u = users[uid];
+      if (u && u.cards && Array.isArray(u.cards)) {
+        const found = u.cards.find(c => c && c.number && c.number.replace(/\s/g, '') === toCardRaw);
+        if (found) {
+          recipientUid = uid;
+          recipientCard = found;
+          recipientData = u;
+          break;
+        }
+      }
+    }
+
+    if (!recipientUid) return showMessage(msg, 'Получатель не найден', false);
+    if (recipientUid === currentUser.uid) return showMessage(msg, 'Самоперевод запрещён', false);
+
+    const recipientCardIndex = recipientData.cards.findIndex(c => c.number === recipientCard.number);
+    
+    senderCard.balance    -= total;
+    recipientData.cards[recipientCardIndex].balance += amount;
+
+    const outTx = { 
+      id: Date.now(),   
+      type: 'transfer_out', 
+      amount, 
+      to: toCardRaw, 
+      fee, 
+      comment, 
+      timestamp: new Date().toISOString() 
+    };
+    const inTx  = { 
+      id: Date.now()+1, 
+      type: 'transfer_in',  
+      amount, 
+      from: senderCard.number, 
+      comment, 
+      timestamp: new Date().toISOString() 
+    };
+
+    if (!userData.transactions)      userData.transactions      = [];
+    if (!recipientData.transactions) recipientData.transactions = [];
+    userData.transactions.unshift(outTx);
+    recipientData.transactions.unshift(inTx);
+
+    const updates = {};
+    updates[`users/${currentUser.uid}`] = userData;
+    updates[`users/${recipientUid}`]    = recipientData;
+    
+    database.ref().update(updates).then(() => {
+      showMessage(msg, `✅ Переведено ${formatAmount(amount)}`, true);
+      setTimeout(() => { 
+        closeAllModals(); 
+        updateUI();
+        loadUserData(currentUser.uid);
+      }, 1500);
+    }).catch(err => {
+      console.error('Update error:', err);
+      showMessage(msg, 'Ошибка: ' + err.message, false);
+    });
+  }).catch(err => {
+    console.error('Read error:', err);
+    showMessage(msg, 'Ошибка доступа к базе: ' + err.message, false);
+  });
+});
+
+  // ===========================
+  // QR-ГЕНЕРАТОР
+  // ===========================
+  document.getElementById('generate-qr-btn')?.addEventListener('click', () => {
+    const idx  = parseInt(document.getElementById('qr-card-select').value);
+    const card = userCards[idx];
+    if (!card) return;
+
+    let link = `${window.location.origin}${window.location.pathname}?card=${card.number.replace(/\s/g, '')}`;
+    const amount = document.getElementById('qr-amount').value;
+    if (amount) link += `&amount=${amount}`;
+
+    document.getElementById('qrcode-display').innerHTML = '';
+    new QRCode(document.getElementById('qrcode-display'), { text: link, width: 240, height: 240 });
+    document.getElementById('qr-display-card-number').textContent = card.number;
+    document.getElementById('qr-code-result').style.display = 'block';
+  });
+
+  // ===========================
+  // МАГАЗИН КАРТ
+  // ===========================
+  document.getElementById('shop-cards-container').innerHTML = `
+    <div class="shop-item">
+      <span class="material-icons">credit_card</span>
+      <h4>Дебетовая</h4>
+      <div class="card-price">0 TJS</div>
+      <button class="btn-shop" onclick="quickPurchase('debit')">Получить бесплатно</button>
+    </div>
+    <div class="shop-item">
+      <span class="material-icons">star</span>
+      <h4>Gold</h4>
+      <div class="card-price">500 TJS</div>
+      <button class="btn-shop" onclick="quickPurchase('gold')">Купить Gold</button>
+    </div>
+    <div class="shop-item">
+      <span class="material-icons">diamond</span>
+      <h4>Platinum</h4>
+      <div class="card-price">1 000 TJS</div>
+      <button class="btn-shop" onclick="quickPurchase('platinum')">Купить Platinum</button>
+    </div>
+  `;
+
+  window.quickPurchase = (type) => {
+    document.getElementById('new-card-type').value = type;
+    document.getElementById('new-card-name').value =
+      type === 'gold' ? 'Gold Card' : type === 'platinum' ? 'Platinum Card' : 'Дебетовая карта';
+    openModal('add-card-modal');
+  };
+
+  // ===========================
+  // ДОБАВЛЕНИЕ КАРТЫ
+  // ===========================
+  document.getElementById('confirm-add-card')?.addEventListener('click', () => {
+    const type  = document.getElementById('new-card-type').value;
+    const name  = document.getElementById('new-card-name').value.trim() ||
+      (type === 'gold' ? 'Gold' : type === 'platinum' ? 'Platinum' : 'Дебетовая');
+    const price = type === 'gold' ? 500 : type === 'platinum' ? 1000 : 0;
+    const msg   = document.getElementById('add-card-message');
+    const activeCard = userCards[activeCardIndex];
+
+    if (price > 0 && price > activeCard.balance)
+      return showMessage(msg, `Недостаточно средств. Нужно ${price} TJS.`, false);
+    if (price > 0) activeCard.balance -= price;
+
+    const newCard = {
+      id: 'card_' + Date.now(),
+      type,
+      number: generateCardNumber(),
+      name,
+      balance: 0,
+      isPrimary: false,
+      pin: '1234',
+      expiry: '12/28'
+    };
+    userCards.push(newCard);
+    userData.cards = userCards;
+
+    if (price > 0) {
+      if (!userData.transactions) userData.transactions = [];
+      userData.transactions.unshift({
+        id: Date.now(),
+        type: 'purchase',
+        amount: price,
+        item: type + ' card DOROSpay',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    database.ref(`users/${currentUser.uid}`).set(userData).then(() => {
+      showMessage(msg, '✅ Карта успешно выпущена', true);
+      setTimeout(() => { closeAllModals(); updateUI(); }, 1500);
+    });
+  });
+
+  // ===========================
+  // СЕРВИСЫ ЭКОСИСТЕМЫ DOROSphere
+  // ===========================
+  const financialServices = [
+    { id: 'doroshop',     title: 'DOROShop',          description: 'Маркетплейс с безопасными платежами и мгновенной оплатой', icon: 'fa-solid fa-cart-shopping', url: 'https://dorosfamd.com/DOROShop',       badge: 'ПЛАТЕЖИ' },
+    { id: 'famdcoin',     title: 'FAMDcoin',           description: 'Биржевой монитор в реальном времени: акции Apple, NVIDIA…', icon: 'fa-brands fa-bitcoin',        url: 'https://dorosfamd.com/akci.html',     badge: 'КРИПТО' },
+    { id: 'payments',     title: 'DOROSpay',           description: 'Мгновенные переводы, оплата услуг и коммунальных платежей', icon: 'fa-solid fa-credit-card',      url: 'https://dorosfamd.com/bankd',         badge: 'ПЛАТЕЖИ' },
+    { id: 'finance',      title: 'Финансы',            description: 'Управление бюджетом, инвестиции и кредитный рейтинг',      icon: 'fa-solid fa-chart-line',       url: 'https://dorosfamd.com/fin',           badge: 'ФИНАНСЫ' },
+    { id: 'accounting',   title: 'Бухгалтерия',        description: 'Онлайн-бухгалтерия для бизнеса, налоги и отчётность',     icon: 'fa-solid fa-calculator',       url: 'https://dorosfamd.com/bschool',       badge: 'БИЗНЕС' },
+    { id: 'businessideas',title: 'Идеи для бизнеса',  description: 'Генератор бизнес-идей и поиск инвесторов',                 icon: 'fa-regular fa-lightbulb',      url: 'https://dorosfamd.com/ideya',         badge: 'СТАРТАП' },
+    { id: 'taxi',         title: 'Такси DOROS',        description: 'Оплата поездок с карты, бонусы и кешбэк',                  icon: 'fa-solid fa-taxi',             url: 'https://famd-sn.github.io/PIXball/client', badge: 'ТРАНСПОРТ' },
+    { id: 'currency',     title: 'Конвертер валют',    description: 'Актуальные курсы 150+ валют и криптовалют',                icon: 'fa-solid fa-exchange-alt',     url: 'https://dorosfamd.com/FAMDvaluta',    badge: 'КУРСЫ' }
+  ];
+
+  const servicesContainer = document.getElementById('services-container');
+  if (servicesContainer) {
+    servicesContainer.innerHTML = financialServices.map(s => `
+      <div class="service-card" onclick="window.open('${s.url}', '_blank')">
+        <span class="badge">${s.badge}</span>
+        <div class="service-icon"><i class="${s.icon}"></i></div>
+        <div class="service-title">${s.title}</div>
+        <div class="service-desc">${s.description}</div>
+        <div class="service-link">Перейти <span class="material-icons" style="font-size:16px;">arrow_forward</span></div>
+      </div>
+    `).join('');
+  }
+
+  // ===========================
+  // НАВИГАЦИЯ
+  // ===========================
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function() {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      this.classList.add('active');
+      const tab = document.getElementById(this.dataset.tab + '-tab');
+      if (tab) tab.classList.remove('hidden');
+      if (this.dataset.tab === 'qr-scanner') startScanner();
+    });
+  });
+
+  // ===========================
+  // КНОПКИ ДЕЙСТВИЙ
+  // ===========================
+  document.getElementById('add-card-btn')?.addEventListener('click', () => openModal('add-card-modal'));
+  document.getElementById('logout-btn')?.addEventListener('click', () => auth.signOut());
+  document.getElementById('view-all-btn')?.addEventListener('click', showAllTransactions);
+  document.querySelectorAll('.modal-close, .close-modal').forEach(b =>
+    b.addEventListener('click', closeAllModals)
+  );
+
+  // Закрытие модала кликом на фон
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) closeAllModals();
+    });
+  });
+
+  // ===========================
+  // ПЕРЕКЛЮЧЕНИЕ ФОРМ АВТОРИЗАЦИИ
+  // ===========================
+  document.getElementById('show-register')?.addEventListener('click', (e) => {
+    e.preventDefault(); toggleAuthForm('reg');
+  });
+  document.getElementById('show-login')?.addEventListener('click', (e) => {
+    e.preventDefault(); toggleAuthForm('login');
+  });
+  document.getElementById('tab-login').addEventListener('click', () => toggleAuthForm('login'));
+  document.getElementById('tab-reg').addEventListener('click',   () => toggleAuthForm('reg'));
+
+  function toggleAuthForm(type) {
+    const loginForm = document.getElementById('login-form');
+    const regForm   = document.getElementById('register-form');
+    const tabs      = document.querySelectorAll('.auth-tab');
+    if (type === 'login') {
+      loginForm.style.display = 'block'; regForm.style.display = 'none';
+      tabs[0].classList.add('active'); tabs[1].classList.remove('active');
+    } else {
+      loginForm.style.display = 'none'; regForm.style.display = 'block';
+      tabs[0].classList.remove('active'); tabs[1].classList.add('active');
+    }
+  }
+
+  // ===========================
+  // ВХОД / РЕГИСТРАЦИЯ (Firebase Auth)
+  // (пути и методы сохранены без изменений)
+  // ===========================
+  document.getElementById('login-btn').addEventListener('click', () => {
+    const email = document.getElementById('login-email').value;
+    const pass  = document.getElementById('login-password').value;
+    auth.signInWithEmailAndPassword(email, pass)
+      .catch(e => showMessage(document.getElementById('auth-message'), e.message, false));
+  });
+
+  document.getElementById('register-btn').addEventListener('click', () => {
+    const name  = document.getElementById('register-fullname').value;
+    const phone = document.getElementById('register-phone').value;
+    const email = document.getElementById('register-email').value;
+    const pass  = document.getElementById('register-password').value;
+
+    if (!name || !phone || !email || pass.length < 6)
+      return showMessage(document.getElementById('auth-message'),
+        'Заполните все поля, пароль минимум 6 символов', false);
+
+    auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+      const uid        = cred.user.uid;
+      const userRecord = { fullName: name, phone, email, cards: [], transactions: [], credits: [] };
+      database.ref(`users/${uid}`).set(userRecord).then(() => loadUserData(uid));
+    }).catch(e => showMessage(document.getElementById('auth-message'), e.message, false));
+  });
+
+  // ===========================
+  // СЛУШАТЕЛЬ АУТЕНТИФИКАЦИИ
+  // ===========================
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('bank-screen').classList.remove('hidden');
+      loadUserData(user.uid);
+      // Инициализируем 3D-тилт карты после монтажа
+      setTimeout(initCardTilt, 400);
+    } else {
+      currentUser = null;
+      lastBalance = 0;
+      document.getElementById('auth-screen').classList.remove('hidden');
+      document.getElementById('bank-screen').classList.add('hidden');
+      closeAllModals();
+    }
+  });
+
+  // Предзаполнение из URL-параметра (если перешли по QR-ссылке)
+  const urlParams = new URLSearchParams(window.location.search);
+  const qrCard    = urlParams.get('card');
+  if (qrCard && qrCard.length === 16) {
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        setTimeout(() => {
+          document.getElementById('scan-recipient-card').value = qrCard.match(/.{1,4}/g).join(' ');
+          const amt = urlParams.get('amount');
+          if (amt) document.getElementById('scan-transfer-amount').value = amt;
+          openModal('scan-transfer-modal');
+        }, 1200);
+      }
+    });
+  }
+
+})();
+</script>
+</body>
+</html>
