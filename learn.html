@@ -1,633 +1,3069 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>DOROSlearn ULTRA · Алгебра + ИИ</title>
-    <meta name="description" content="Автоматическая платформа: ИИ-мультичат, YouTube поиск видео по алгебре 5-11 класс, генерация тестов через ИИ, решатель задач и сертификаты.">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        :root {
-            --blue: #2563eb;
-            --cyan: #06cdd4;
-            --gold: #f4b940;
-            --purple: #9b5cf6;
-            --bg-deep: #0a0c12;
-            --card-glass: rgba(18,22,32,0.7);
-            --border-cyan: rgba(6,205,212,0.25);
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-deep);
-            color: #fff;
-            overflow-x: hidden;
-        }
-        /* градиентный фон */
-        .bg-aura {
-            position:fixed; inset:0; z-index:-2;
-            background: radial-gradient(circle at 10% 20%, rgba(37,99,235,0.2), var(--bg-deep) 85%);
-        }
-        .bg-aura::after {
-            content:''; position:absolute; inset:0;
-            background: radial-gradient(circle at 90% 70%, rgba(6,205,212,0.12), transparent 70%);
-        }
-        .grid-lines {
-            position:fixed; inset:0;
-            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index:-1; pointer-events:none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOROSlearn ULTRA · Полная образовательная платформа</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ============================================================
+   RESET & ROOT VARIABLES
+   ============================================================ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg-deep:#050712;
+  --bg-card:rgba(10,14,28,0.85);
+  --cyan:#00e5ff;
+  --cyan-dim:rgba(0,229,255,0.18);
+  --blue:#1a6bff;
+  --blue-dim:rgba(26,107,255,0.15);
+  --gold:#ffcc00;
+  --gold-dim:rgba(255,204,0,0.15);
+  --purple:#9d4edd;
+  --purple-dim:rgba(157,78,221,0.15);
+  --green:#00ff8c;
+  --red:#ff3355;
+  --border-cyan:rgba(0,229,255,0.22);
+  --border-blue:rgba(26,107,255,0.22);
+  --text-primary:#f0f4ff;
+  --text-muted:rgba(200,210,255,0.55);
+  --glass:rgba(0,229,255,0.04);
+  --shadow-cyan:0 0 32px rgba(0,229,255,0.18),0 0 8px rgba(0,229,255,0.1);
+  --shadow-gold:0 0 28px rgba(255,204,0,0.25);
+  --font-head:'Orbitron',monospace;
+  --font-body:'Rajdhani',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --r-lg:24px;
+  --r-xl:32px;
+  --r-full:999px;
+  --trans:all 0.28s cubic-bezier(.4,0,.2,1);
+}
 
-        .app-layout {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            gap: 24px;
-            min-height: 100vh;
-        }
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:2px;opacity:.5;}
+::-webkit-scrollbar-thumb:hover{opacity:1;}
 
-        /* левая панель: уроки */
-        .learn-panel {
-            flex: 1.2;
-            background: var(--card-glass);
-            backdrop-filter: blur(18px);
-            border-radius: 32px;
-            border: 1px solid var(--border-cyan);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+/* ============================================================
+   BACKGROUND & LAYOUT
+   ============================================================ */
+body{
+  font-family:var(--font-body);
+  background:var(--bg-deep);
+  color:var(--text-primary);
+  overflow-x:hidden;
+  min-height:100vh;
+  font-size:1rem;
+}
+.bg-mesh{
+  position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse 70% 60% at 8% 12%,rgba(26,107,255,0.22),transparent 70%),
+    radial-gradient(ellipse 60% 50% at 92% 80%,rgba(0,229,255,0.14),transparent 65%),
+    radial-gradient(ellipse 50% 40% at 50% 100%,rgba(157,78,221,0.12),transparent 60%),
+    #050712;
+}
+.bg-grid{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+.bg-grid::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 80% at 50% 50%,transparent 40%,var(--bg-deep) 100%);
+}
 
-        .grade-selector {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            background: rgba(0,0,0,0.3);
-            padding: 12px;
-            border-radius: 60px;
-            justify-content: center;
-        }
-        .grade-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 40px;
-            padding: 8px 20px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .grade-btn.active {
-            background: linear-gradient(135deg, var(--blue), var(--cyan));
-            border-color: transparent;
-            box-shadow: 0 0 12px rgba(6,205,212,0.4);
-        }
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .progress-bar-wrap {
-            flex: 1;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            height: 10px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--cyan), var(--blue));
-            transition: width 0.3s;
-        }
-        .reset-prog {
-            background: none;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 6px 16px;
-            border-radius: 30px;
-            color: #ddd;
-            cursor: pointer;
-        }
-        .lessons-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
-            max-height: 60vh;
-            overflow-y: auto;
-            padding-right: 6px;
-        }
-        .lesson-card {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(6,205,212,0.2);
-            border-radius: 28px;
-            padding: 18px;
-            transition: 0.2s;
-        }
-        .lesson-card.locked {
-            opacity: 0.5;
-            filter: blur(1px);
-            pointer-events: none;
-        }
-        .lesson-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: flex;
-            justify-content: space-between;
-        }
-        .lesson-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-        .btn-neon {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(6,205,212,0.4);
-            border-radius: 40px;
-            padding: 8px 16px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-neon.primary {
-            background: linear-gradient(135deg, var(--blue), var(--cyan));
-            border: none;
-        }
-        .btn-neon:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
-        }
-        .video-preview {
-            margin-top: 12px;
-            border-radius: 20px;
-            overflow: hidden;
-        }
-        .video-preview iframe {
-            width: 100%;
-            aspect-ratio: 16/9;
-            border: none;
-        }
+/* ============================================================
+   TOP NAVIGATION
+   ============================================================ */
+.top-nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(5,7,18,0.88);
+  backdrop-filter:blur(24px) saturate(1.5);
+  border-bottom:1px solid var(--border-cyan);
+  padding:0 2rem;
+  display:flex;align-items:center;gap:1.5rem;
+  height:64px;
+}
+.brand{
+  font-family:var(--font-head);
+  font-size:1.1rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  flex-shrink:0;
+}
+.subject-tabs{
+  display:flex;gap:.5rem;flex-wrap:wrap;flex:1;
+  overflow-x:auto;scrollbar-width:none;
+}
+.subject-tabs::-webkit-scrollbar{display:none;}
+.stab{
+  font-family:var(--font-body);
+  font-weight:600;font-size:.85rem;
+  padding:.4rem 1.1rem;
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--r-full);
+  cursor:pointer;transition:var(--trans);
+  color:var(--text-muted);
+  background:transparent;
+  white-space:nowrap;letter-spacing:.04em;
+}
+.stab:hover{color:var(--cyan);border-color:var(--border-cyan);}
+.stab.active{
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  border-color:transparent;color:#fff;
+  box-shadow:var(--shadow-cyan);
+  -webkit-text-fill-color:#fff;
+}
+.nav-right{
+  display:flex;align-items:center;gap:.75rem;flex-shrink:0;
+}
+.avatar-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--blue));
+  border:2px solid var(--border-cyan);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:1.2rem;transition:var(--trans);
+}
+.avatar-btn:hover{box-shadow:var(--shadow-cyan);transform:scale(1.05);}
+.achievements-btn{
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-full);
+  padding:.35rem .9rem;
+  font-size:.78rem;font-weight:600;
+  color:var(--gold);cursor:pointer;
+  background:var(--gold-dim);
+  transition:var(--trans);
+}
+.achievements-btn:hover{box-shadow:var(--shadow-gold);}
 
-        /* правая панель: мультичат */
-        .chat-panel {
-            width: 400px;
-            background: var(--card-glass);
-            backdrop-filter: blur(20px);
-            border-radius: 32px;
-            border: 1px solid var(--border-cyan);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .chat-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(6,205,212,0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .model-select {
-            background: #0f111a;
-            border: 1px solid var(--cyan);
-            border-radius: 40px;
-            padding: 6px 12px;
-            color: white;
-        }
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .msg {
-            display: flex;
-            gap: 10px;
-        }
-        .msg.user {
-            justify-content: flex-end;
-        }
-        .msg-bubble {
-            max-width: 80%;
-            background: rgba(255,255,255,0.08);
-            border-radius: 24px;
-            padding: 10px 16px;
-            font-size: 0.85rem;
-        }
-        .msg.user .msg-bubble {
-            background: linear-gradient(135deg, var(--blue), var(--cyan));
-        }
-        .chat-input-area {
-            padding: 16px;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .chat-input-area input {
-            flex: 1;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid var(--border-cyan);
-            border-radius: 60px;
-            padding: 12px 16px;
-            color: white;
-        }
-        .chat-input-area button {
-            background: var(--cyan);
-            border: none;
-            width: 44px;
-            border-radius: 44px;
-            color: black;
-        }
-        .quick-actions {
-            display: flex;
-            gap: 8px;
-            padding: 8px 16px;
-            flex-wrap: wrap;
-        }
-        .qa-btn {
-            background: rgba(255,255,255,0.05);
-            border-radius: 30px;
-            padding: 6px 12px;
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
-        /* модалки */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(12px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-card {
-            background: #11141f;
-            border: 1px solid var(--cyan);
-            border-radius: 32px;
-            max-width: 550px;
-            width: 90%;
-            padding: 28px;
-            color: white;
-        }
-        .test-question {
-            margin-bottom: 20px;
-            background: rgba(255,255,255,0.03);
-            padding: 16px;
-            border-radius: 24px;
-        }
-        .option {
-            display: block;
-            margin: 8px 0;
-        }
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #0f1222;
-            border: 1px solid var(--cyan);
-            border-radius: 40px;
-            padding: 12px 24px;
-            z-index: 1100;
-            backdrop-filter: blur(10px);
-        }
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+.app-layout{
+  max-width:1700px;margin:0 auto;
+  padding:1.5rem;
+  display:flex;gap:1.5rem;
+  min-height:calc(100vh - 64px);
+}
+.learn-panel{
+  flex:1.3;
+  background:var(--bg-card);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-xl);
+  padding:1.5rem;
+  display:flex;flex-direction:column;gap:1.25rem;
+  animation:fadeSlideUp .5s ease both;
+}
+.chat-panel{
+  width:390px;flex-shrink:0;
+  background:var(--bg-card);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border-blue);
+  border-radius:var(--r-xl);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  animation:fadeSlideUp .5s .1s ease both;
+}
+@keyframes fadeSlideUp{
+  from{opacity:0;transform:translateY(24px) scale(.98);}
+  to{opacity:1;transform:none;}
+}
 
-        @media (max-width: 1000px) {
-            .app-layout { flex-direction: column; }
-            .chat-panel { width: 100%; max-height: 500px; }
-        }
-        ::-webkit-scrollbar { width: 5px; }
-    </style>
+/* ============================================================
+   WELCOME BANNER
+   ============================================================ */
+.welcome-banner{
+  display:flex;align-items:center;gap:1rem;
+  padding:1rem 1.25rem;
+  background:linear-gradient(135deg,rgba(26,107,255,.15),rgba(0,229,255,.08));
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-lg);
+}
+.welcome-avatar{font-size:2rem;}
+.welcome-text h2{font-size:1rem;font-weight:700;margin-bottom:.2rem;}
+.welcome-text p{font-size:.8rem;color:var(--text-muted);}
+.quote-strip{
+  font-size:.78rem;font-style:italic;
+  color:var(--text-muted);
+  padding:.6rem 1rem;
+  background:rgba(255,255,255,.03);
+  border-left:3px solid var(--cyan);
+  border-radius:0 var(--r-lg) var(--r-lg) 0;
+}
+.daily-goal-strip{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.65rem 1rem;
+  background:var(--purple-dim);
+  border:1px solid rgba(157,78,221,.3);
+  border-radius:var(--r-lg);
+  font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:var(--trans);
+}
+.daily-goal-strip:hover{background:rgba(157,78,221,.2);}
+.daily-goal-strip .goal-icon{font-size:1.2rem;}
+.daily-goal-strip .goal-check{
+  margin-left:auto;width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--purple);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;
+}
+.daily-goal-strip.done .goal-check{background:var(--green);border-color:var(--green);color:#000;}
+
+/* ============================================================
+   LEVEL / GRADE SELECTOR
+   ============================================================ */
+.section-label{
+  font-family:var(--font-head);
+  font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:.5rem;
+}
+.grade-scroll{
+  display:flex;gap:.5rem;flex-wrap:wrap;
+}
+.grade-btn{
+  font-family:var(--font-body);font-weight:700;
+  font-size:.82rem;padding:.42rem 1rem;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r-full);cursor:pointer;
+  background:transparent;color:var(--text-muted);
+  transition:var(--trans);white-space:nowrap;
+}
+.grade-btn:hover{color:var(--cyan);border-color:var(--border-cyan);}
+.grade-btn.active{
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  border-color:transparent;color:#fff;
+  box-shadow:0 0 16px rgba(0,229,255,.25);
+}
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+.progress-row{
+  display:flex;align-items:center;gap:1rem;
+}
+.progress-wrap{flex:1;position:relative;}
+.progress-bg{
+  background:rgba(255,255,255,.06);
+  border-radius:var(--r-full);height:10px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;border-radius:var(--r-full);
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  width:0%;transition:width .9s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 12px var(--cyan);
+}
+.progress-label{font-size:.78rem;font-weight:700;color:var(--cyan);}
+.svg-donut{
+  width:52px;height:52px;flex-shrink:0;
+}
+.reset-btn{
+  font-size:.75rem;padding:.35rem .85rem;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:var(--r-full);cursor:pointer;
+  background:transparent;color:var(--text-muted);
+  transition:var(--trans);
+}
+.reset-btn:hover{color:var(--red);border-color:var(--red);}
+
+/* ============================================================
+   LESSON CARDS
+   ============================================================ */
+.lessons-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:1.1rem;
+  max-height:55vh;
+  overflow-y:auto;
+  padding-right:4px;
+}
+.lesson-card{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(0,229,255,.15);
+  border-radius:var(--r-lg);
+  padding:1.1rem;
+  transition:var(--trans);
+  cursor:default;
+  animation:cardIn .35s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.lesson-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(0,229,255,.45);
+  box-shadow:0 8px 32px rgba(0,229,255,.12);
+}
+.lesson-card.locked{
+  opacity:.35;filter:blur(.5px);pointer-events:none;
+}
+.lesson-card.done{
+  border-color:rgba(0,255,140,.3);
+}
+.lesson-top{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;
+  margin-bottom:.65rem;
+}
+.lesson-title{font-weight:700;font-size:.95rem;line-height:1.3;}
+.lesson-badge{
+  flex-shrink:0;font-size:.65rem;font-weight:700;
+  padding:.2rem .6rem;border-radius:var(--r-full);
+  background:var(--green);color:#000;letter-spacing:.05em;
+}
+.lesson-badge.locked-badge{background:rgba(255,255,255,.1);color:var(--text-muted);}
+.lesson-progress-mini{
+  background:rgba(255,255,255,.06);
+  border-radius:var(--r-full);height:4px;margin-bottom:.8rem;overflow:hidden;
+}
+.lesson-progress-fill{
+  height:100%;border-radius:var(--r-full);
+  background:linear-gradient(90deg,var(--green),var(--cyan));
+  transition:width .8s ease;
+}
+.lesson-actions{
+  display:flex;gap:.5rem;flex-wrap:wrap;
+}
+.btn-sm{
+  font-family:var(--font-body);font-weight:600;font-size:.72rem;
+  padding:.35rem .85rem;border-radius:var(--r-full);
+  border:1px solid rgba(0,229,255,.3);
+  background:transparent;color:var(--text-primary);
+  cursor:pointer;transition:var(--trans);white-space:nowrap;
+}
+.btn-sm:hover{background:var(--cyan-dim);border-color:var(--cyan);}
+.btn-sm.primary{
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  border:none;color:#fff;
+}
+.btn-sm.primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-sm.gold{
+  background:var(--gold-dim);
+  border-color:rgba(255,204,0,.4);color:var(--gold);
+}
+.btn-sm.gold:hover{background:rgba(255,204,0,.25);}
+.btn-sm.green{
+  background:rgba(0,255,140,.08);
+  border-color:rgba(0,255,140,.3);color:var(--green);
+}
+
+/* ============================================================
+   AI CHAT PANEL
+   ============================================================ */
+.chat-header{
+  padding:1rem 1.25rem;
+  border-bottom:1px solid var(--border-blue);
+  display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+}
+.chat-brand{
+  font-family:var(--font-head);font-size:.9rem;font-weight:900;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  flex:1;
+}
+.model-select{
+  background:#080c1a;
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-full);
+  padding:.3rem .75rem;
+  color:var(--cyan);
+  font-family:var(--font-body);font-size:.75rem;font-weight:600;
+  cursor:pointer;
+}
+.chat-header-actions{display:flex;gap:.4rem;}
+.icon-btn{
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.12);
+  background:transparent;color:var(--text-muted);
+  cursor:pointer;transition:var(--trans);font-size:.8rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.icon-btn:hover{color:var(--red);border-color:var(--red);}
+.quick-btns{
+  display:flex;gap:.4rem;padding:.6rem 1rem;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  flex-wrap:wrap;
+}
+.qbtn{
+  font-size:.68rem;font-weight:600;padding:.28rem .75rem;
+  border-radius:var(--r-full);cursor:pointer;transition:var(--trans);
+  border:1px solid rgba(0,229,255,.2);
+  background:transparent;color:var(--text-muted);
+  white-space:nowrap;
+}
+.qbtn:hover{color:var(--cyan);border-color:var(--cyan);background:var(--cyan-dim);}
+.chat-messages{
+  flex:1;overflow-y:auto;
+  padding:.9rem 1rem;
+  display:flex;flex-direction:column;gap:.8rem;
+  min-height:0;
+}
+.msg{display:flex;gap:.5rem;animation:msgIn .25s ease both;}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.9rem;
+}
+.msg.bot .msg-avatar{background:linear-gradient(135deg,var(--blue),var(--purple));}
+.msg.user .msg-avatar{background:linear-gradient(135deg,var(--cyan),var(--blue));}
+.msg-bubble{
+  max-width:82%;
+  background:rgba(255,255,255,.06);
+  border-radius:var(--r-lg) var(--r-lg) var(--r-lg) 4px;
+  padding:.6rem .9rem;
+  font-size:.82rem;line-height:1.55;
+  white-space:pre-wrap;word-break:break-word;
+}
+.msg.user .msg-bubble{
+  background:linear-gradient(135deg,var(--blue),rgba(0,229,255,.7));
+  border-radius:var(--r-lg) var(--r-lg) 4px var(--r-lg);
+  color:#fff;
+}
+.chat-input-row{
+  padding:.85rem;
+  border-top:1px solid rgba(255,255,255,.05);
+  display:flex;gap:.6rem;align-items:center;
+}
+.chat-input{
+  flex:1;background:rgba(0,0,0,.45);
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-full);
+  padding:.55rem 1rem;
+  color:var(--text-primary);font-family:var(--font-body);font-size:.85rem;
+  outline:none;transition:var(--trans);
+}
+.chat-input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.1);}
+.send-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  border:none;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.9rem;transition:var(--trans);
+}
+.send-btn:hover{transform:scale(1.08);box-shadow:var(--shadow-cyan);}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(3,5,15,.85);
+  backdrop-filter:blur(16px);
+  display:none;align-items:center;justify-content:center;
+  padding:1rem;
+}
+.modal-overlay.open{display:flex;}
+.modal-card{
+  background:rgba(8,12,28,.95);
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-xl);
+  max-width:580px;width:100%;
+  max-height:90vh;overflow-y:auto;
+  padding:2rem;
+  animation:modalIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes modalIn{
+  from{opacity:0;transform:scale(.88) translateY(24px);}
+  to{opacity:1;transform:none;}
+}
+.modal-title{
+  font-family:var(--font-head);font-size:1.1rem;
+  margin-bottom:1.2rem;display:flex;align-items:center;gap:.75rem;
+}
+.modal-close{
+  margin-left:auto;background:none;border:none;
+  color:var(--text-muted);font-size:1.2rem;cursor:pointer;
+  transition:var(--trans);
+}
+.modal-close:hover{color:var(--red);}
+
+/* ============================================================
+   TEST UI
+   ============================================================ */
+.test-timer-bar{
+  height:5px;border-radius:var(--r-full);
+  background:rgba(255,255,255,.08);margin-bottom:1.2rem;overflow:hidden;
+}
+.test-timer-fill{
+  height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));
+  border-radius:var(--r-full);transition:width .1s linear;
+}
+.test-question-wrap{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:var(--r-lg);padding:1.1rem;margin-bottom:1rem;
+}
+.test-q-num{
+  font-size:.65rem;font-weight:700;color:var(--cyan);
+  letter-spacing:.1em;margin-bottom:.5rem;
+}
+.test-q-text{font-weight:600;font-size:.92rem;margin-bottom:.85rem;}
+.test-options{display:flex;flex-direction:column;gap:.5rem;}
+.test-opt{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.55rem .85rem;border-radius:var(--r-lg);
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.02);
+  cursor:pointer;transition:var(--trans);font-size:.85rem;font-weight:500;
+}
+.test-opt:hover{border-color:var(--cyan);background:var(--cyan-dim);}
+.test-opt.selected{border-color:var(--blue);background:var(--blue-dim);}
+.test-opt.correct{border-color:var(--green);background:rgba(0,255,140,.12);}
+.test-opt.wrong{border-color:var(--red);background:rgba(255,51,85,.12);}
+.test-opt input[type=radio]{accent-color:var(--cyan);}
+.test-actions{display:flex;gap:.75rem;margin-top:1.2rem;flex-wrap:wrap;}
+.btn-lg{
+  flex:1;padding:.7rem 1.4rem;border-radius:var(--r-full);
+  font-family:var(--font-body);font-weight:700;font-size:.9rem;
+  border:none;cursor:pointer;transition:var(--trans);
+}
+.btn-lg.primary{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;}
+.btn-lg.primary:hover{filter:brightness(1.12);}
+.btn-lg.secondary{background:rgba(255,255,255,.06);color:var(--text-muted);}
+.test-result-box{
+  padding:1rem;border-radius:var(--r-lg);margin-top:1rem;
+  font-weight:700;font-size:1rem;text-align:center;
+}
+.test-result-box.success{background:rgba(0,255,140,.12);border:1px solid rgba(0,255,140,.3);color:var(--green);}
+.test-result-box.fail{background:rgba(255,51,85,.1);border:1px solid rgba(255,51,85,.3);color:var(--red);}
+
+/* ============================================================
+   NAME MODAL (first launch)
+   ============================================================ */
+.name-modal-inner{text-align:center;}
+.name-modal-inner h2{font-family:var(--font-head);font-size:1.4rem;margin-bottom:.5rem;}
+.name-modal-inner p{color:var(--text-muted);font-size:.88rem;margin-bottom:1.5rem;}
+.name-input{
+  width:100%;background:rgba(0,0,0,.5);
+  border:1px solid var(--border-cyan);
+  border-radius:var(--r-full);
+  padding:.75rem 1.25rem;
+  color:var(--text-primary);font-family:var(--font-body);font-size:1rem;
+  outline:none;text-align:center;
+  transition:var(--trans);margin-bottom:1.2rem;
+}
+.name-input:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(0,229,255,.1);}
+.avatar-picker{display:flex;justify-content:center;gap:.75rem;margin-bottom:1.2rem;}
+.avatar-pick-item{
+  width:44px;height:44px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;cursor:pointer;transition:var(--trans);
+  background:rgba(255,255,255,.04);
+}
+.avatar-pick-item:hover{transform:scale(1.1);}
+.avatar-pick-item.selected{border-color:var(--cyan);box-shadow:0 0 12px var(--cyan);}
+
+/* ============================================================
+   ACHIEVEMENTS
+   ============================================================ */
+.achievements-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:.85rem;
+}
+.ach-card{
+  padding:1rem;border-radius:var(--r-lg);
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+  display:flex;gap:.75rem;align-items:flex-start;
+  transition:var(--trans);
+}
+.ach-card.unlocked{
+  border-color:var(--gold-dim);background:var(--gold-dim);
+}
+.ach-icon{font-size:1.6rem;flex-shrink:0;}
+.ach-name{font-weight:700;font-size:.88rem;margin-bottom:.15rem;}
+.ach-desc{font-size:.72rem;color:var(--text-muted);}
+.ach-card.unlocked .ach-name{color:var(--gold);}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;
+  background:rgba(8,12,28,.95);
+  border:1px solid var(--cyan);
+  border-radius:var(--r-full);
+  padding:.65rem 1.25rem;
+  font-size:.82rem;font-weight:600;
+  z-index:2000;
+  animation:toastIn .3s ease both;
+  pointer-events:none;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+
+/* ============================================================
+   CONFETTI CANVAS
+   ============================================================ */
+#confettiCanvas{
+  position:fixed;inset:0;z-index:1900;
+  pointer-events:none;display:none;
+}
+
+/* ============================================================
+   FORMULA NUDGE
+   ============================================================ */
+.formula-nudge{
+  position:fixed;bottom:1.5rem;left:1.5rem;
+  max-width:290px;
+  background:rgba(8,12,28,.96);
+  border:1px solid var(--purple);
+  border-radius:var(--r-lg);
+  padding:1rem 1.2rem;
+  z-index:900;
+  display:none;
+  animation:nudgeIn .35s ease both;
+}
+@keyframes nudgeIn{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:none;}}
+.formula-nudge h4{font-size:.82rem;font-weight:700;color:var(--purple);margin-bottom:.4rem;}
+.formula-nudge .formula-text{
+  font-family:var(--font-mono);font-size:1rem;
+  color:var(--cyan);background:rgba(0,229,255,.06);
+  padding:.4rem .75rem;border-radius:var(--r-lg);margin-bottom:.7rem;
+}
+.nudge-actions{display:flex;gap:.5rem;}
+.nudge-btn{
+  flex:1;padding:.35rem;border-radius:var(--r-full);
+  font-size:.75rem;font-weight:700;border:none;cursor:pointer;transition:var(--trans);
+}
+.nudge-btn.know{background:var(--green);color:#000;}
+.nudge-btn.dk{background:rgba(255,255,255,.08);color:var(--text-muted);}
+
+/* ============================================================
+   TIMER TOGGLE
+   ============================================================ */
+.timer-toggle{
+  display:flex;align-items:center;gap:.5rem;
+  font-size:.78rem;color:var(--text-muted);
+  cursor:pointer;user-select:none;
+}
+.timer-toggle input{accent-color:var(--cyan);}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:1050px){
+  .app-layout{flex-direction:column;}
+  .chat-panel{width:100%;max-height:520px;}
+}
+@media(max-width:640px){
+  .top-nav{padding:0 1rem;gap:.75rem;}
+  .brand{font-size:.85rem;}
+  .app-layout{padding:.75rem;}
+  .lessons-grid{max-height:none;}
+}
+</style>
 </head>
 <body>
-<div class="bg-aura"></div>
-<div class="grid-lines"></div>
+<!-- BACKGROUND -->
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+<canvas id="confettiCanvas"></canvas>
 
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <div class="brand">DOROS<span style="opacity:.5">learn</span></div>
+  <div class="subject-tabs" id="subjectTabs"></div>
+  <div class="nav-right">
+    <button class="achievements-btn" onclick="openModal('achievementsModal')">
+      <i class="fas fa-trophy"></i> Ачивки
+    </button>
+    <div class="avatar-btn" id="navAvatar" onclick="openModal('profileModal')"></div>
+  </div>
+</nav>
+
+<!-- MAIN -->
 <div class="app-layout">
-    <!-- ЛЕВАЯ ЧАСТЬ: Алгебра 5-11 -->
-    <div class="learn-panel">
-        <div class="grade-selector" id="gradeSelector"></div>
-        <div class="progress-header">
-            <div class="progress-bar-wrap"><div class="progress-fill" id="globalProgressFill"></div></div>
-            <button class="reset-prog" id="resetProgressBtn"><i class="fas fa-undo-alt"></i> Сброс</button>
-        </div>
-        <div id="lessonsContainer" class="lessons-grid"></div>
-        <div style="font-size:0.7rem; text-align:center; opacity:0.5;">⭐ Видео ищутся автоматически через YouTube API или прямой поиск</div>
+  <!-- LEFT: LEARN PANEL -->
+  <div class="learn-panel">
+    <!-- Welcome -->
+    <div class="welcome-banner">
+      <div class="welcome-avatar" id="welcomeAvatar">🎓</div>
+      <div class="welcome-text">
+        <h2 id="welcomeText">Привет! Давай учиться дальше →</h2>
+        <p id="welcomeSub">Выбери предмет и тему для изучения</p>
+      </div>
     </div>
 
-    <!-- ПРАВАЯ ЧАСТЬ: ИИ-мультичат (история, модели, инструменты) -->
-    <div class="chat-panel">
-        <div class="chat-header">
-            <h3><i class="fas fa-brain" style="color: var(--cyan);"></i> DOROSai Чат</h3>
-            <select id="chatModelSelect" class="model-select">
-                <option value="openai">GPT-4</option>
-                <option value="llama">Llama 3</option>
-                <option value="mistral">Mistral</option>
-                <option value="gemini">Gemini Pro</option>
-            </select>
-        </div>
-        <div class="quick-actions">
-            <div class="qa-btn" onclick="aiGenerateTestForCurrentTopic()"><i class="fas fa-file-alt"></i> Тест по теме</div>
-            <div class="qa-btn" onclick="aiFindVideoByTopic()"><i class="fab fa-youtube"></i> Найти видео</div>
-            <div class="qa-btn" onclick="aiMakeSummary()"><i class="fas fa-scroll"></i> Конспект</div>
-        </div>
-        <div class="chat-messages" id="chatMessagesArea">
-            <div class="msg bot"><div class="msg-bubble">👋 Привет! Я DOROSai. Спрашивай про алгебру, генерируй тесты или ищи видео по теме.</div></div>
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Спроси у ИИ..." autocomplete="off">
-            <button id="sendChatBtn"><i class="fas fa-paper-plane"></i></button>
-        </div>
-        <button id="openSolverBtn" style="margin: 12px; background: rgba(155,92,246,0.3); border:none; border-radius:40px; padding:10px; color:white;"><i class="fas fa-calculator"></i> 🤖 ИИ-Решатель задач</button>
+    <!-- Quote -->
+    <div class="quote-strip" id="quoteStrip"></div>
+
+    <!-- Daily goal -->
+    <div class="daily-goal-strip" id="dailyGoalStrip" onclick="checkDailyGoal()">
+      <span class="goal-icon">🎯</span>
+      <span>Ежедневная цель: пройди 1 тест сегодня</span>
+      <div class="goal-check" id="dailyGoalCheck"></div>
     </div>
+
+    <!-- Grade / Level selector -->
+    <div>
+      <div class="section-label">Класс / Раздел</div>
+      <div class="grade-scroll" id="gradeSelector"></div>
+    </div>
+
+    <!-- Progress row -->
+    <div class="progress-row">
+      <svg class="svg-donut" id="donutSvg" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
+        <circle id="donutFill" cx="26" cy="26" r="22" fill="none" stroke="url(#donutGrad)" stroke-width="5"
+          stroke-dasharray="138" stroke-dashoffset="138" stroke-linecap="round"
+          transform="rotate(-90 26 26)"/>
+        <defs>
+          <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1a6bff"/>
+            <stop offset="100%" stop-color="#00e5ff"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="progress-wrap">
+        <div class="progress-bg"><div class="progress-fill" id="globalProgressFill"></div></div>
+      </div>
+      <div class="progress-label" id="progressLabel">0%</div>
+      <button class="reset-btn" onclick="resetProgress()"><i class="fas fa-undo-alt"></i></button>
+    </div>
+
+    <!-- Timer toggle -->
+    <label class="timer-toggle">
+      <input type="checkbox" id="timerToggle"> ⏱ Таймер на тест (30 сек / вопрос)
+    </label>
+
+    <!-- Lessons -->
+    <div>
+      <div class="section-label">Темы</div>
+      <div class="lessons-grid" id="lessonsContainer"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-brand">DOROSai</div>
+      <select id="chatModelSelect" class="model-select">
+        <option value="openai">GPT-4o</option>
+        <option value="mistral">Mistral</option>
+        <option value="llama">Llama 3</option>
+        <option value="gemini">Gemini</option>
+      </select>
+      <div class="chat-header-actions">
+        <button class="icon-btn" title="Очистить историю" onclick="clearChatHistory()">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+    <div class="quick-btns">
+      <button class="qbtn" onclick="aiTestCurrentTopic()"><i class="fas fa-file-alt"></i> Тест</button>
+      <button class="qbtn" onclick="aiSummary()"><i class="fas fa-scroll"></i> Конспект</button>
+      <button class="qbtn" onclick="aiExplain()"><i class="fas fa-lightbulb"></i> Объяснение</button>
+      <button class="qbtn" onclick="aiVideo()"><i class="fab fa-youtube"></i> Видео</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-row">
+      <input type="text" class="chat-input" id="chatInput"
+        placeholder="Задай вопрос DOROSai..." autocomplete="off"
+        onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="send-btn" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
 </div>
 
-<!-- модалка: тест -->
-<div id="testModal" class="modal-overlay"><div class="modal-card" id="testModalContent"></div></div>
-<!-- модалка: решатель -->
-<div id="solverModal" class="modal-overlay"><div class="modal-card"><h3>🤖 ИИ-Решатель</h3><textarea id="solverTask" rows="4" style="width:100%; background:#000; color:white; border:1px solid var(--cyan); border-radius:20px; padding:12px;" placeholder="Введи задачу по алгебре..."></textarea><div style="display:flex; gap:12px; margin-top:16px;"><button id="solveTaskBtn" class="btn-neon primary">Решить</button><button onclick="closeModal('solverModal')">Закрыть</button></div><div id="solverAnswer" style="margin-top:16px; background:rgba(255,255,255,0.05); border-radius:20px; padding:12px;"></div></div></div>
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+
+<!-- Name / First launch -->
+<div class="modal-overlay open" id="nameModal" style="z-index:900;">
+  <div class="modal-card" style="max-width:440px;">
+    <div class="name-modal-inner">
+      <h2>👋 Добро пожаловать!</h2>
+      <p>Введи своё имя и выбери аватар, чтобы начать обучение на <strong>DOROSlearn ULTRA</strong></p>
+      <div class="avatar-picker" id="avatarPicker"></div>
+      <input type="text" class="name-input" id="nameInput" placeholder="Твоё имя..." maxlength="40">
+      <button class="btn-lg primary" onclick="saveName()" style="width:100%;">
+        <i class="fas fa-rocket"></i> Начать обучение
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Test Modal -->
+<div class="modal-overlay" id="testModal">
+  <div class="modal-card">
+    <div class="modal-title" id="testModalTitle">
+      <i class="fas fa-pencil-alt" style="color:var(--cyan)"></i>
+      Тест
+      <button class="modal-close" onclick="closeModal('testModal')">✕</button>
+    </div>
+    <div class="test-timer-bar"><div class="test-timer-fill" id="testTimerFill" style="width:100%"></div></div>
+    <div id="testBody"></div>
+    <div class="test-actions">
+      <button class="btn-lg primary" id="checkTestBtn" onclick="checkTest()">
+        <i class="fas fa-check"></i> Проверить
+      </button>
+      <button class="btn-lg secondary" onclick="closeModal('testModal')">Закрыть</button>
+    </div>
+    <div id="testResult"></div>
+  </div>
+</div>
+
+<!-- Achievements -->
+<div class="modal-overlay" id="achievementsModal">
+  <div class="modal-card">
+    <div class="modal-title">
+      <i class="fas fa-trophy" style="color:var(--gold)"></i> Достижения
+      <button class="modal-close" onclick="closeModal('achievementsModal')">✕</button>
+    </div>
+    <div class="achievements-grid" id="achGrid"></div>
+  </div>
+</div>
+
+<!-- Profile / Avatar -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal-card" style="max-width:400px;text-align:center;">
+    <div class="modal-title">
+      <i class="fas fa-user-circle" style="color:var(--cyan)"></i> Профиль
+      <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <div id="profileContent"></div>
+  </div>
+</div>
+
+<!-- Formula Nudge -->
+<div class="formula-nudge" id="formulaNudge">
+  <h4>⚡ Повтори формулу!</h4>
+  <div class="formula-text" id="nudgeFormula"></div>
+  <div id="nudgeExplain" style="display:none;font-size:.78rem;color:var(--text-muted);margin-bottom:.5rem;"></div>
+  <div class="nudge-actions">
+    <button class="nudge-btn know" onclick="nudgeKnow()">Знаю ✓</button>
+    <button class="nudge-btn dk" onclick="nudgeDK()">Не знаю</button>
+  </div>
+</div>
 
 <script>
-    // --------------------------------------------------------------
-    // 1. ДАННЫЕ: темы по алгебре 5-11 класс (только названия)
-    const curriculum = {
-        5: ["Натуральные числа", "Дроби и смешанные числа", "Проценты", "Простейшие уравнения", "Координаты и шкала"],
-        6: ["Рациональные числа", "Пропорции и отношения", "Модуль числа", "Степень с натуральным показателем", "Решение неравенств"],
-        7: ["Многочлены и одночлены", "Формулы сокращённого умножения", "Линейная функция", "Системы линейных уравнений", "Степень с целым показателем"],
-        8: ["Квадратные корни", "Квадратные уравнения", "Теорема Виета", "Квадратные неравенства", "Преобразование выражений"],
-        9: ["Арифметическая прогрессия", "Геометрическая прогрессия", "Квадратичная функция", "Степень с рациональным показателем", "Неравенства методом интервалов"],
-        10: ["Тригонометрические выражения", "Тригонометрические уравнения", "Производная функции", "Исследование функций", "Показательные уравнения"],
-        11: ["Логарифмы и их свойства", "Логарифмические уравнения", "Интегралы", "Комплексные числа", "Финансовая математика"]
+// ================================================================
+// DATA: CURRICULUM
+// ================================================================
+const SUBJECTS = {
+  'Алгебра': {
+    icon:'∑',color:'#1a6bff',
+    levels: {
+      '5 класс':["Натуральные числа","Дроби и смешанные числа","Проценты","Простейшие уравнения","Координаты и шкала"],
+      '6 класс':["Рациональные числа","Пропорции и отношения","Модуль числа","Степень с натуральным показателем","Решение неравенств"],
+      '7 класс':["Многочлены и одночлены","Формулы сокращённого умножения","Линейная функция","Системы линейных уравнений","Степень с целым показателем"],
+      '8 класс':["Квадратные корни","Квадратные уравнения","Теорема Виета","Квадратные неравенства","Преобразование выражений"],
+      '9 класс':["Арифметическая прогрессия","Геометрическая прогрессия","Квадратичная функция","Степень с рациональным показателем","Неравенства методом интервалов"],
+      '10 класс':["Тригонометрические выражения","Тригонометрические уравнения","Производная функции","Исследование функций","Показательные уравнения"],
+      '11 класс':["Логарифмы и их свойства","Логарифмические уравнения","Интегралы","Комплексные числа","Финансовая математика"]
+    }
+  },
+  'Программирование': {
+    icon:'</>',color:'#00e5ff',
+    levels: {
+      'Scratch':["Основы интерфейса","Движение и координаты","Циклы","Условные операторы","Переменные","Создание игры"],
+      'App Inventor':["Знакомство с App Inventor","Кнопки и события","Хранение данных","Таймеры и анимация","Работа со звуком","Публикация приложения"],
+      'Frontend':["HTML основы","CSS селекторы","Flexbox и Grid","JavaScript переменные","DOM манипуляции","События и формы"],
+      'Python':["Переменные и типы данных","Условные операторы if/else","Циклы for и while","Функции и область видимости","Списки и словари","Работа с файлами"],
+      'Kotlin':["Hello World и синтаксис","Переменные val и var","Условные выражения","Циклы и коллекции","Функции и лямбды","Null safety"],
+      'C++':["Ввод и вывод данных","Типы данных и переменные","Условные операторы","Циклы","Массивы и строки","Указатели и ссылки"],
+      'Информатика':["Системы счисления","Логические схемы","Алгоритмы и блок-схемы","Базы данных","Компьютерные сети","Кибербезопасность"]
+    }
+  },
+  'Физика': {
+    icon:'⚡',color:'#9d4edd',
+    levels: {
+      '7 класс':["Введение в физику","Механическое движение","Плотность вещества","Давление твёрдых тел","Архимедова сила"],
+      '8 класс':["Тепловые явления","Агрегатные состояния","Электрический заряд","Сила тока и напряжение","Электрические цепи"],
+      '9 класс':["Законы Ньютона","Импульс и сохранение","Работа и мощность","Кинетическая и потенциальная энергия","Колебания и волны"],
+      '10 класс':["Молекулярно-кинетическая теория","Законы термодинамики","Электрическое поле","Магнитное поле","Электромагнитная индукция"],
+      '11 класс':["Электромагнитные колебания","Оптика и свет","Специальная теория относительности","Квантовая физика","Ядерная физика"]
+    }
+  },
+  'Биология': {
+    icon:'🧬',color:'#00ff8c',
+    levels: {
+      '5 класс':["Введение в биологию","Клетка — основа жизни","Царство растений","Фотосинтез","Размножение растений"],
+      '6 класс':["Царство грибов","Бактерии","Вирусы","Экосистемы","Круговорот веществ"],
+      '7 класс':["Беспозвоночные животные","Хордовые","Рыбы и амфибии","Рептилии и птицы","Млекопитающие"],
+      '8 класс':["Опорно-двигательная система","Кровообращение","Дыхательная система","Пищеварение","Нервная система"],
+      '9 класс':["Основы генетики","Законы Менделя","ДНК и РНК","Мутации","Генная инженерия"],
+      '10 класс':["Теория эволюции","Естественный отбор","Происхождение человека","Экология","Биоразнообразие"],
+      '11 класс':["Биотехнологии","Иммунология","Эндокринная система","Репродуктивная биология","Охрана природы"]
+    }
+  },
+  'История': {
+    icon:'🏛',color:'#ffcc00',
+    levels: {
+      'История Таджикистана':["Древние государства Средней Азии","Саманидское государство","Монгольское нашествие","Бухарское эмирство","Таджикистан в составе СССР","Независимость Таджикистана"],
+      'Всемирная история':["Возникновение цивилизаций","Античный мир","Средневековая Европа","Великие географические открытия","Промышленная революция","Глобализация"],
+      'Древний мир':["Месопотамия","Древний Египет","Древняя Греция","Древний Рим","Древний Китай и Индия","Персидская империя"],
+      'Средневековье':["Падение Рима","Феодализм","Крестовые походы","Ислам и Арабский халифат","Монгольская империя","Возрождение"],
+      'Новое время':["Реформация","Английская революция","Французская революция","Наполеоновские войны","Национальные движения XIX в","Колониализм"],
+      'Новейшая история':["Первая мировая война","Русская революция","Вторая мировая война","Холодная война","Деколонизация","Современный мир"]
+    }
+  }
+};
+
+// ================================================================
+// TESTS DATA (hardcoded, 5 questions each, 3 options, index of correct)
+// ================================================================
+const TESTS = {};
+
+// Helper to build tests more compactly: [question, [opt1,opt2,opt3], correctIndex]
+function mkTest(arr){ return arr.map(q=>({t:q[0],o:q[1],c:q[2]})); }
+
+// --- АЛГЕБРА ---
+TESTS['Алгебра'] = {
+  '5 класс':{
+    0:mkTest([
+      ["Что такое натуральные числа?",["Числа от 0 до 9","Числа 1, 2, 3, 4...","Числа, включая дроби"],1],
+      ["Наибольшее двузначное натуральное число:",["89","99","100"],1],
+      ["Сколько цифр в числе 204?",["2","3","4"],1],
+      ["Результат умножения любого числа на 0 равен:",["Самому числу","0","1"],1],
+      ["Наименьшее натуральное число:",["0","1","2"],1]
+    ]),
+    1:mkTest([
+      ["Дробь 3/4 означает:",["3 из 4 равных частей","4 из 3 частей","3 умножить на 4"],0],
+      ["Какая дробь больше: 1/2 или 1/3?",["1/3","1/2","Они равны"],1],
+      ["Смешанное число 2½ в виде неправильной дроби:",["5/2","3/2","4/2"],0],
+      ["0,5 в виде обыкновенной дроби:",["1/4","1/2","1/5"],1],
+      ["Чему равно 3/6 в сокращённой форме?",["2/4","1/2","3/3"],1]
+    ]),
+    2:mkTest([
+      ["25% от 200 равно:",["25","50","75"],1],
+      ["Как записать 0.3 в процентах?",["3%","30%","0.3%"],1],
+      ["Скидка 20% от 500 рублей:",["80","100","120"],1],
+      ["50% равно дроби:",["1/4","1/3","1/2"],2],
+      ["Если цена выросла на 10%, то новая цена товара за 100 руб:",["105","110","115"],1]
+    ]),
+    3:mkTest([
+      ["Решить: x + 5 = 12",["x=5","x=7","x=17"],1],
+      ["Если 2x = 10, то x равно:",["20","5","12"],1],
+      ["Уравнение x - 3 = 7. Найди x:",["4","10","21"],1],
+      ["При каком x верно: 3x = 21?",["x=6","x=7","x=8"],1],
+      ["x/4 = 3, тогда x =",["7","12","16"],1]
+    ]),
+    4:mkTest([
+      ["Координата точки A на числовой шкале — это:",["Имя точки","Положение точки в числе","Расстояние до нуля"],1],
+      ["Точка с координатой -3 находится:",["Правее нуля","Левее нуля","На нуле"],1],
+      ["Расстояние от -5 до +5 на шкале равно:",["5","10","0"],1],
+      ["Ноль на числовой шкале:",["Левее всех отрицательных","Между отрицательными и положительными","Правее всех положительных"],1],
+      ["На шкале температур -10° — это:",["Тепло","Ниже нуля","Выше нуля"],1]
+    ])
+  },
+  '6 класс':{
+    0:mkTest([
+      ["К рациональным числам относятся:",["Только натуральные","Целые и дробные числа","Только дроби"],1],
+      ["Число -7 является:",["Натуральным","Целым рациональным","Иррациональным"],1],
+      ["Сумма (-3) + 5 равна:",["8","-8","2"],2],
+      ["Произведение (-4) × (-3) равно:",["12","-12","7"],0],
+      ["Частное (-12) ÷ 4 равно:",["3","-3","48"],1]
+    ]),
+    1:mkTest([
+      ["Если a/b = c/d, то это называется:",["Пропорцией","Уравнением","Равенством"],0],
+      ["В пропорции 2:3 = 4:x найди x:",["5","6","3"],1],
+      ["Отношение 15 к 5 равно:",["10","3","75"],1],
+      ["Прямая пропорциональность означает:",["Чем больше одно, тем меньше другое","Чем больше одно, тем больше другое","Величины не связаны"],1],
+      ["Если 4 кг стоит 200 руб., то 6 кг стоит:",["240 руб.","300 руб.","260 руб."],1]
+    ]),
+    2:mkTest([
+      ["Модуль числа -7 равен:",["−7","7","0"],1],
+      ["|-5| + |3| =",["2","8","−2"],1],
+      ["Модуль нуля равен:",["1","0","−1"],1],
+      ["Какое из чисел имеет наибольший модуль?",["−10","8","−6"],0],
+      ["Запись |x| = 4 означает, что x равно:",["4","−4 или 4","−4"],1]
+    ]),
+    3:mkTest([
+      ["2³ равно:",["6","8","9"],1],
+      ["Чему равно 3² × 3³?",["3⁵","3⁶","9⁵"],0],
+      ["(2³)² равно:",["2⁵","2⁶","4⁶"],1],
+      ["Любое число в степени 0 равно:",["0","1","Самому числу"],1],
+      ["5¹ равно:",["5","1","25"],0]
+    ]),
+    4:mkTest([
+      ["Решить неравенство x + 3 > 7:",["x > 4","x > 10","x < 4"],0],
+      ["Знак неравенства меняется при:",["Сложении обеих частей","Умножении на отрицательное число","Вычитании обеих частей"],1],
+      ["Решение x < 5 означает, что x:",["Меньше 5","Больше 5","Равно 5"],0],
+      ["2x ≥ 8, тогда x:",["x ≥ 4","x ≥ 16","x ≤ 4"],0],
+      ["Множество решений неравенства x > 0 — это:",["Все числа","Все положительные числа","Все отрицательные числа"],1]
+    ])
+  },
+  '7 класс':{
+    0:mkTest([
+      ["Одночлен — это:",["Сумма одночленов","Произведение числа и переменных","Разность двух выражений"],1],
+      ["5x² — это:",["Двучлен","Одночлен степени 2","Многочлен 5 степени"],1],
+      ["Степень многочлена 3x³ + 2x - 1:",["2","1","3"],2],
+      ["Коэффициент при x в выражении -4x:",["4","-4","x"],1],
+      ["Подобные слагаемые: 3x и 5x. Их сумма:",["8x","15x²","8x²"],0]
+    ]),
+    1:mkTest([
+      ["(a+b)² равно:",["a²+b²","a²+2ab+b²","a²-2ab+b²"],1],
+      ["(a-b)² равно:",["a²+b²","a²+2ab+b²","a²-2ab+b²"],2],
+      ["a²-b² равно:",["(a-b)²","(a+b)(a-b)","(a+b)²"],1],
+      ["(a+b)(a-b) =",["a²-b²","a²+b²","2ab"],0],
+      ["Разложить x²-9:",["(x-3)²","(x+3)(x-3)","(x-9)(x+1)"],1]
+    ]),
+    2:mkTest([
+      ["Линейная функция имеет вид:",["y=ax²+b","y=ax+b","y=a/x"],1],
+      ["График линейной функции — это:",["Парабола","Прямая","Гипербола"],1],
+      ["При k>0 функция y=kx+b:",["Убывает","Возрастает","Постоянна"],1],
+      ["Нулём функции y=2x-4 является:",["x=2","x=4","x=-2"],0],
+      ["y-пересечение функции y=3x+1:",["x=3","y=1","y=3"],1]
+    ]),
+    3:mkTest([
+      ["Система двух линейных уравнений решается методами:",["Итераций","Подстановки и сложения","Дифференцирования"],1],
+      ["Решение системы — это:",["Одно уравнение","Пара значений (x;y)","Одно значение x"],1],
+      ["Метод сложения: суммируем уравнения, чтобы:",["Увеличить число переменных","Устранить одну переменную","Получить тождество"],1],
+      ["Если система не имеет решений, прямые:",["Совпадают","Пересекаются","Параллельны"],2],
+      ["Бесконечно много решений — прямые:",["Пересекаются","Совпадают","Перпендикулярны"],1]
+    ]),
+    4:mkTest([
+      ["a⁻¹ равно:",["a","1/a","-a"],1],
+      ["a⁻²  =",["1/a²","a²","-2a"],0],
+      ["2⁻³ равно:",["1/8","8","-6"],0],
+      ["a^m / a^n =",["a^(m-n)","a^(m+n)","a^(mn)"],0],
+      ["Степень с нулевым показателем a⁰ (a≠0) равна:",["a","0","1"],2]
+    ])
+  },
+  '8 класс':{
+    0:mkTest([
+      ["√49 равно:",["7","8","6"],0],
+      ["√2 является числом:",["Рациональным","Иррациональным","Натуральным"],1],
+      ["√(a²) для a>0 равно:",["a²","a","-a"],1],
+      ["√25 × √4 =",["√29","10","√100"],1],
+      ["Упростить √12:",["2√3","3√2","4√3"],0]
+    ]),
+    1:mkTest([
+      ["Квадратное уравнение имеет вид:",["ax+b=0","ax²+bx+c=0","ax³=0"],1],
+      ["Дискриминант D = b²-4ac. При D>0 уравнение имеет:",["Нет корней","1 корень","2 корня"],2],
+      ["При D=0 уравнение имеет:",["Нет корней","1 корень","2 корня"],1],
+      ["x²-5x+6=0. Корни:",["2 и 3","1 и 6","−2 и −3"],0],
+      ["Корни x²=9 это:",["±3","3","±9"],0]
+    ]),
+    2:mkTest([
+      ["Теорема Виета: сумма корней x₁+x₂ равна:",["c/a","-b/a","b/a"],1],
+      ["Произведение корней x₁·x₂ равно:",["c/a","b/a","-c/a"],0],
+      ["В уравнении x²-5x+6=0: x₁+x₂=?",["5","6","−5"],0],
+      ["x₁·x₂=6 для x²-5x+6=0. Проверь: 2×3=?",["5","6","8"],1],
+      ["Уравнение x²+px+q=0 имеет корни 1 и -4. Найди p:",["3","5","-5"],0]
+    ]),
+    3:mkTest([
+      ["x²-4>0 означает, что:",["x∈(-2;2)","x∈(-∞;-2)∪(2;+∞)","x=-2 или x=2"],1],
+      ["Метод решения квадратного неравенства:",["Логарифмирование","Параболы / числовой оси","Производная"],1],
+      ["x²+1<0 имеет решений:",["0","2","Бесконечно много"],0],
+      ["При a>0 ветви параболы y=ax² направлены:",["Вниз","Вверх","В стороны"],1],
+      ["x²-x-6≤0. Корни 3 и -2. Решение:",["x≤-2 или x≥3","x∈[-2;3]","x∈(−∞;3)"],1]
+    ]),
+    4:mkTest([
+      ["Выражение (a+b)/(c+d) — это:",["Многочлен","Дробное выражение","Корень"],1],
+      ["При каком значении знаменатель x-3=0?",["x=0","x=3","x=-3"],1],
+      ["Сократить (x²-4)/(x-2) =",["x-2","x+2","x²-2"],1],
+      ["a/b + c/b =",["(a+c)/b","(a+c)/2b","ac/b²"],0],
+      ["1/(x+1) - 1/(x-1) = ?",["2/(x²-1)","-2/(x²-1)","0"],1]
+    ])
+  },
+  '9 класс':{
+    0:mkTest([
+      ["В арифметической прогрессии каждый следующий член:",["Умножается на одно число","Отличается на постоянную разность","Является квадратом предыдущего"],1],
+      ["Формула n-го члена: aₙ = a₁ + (n-1)d. Это формула:",["Суммы","Общего члена","Разности"],1],
+      ["Прогрессия 2, 5, 8, 11... Разность d =",["3","5","2"],0],
+      ["Сумма первых 10 членов: 1,2,3... равна:",["50","55","45"],1],
+      ["a₁=3, d=2, n=5: a₅=?",["11","13","10"],0]
+    ]),
+    1:mkTest([
+      ["В геометрической прогрессии каждый член умножается на:",["Разность","Знаменатель q","Первый член"],1],
+      ["Формула n-го члена: bₙ = b₁·qⁿ⁻¹",["Верно","Неверно","Зависит от q"],0],
+      ["Прогрессия 2, 6, 18... Знаменатель q=",["2","3","6"],1],
+      ["Сумма бесконечной геометрической прогрессии |q|<1: S=b₁/(1-q). При b₁=1,q=0.5: S=?",["2","1","0.5"],0],
+      ["b₁=4, q=3, n=3: b₃=?",["12","36","24"],1]
+    ]),
+    2:mkTest([
+      ["Квадратичная функция: y=ax²+bx+c. Её график:",["Прямая","Парабола","Гипербола"],1],
+      ["При a<0 парабола:",["Ветви вверх","Ветви вниз","Это прямая"],1],
+      ["Вершина параболы: x₀=-b/(2a). При a=1,b=-4: x₀=?",["4","2","-2"],1],
+      ["Ось симметрии параболы y=x²-4x+3:",["x=1","x=2","x=3"],1],
+      ["y=x²: значение в точке x=3:",["6","9","12"],1]
+    ]),
+    3:mkTest([
+      ["a^(1/2) =",["a/2","√a","2√a"],1],
+      ["a^(p/q) =",["a^p / q","(q-й корень из a)^p","p·a^q"],1],
+      ["4^(1/2) =",["2","8","16"],0],
+      ["8^(2/3) =",["4","2","16"],0],
+      ["Для любого a>0: a^(m/n) · a^(k/n) =",["a^(mk/n)","a^((m+k)/n)","a^(m/n+k)"],1]
+    ]),
+    4:mkTest([
+      ["Метод интервалов применяется для решения:",["Линейных уравнений","Неравенств","Систем уравнений"],1],
+      ["Первый шаг метода интервалов:",["Найти нули числителя и знаменателя","Дифференцировать","Логарифмировать"],0],
+      ["(x-1)(x+2)>0: решение",["x∈(-2;1)","x∈(-∞;-2)∪(1;+∞)","x∈[-2;1]"],1],
+      ["На интервалах знак чередуется:",["Если нет кратных корней","Всегда","Никогда"],0],
+      ["При нечётной кратности корня знак на интервале:",["Не меняется","Меняется","Зависит от a"],1]
+    ])
+  },
+  '10 класс':{
+    0:mkTest([
+      ["sin²x + cos²x =",["2","0","1"],2],
+      ["tg(x) =",["sin(x)/cos(x)","cos(x)/sin(x)","1/sin(x)"],0],
+      ["Значение sin(30°) =",["√3/2","1/2","√2/2"],1],
+      ["cos(0) =",["0","1","-1"],1],
+      ["Радиан — это:",["Единица длины","Единица угла","Тип функции"],1]
+    ]),
+    1:mkTest([
+      ["Простейшее уравнение sin(x)=a имеет решения, если:",["a>1","a<-1","|a|≤1"],2],
+      ["Общее решение sin(x)=0: x=",["πn","π/2+πn","2πn"],0],
+      ["cos(x)=1 при x=",["πn","2πn","π/2+πn"],1],
+      ["Период функции sin(x):",["π","2π","π/2"],1],
+      ["Уравнение tg(x)=0: x=",["πn","π/2+πn","2πn"],0]
+    ]),
+    2:mkTest([
+      ["Производная константы равна:",["Константе","0","1"],1],
+      ["(x²)' =",["x","2x","2"],1],
+      ["(sin x)' =",["cos x","-cos x","sin x"],0],
+      ["Правило: (f+g)' =",["f'g'","f'+g'","fg'"],1],
+      ["Производная f(x)=5x³ в точке x=1:",["5","15","3"],1]
+    ]),
+    3:mkTest([
+      ["Функция возрастает, если производная:",["f'(x)<0","f'(x)=0","f'(x)>0"],2],
+      ["Точка экстремума — там, где f'(x):",["Максимальная","Равна нулю","Отрицательная"],1],
+      ["При смене знака производной с + на − в точке x₀:",["Минимум","Максимум","Нет экстремума"],1],
+      ["Вторая производная определяет:",["Скорость","Выпуклость","Нули функции"],1],
+      ["Если f'(x₀)=0 и f''(x₀)>0 — это:",["Максимум","Минимум","Точка перегиба"],1]
+    ]),
+    4:mkTest([
+      ["Показательная функция y=aˣ при a>1:",["Убывает","Возрастает","Постоянна"],1],
+      ["2ˣ=8, тогда x=",["2","3","4"],1],
+      ["3ˣ=1, тогда x=",["0","1","3"],0],
+      ["Основание показательной функции должно быть:",["a>0, a≠1","a>1","a≥0"],0],
+      ["Уравнение 5ˣ=5³ ⟹ x=",["1","5","3"],2]
+    ])
+  },
+  '11 класс':{
+    0:mkTest([
+      ["log_a(a) =",["0","a","1"],2],
+      ["log_a(1) =",["1","0","a"],1],
+      ["log₂(8) =",["4","3","2"],1],
+      ["log_a(xy) =",["log_a(x)·log_a(y)","log_a(x)+log_a(y)","log_a(x-y)"],1],
+      ["Основание логарифма должно быть:",["a>0, a≠1","a>1","a≥1"],0]
+    ]),
+    1:mkTest([
+      ["log₂(x)=3, тогда x=",["6","8","9"],1],
+      ["log_a(f(x))=b ⟺ f(x)=",["a^b","b^a","a·b"],0],
+      ["ОДЗ логарифма log_a(f(x)): f(x)",["<0",">0","=0"],1],
+      ["log₂(x²-1)=3 ⟹ x²=",["7","9","3"],1],
+      ["Метод потенцирования: оба основания равны, тогда:",["Аргументы равны","Показатели умножаются","Ответа нет"],0]
+    ]),
+    2:mkTest([
+      ["Интеграл ∫2x dx =",["x","x²+C","2+C"],1],
+      ["∫cos(x) dx =",["sin(x)+C","-sin(x)+C","cos(x)+C"],0],
+      ["Определённый интеграл ∫₀¹ x dx =",["0","1","1/2"],2],
+      ["Формула Ньютона-Лейбница: ∫ₐᵇ f(x)dx =",["F(a)-F(b)","F(b)-F(a)","f(b)-f(a)"],1],
+      ["Площадь криволинейной трапеции вычисляется через:",["Производную","Определённый интеграл","Логарифм"],1]
+    ]),
+    3:mkTest([
+      ["Мнимая единица i — это:",["√(-1)","√2","-1"],0],
+      ["i² =",["1","-1","i"],1],
+      ["Комплексное число z=a+bi: его модуль |z|=",["a+b","√(a²+b²)","a²+b²"],1],
+      ["Сопряжённое к z=3+2i:",["3-2i","-3+2i","−3−2i"],0],
+      ["Сумма (2+3i)+(1-i)=",["3+2i","3+4i","1+4i"],0]
+    ]),
+    4:mkTest([
+      ["Простые проценты начисляются на:",["Нарощенную сумму","Начальный капитал","Разность сумм"],1],
+      ["Сложные проценты: S=P(1+r)ⁿ. r — это:",["Число лет","Процентная ставка","Итоговая сумма"],1],
+      ["Аннуитет — это:",["Одноразовый платёж","Регулярные равные платежи","Банковский штраф"],1],
+      ["Если P=1000, r=10%, n=2: S по простым % =",["1200","1100","1210"],0],
+      ["Инфляция уменьшает:",["Номинальную стоимость","Реальную стоимость денег","Банковский процент"],1]
+    ])
+  }
+};
+
+// --- ПРОГРАММИРОВАНИЕ ---
+TESTS['Программирование'] = {
+  'Scratch':{
+    0:mkTest([
+      ["Что такое Scratch?",["Язык программирования с визуальными блоками","Язык текстового кода","Программа для работы с Excel"],0],
+      ["Спрайт в Scratch — это:",["Блок кода","Персонаж или объект","Фоновое изображение"],1],
+      ["Где располагается сцена в Scratch?",["Слева","В центре-справа","Внизу"],1],
+      ["Что такое костюмы?",["Наборы звуков","Разные изображения спрайта","Блоки движения"],1],
+      ["Фон в Scratch называется:",["Задник","Сцена / backdrop","Холст"],1]
+    ]),
+    1:mkTest([
+      ["Блок 'двигаться на 10 шагов' перемещает спрайт на:",["10 пикселей","10 метров","10 секунд"],0],
+      ["X увеличивается при движении:",["Вниз","Вправо","Влево"],1],
+      ["При y=0 спрайт находится:",["На верхнем крае","По центру по вертикали","На нижнем крае"],1],
+      ["Блок 'идти в x:0 y:0' перемещает в:",["Центр сцены","Левый угол","Правый угол"],0],
+      ["Повернуть спрайт на 90° вправо:",["Блок 'повернуть на 90°'","Блок 'скользить'","Блок 'идти к'"],0]
+    ]),
+    2:mkTest([
+      ["Цикл 'повторить 10 раз' выполняет действие:",["10 раз","Бесконечно","1 раз"],0],
+      ["Цикл 'всегда' работает:",["Пока не нажать стоп","10 секунд","Один раз"],0],
+      ["Как остановить бесконечный цикл?",["Нажать красный стоп","Закрыть Scratch","Удалить спрайт"],0],
+      ["Зачем нужны циклы?",["Повторять блоки кода","Создавать переменные","Воспроизводить звук"],0],
+      ["Цикл 'повторять пока' останавливается:",["Сразу","Когда условие становится ложным","Никогда"],1]
+    ]),
+    3:mkTest([
+      ["Блок 'если ... то' — это:",["Цикл","Условный оператор","Переменная"],1],
+      ["'Если ... то ... иначе' даёт:",["Один вариант действий","Два варианта действий","Три варианта"],1],
+      ["Что вернёт условие 5>3?",["Истина","Ложь","Число 5"],0],
+      ["Какой блок проверяет касание цвета?",["Блок движения","Блок сенсоров","Блок звука"],1],
+      ["'И' в условии означает:",["Одно из условий","Оба условия должны быть истинными","Ни одно"],1]
+    ]),
+    4:mkTest([
+      ["Переменная — это:",["Хранилище данных","Вид цикла","Тип спрайта"],0],
+      ["Как создать переменную в Scratch?",["Раздел 'Переменные' → 'Создать переменную'","Нажать пробел","Добавить спрайт"],0],
+      ["Переменная может хранить:",["Только числа","Только текст","Числа и текст"],2],
+      ["'Изменить [переменную] на 1' делает:",["Удаляет переменную","Увеличивает значение на 1","Сбрасывает в 0"],1],
+      ["Глобальная переменная доступна:",["Только одному спрайту","Всем спрайтам","Только фону"],1]
+    ]),
+    5:mkTest([
+      ["Какой блок позволяет определить столкновение?",["Блок звука","Блок сенсоров","Блок внешности"],1],
+      ["Счёт в игре удобно хранить в:",["Переменной","Костюме","Звуке"],0],
+      ["Игра заканчивается блоком:",["Стоп всё","Жди 1 секунду","Иди к x:0"],0],
+      ["Уровни сложности реализуют с помощью:",["Переменных","Костюмов","Звуков"],0],
+      ["Сообщение ('broadcast') нужно для:",["Передачи сигнала между спрайтами","Показа текста","Изменения фона"],0]
+    ])
+  },
+  'Frontend':{
+    0:mkTest([
+      ["HTML — это:",["Язык стилей","Язык разметки","Язык программирования"],1],
+      ["Тег для заголовка первого уровня:",["<h2>","<h1>","<p>"],1],
+      ["DOCTYPE указывается для:",["Стилей","Указания версии HTML","JavaScript"],1],
+      ["Парный тег включает:",["Открывающий и закрывающий","Только открывающий","Только закрывающий"],0],
+      ["Тег для изображения:",["<img>","<pic>","<image>"],0]
+    ]),
+    1:mkTest([
+      ["CSS-селектор '.class' выбирает:",["Элементы по id","Элементы по классу","Все элементы"],1],
+      ["Селектор '#id' выбирает:",["Элемент по id","Все элементы класса","Тег по имени"],0],
+      ["Селектор 'p' выбирает:",["Все параграфы","Элемент с классом p","id=p"],0],
+      ["Комбинатор '>' выбирает:",["Все дочерние элементы","Прямых дочерних","Соседей"],1],
+      ["Псевдокласс :hover срабатывает:",["При клике","При наведении мыши","При загрузке"],1]
+    ]),
+    2:mkTest([
+      ["display:flex делает контейнер:",["Блочным","Флекс-контейнером","Грид-контейнером"],1],
+      ["justify-content в flex выравнивает по:",["Поперечной оси","Главной оси","Обеим осям"],1],
+      ["display:grid создаёт:",["Флекс-контейнер","Сеточный контейнер","Блочный элемент"],1],
+      ["grid-template-columns: 1fr 2fr создаёт:",["Две колонки 1:1","Две колонки 1:2","Три колонки"],1],
+      ["align-items в flex выравнивает по:",["Главной оси","Поперечной оси","Обеим"],1]
+    ]),
+    3:mkTest([
+      ["Ключевое слово let объявляет:",["Константу","Переменную","Функцию"],1],
+      ["typeof 42 возвращает:",["'number'","'string'","'integer'"],0],
+      ["Оператор === проверяет:",["Только значение","Значение и тип","Только тип"],1],
+      ["console.log() нужен для:",["Изменения DOM","Вывода в консоль","Загрузки скриптов"],1],
+      ["Массив в JS объявляется как:",["{}","[]","()"],1]
+    ]),
+    4:mkTest([
+      ["document.getElementById возвращает:",["Коллекцию","Один элемент по id","Все элементы"],1],
+      ["innerHTML позволяет:",["Задать/получить HTML-содержимое","Удалить элемент","Добавить CSS"],0],
+      ["createElement создаёт:",["Новый HTML-элемент","CSS-правило","Событие"],0],
+      ["appendChild добавляет элемент:",["Перед родителем","В конец родителя","В начало"],1],
+      ["querySelector возвращает:",["Первый совпадающий элемент","Все совпадения","Только id"],0]
+    ]),
+    5:mkTest([
+      ["addEventListener принимает аргументы:",["Только функцию","Тип события и обработчик","Только тип"],1],
+      ["Событие 'click' срабатывает:",["При наведении","При клике","При нажатии клавиши"],1],
+      ["preventDefault() останавливает:",["Распространение события","Поведение по умолчанию","Браузер"],1],
+      ["event.target — это:",["Обработчик","Элемент, вызвавший событие","Тип события"],1],
+      ["Форма отправляется событием:",["'change'","'submit'","'load'"],1]
+    ])
+  },
+  'Python':{
+    0:mkTest([
+      ["int('5') преобразует строку в:",["Float","Int","Bool"],1],
+      ["Тип данных True:",["str","int","bool"],2],
+      ["print('Hello') выводит:",["Hello в консоль","Hello в файл","Ошибку"],0],
+      ["Комментарий в Python начинается с:",["//","#","/*"],1],
+      ["Переменная x = 3.14 имеет тип:",["int","float","str"],1]
+    ]),
+    1:mkTest([
+      ["Ключевое слово условного оператора:",["for","if","while"],1],
+      ["elif означает:",["Иначе если","Иначе","Пока"],0],
+      ["Блок else выполняется:",["Всегда","Когда условие ложно","Никогда"],1],
+      ["Отступ в Python (indent) обязателен?",["Нет","Да","Только в функциях"],1],
+      ["x = 5. if x > 3: print('Да') — что выводится?",["Ничего","Да","Ошибка"],1]
+    ]),
+    2:mkTest([
+      ["for i in range(3) выполняется:",["2 раза","3 раза","4 раза"],1],
+      ["while True — это цикл:",["Конечный","Бесконечный","Ошибочный"],1],
+      ["break прерывает:",["Условие","Цикл","Функцию"],1],
+      ["continue пропускает:",["Весь цикл","Текущую итерацию","Последнюю итерацию"],1],
+      ["range(1,5) даёт числа:",["1,2,3,4,5","1,2,3,4","0,1,2,3,4"],1]
+    ]),
+    3:mkTest([
+      ["Функция объявляется ключевым словом:",["func","def","fn"],1],
+      ["return возвращает:",["Ничего","Значение из функции","Строку"],1],
+      ["Параметры функции — это:",["Переменные внутри","Значения, передаваемые при вызове","Константы"],1],
+      ["Что выведет: def f(): return 5; print(f())?",["None","5","f"],1],
+      ["Рекурсия — это:",["Цикл while","Вызов функции самой себой","Импорт модуля"],1]
+    ]),
+    4:mkTest([
+      ["Список (list) в Python создаётся как:",["{}","[]","()"],1],
+      ["Словарь (dict) — это:",["Упорядоченный список","Пары ключ-значение","Множество"],1],
+      ["list.append(x) делает:",["Удаляет x","Добавляет x в конец","Сортирует"],1],
+      ["len([1,2,3]) возвращает:",["3","1","2"],0],
+      ["d = {'a':1}. d['a'] возвращает:",["'a'","1","Ошибку"],1]
+    ]),
+    5:mkTest([
+      ["open('f.txt','r') открывает файл для:",["Записи","Чтения","Добавления"],1],
+      ["with open(...) as f: — контекстный менеджер:",["Не закрывает файл","Автоматически закрывает","Блокирует файл"],1],
+      ["f.readlines() возвращает:",["Строку","Список строк","Словарь"],1],
+      ["Режим 'w' при записи:",["Дополняет","Перезаписывает","Создаёт только новый"],1],
+      ["f.write('Hi') записывает:",["В конец всегда","По указателю позиции","Только числа"],1]
+    ])
+  },
+  'Kotlin':{
+    0:mkTest([
+      ["Как вывести 'Hello' в Kotlin?",["System.out.println('Hello')","print('Hello')","println(\"Hello\")"],2],
+      ["Функция точки входа:",["start()","main()","init()"],1],
+      ["Расширение файлов Kotlin:",["'.java'","'.kt'","'.kts только'"],1],
+      ["Kotlin разработан компанией:",["Google","JetBrains","Oracle"],1],
+      ["Kotlin работает на:",["Только Android","JVM и Android","Только JVM"],1]
+    ]),
+    1:mkTest([
+      ["val объявляет переменную:",["Изменяемую","Неизменяемую","Глобальную"],1],
+      ["var объявляет переменную:",["Изменяемую","Неизменяемую","Константную"],0],
+      ["Тип String хранит:",["Числа","Строки","Boolean"],1],
+      ["val x: Int = 5. Можно ли изменить x?",["Да","Нет","Только раз"],1],
+      ["Как объявить константу времени компиляции?",["val","const val","var"],1]
+    ]),
+    2:mkTest([
+      ["Оператор if в Kotlin может быть:",["Только инструкцией","Только выражением","Инструкцией и выражением"],2],
+      ["when в Kotlin аналог:",["for","switch/when в Java","while"],1],
+      ["Выражение: val x = if(a>b) a else b — это:",["Ошибка","Условное выражение","Цикл"],1],
+      ["Оператор ?. в Kotlin — это:",["Проверка null","Деление","Сравнение"],0],
+      ["Elvis-оператор ?: возвращает:",["Левую часть или правую если null","Всегда правую","true/false"],0]
+    ]),
+    3:mkTest([
+      ["for (i in 1..5) выполняет итерации:",["4","5","6"],1],
+      ["repeat(3) выполняет блок:",["2","3","4"],1],
+      ["List в Kotlin по умолчанию:",["Изменяемый","Неизменяемый","Нулевой"],1],
+      ["MutableList позволяет:",["Только чтение","Изменение элементов","Только числа"],1],
+      ["forEach у коллекции:",["Сортирует","Перебирает элементы","Фильтрует"],1]
+    ]),
+    4:mkTest([
+      ["Функция в Kotlin объявляется как:",["function f()","def f()","fun f()"],2],
+      ["Возвращаемый тип Unit означает:",["Int","Нет возвращаемого значения","String"],1],
+      ["Лямбда-выражение: { x: Int -> x * 2 } — это:",["Класс","Анонимная функция","Переменная"],1],
+      ["Функция высшего порядка принимает:",["Только числа","Другую функцию","Только строки"],1],
+      ["Ключевое слово return в лямбде:",["Обязательно","Не обязательно","Недопустимо"],1]
+    ]),
+    5:mkTest([
+      ["Null safety означает:",["Запрет null","Явная обработка null","Автоматическое null"],1],
+      ["Тип String? означает:",["Не может быть null","Может быть null","Всегда null"],1],
+      ["!! оператор:",["Безопасный вызов","Принудительное раскрытие null","Elvis"],1],
+      ["let { } используется для:",["Объявления переменных","Безопасной работы с nullable","Циклов"],1],
+      ["Если val x: String? = null, то x?.length возвращает:",["Ошибку","null","0"],1]
+    ])
+  },
+  'C++':{
+    0:mkTest([
+      ["Для ввода используется:",["printf","cin","input"],1],
+      ["Для вывода используется:",["scanf","cout","print"],1],
+      ["Заголовок для cin/cout:",["<stdio.h>","<iostream>","<stdlib.h>"],1],
+      ["Директива подключения библиотеки:",["import","#include","using"],1],
+      ["endl используется для:",["Ввода","Перевода строки","Комментария"],1]
+    ]),
+    1:mkTest([
+      ["int хранит:",["Дробные числа","Целые числа","Символы"],1],
+      ["double хранит:",["Целые","Числа с плавающей точкой","Строки"],1],
+      ["char хранит:",["Строку","Один символ","Массив"],1],
+      ["bool принимает значения:",["0..100","true/false","1..10"],1],
+      ["Объявление переменной: int x = 5; Тип переменной:",["float","int","double"],1]
+    ]),
+    2:mkTest([
+      ["Условный оператор:",["for","if","while"],1],
+      ["switch-case работает с:",["Любым выражением","Целочисленным значением","Только bool"],1],
+      ["break в switch:",["Продолжает следующий case","Выходит из switch","Ошибка"],1],
+      ["else if нужен для:",["Одного условия","Нескольких условий","Цикла"],1],
+      ["Тернарный оператор: (a>b)? a : b возвращает:",["a всегда","Большее из a и b","b всегда"],1]
+    ]),
+    3:mkTest([
+      ["for(int i=0;i<5;i++) выполняется:",["4","5","6"],1],
+      ["while(true) — цикл:",["Конечный","Бесконечный","Ошибочный"],1],
+      ["do-while выполняется хотя бы:",["0 раз","1 раз","2 раза"],1],
+      ["continue в цикле:",["Выходит из цикла","Пропускает итерацию","Останавливает программу"],1],
+      ["Счётчик i++ увеличивает i на:",["2","1","0"],1]
+    ]),
+    4:mkTest([
+      ["Массив int a[5] содержит:",["4 элемента","5 элементов","6 элементов"],1],
+      ["Индексация массива начинается с:",["1","0","-1"],1],
+      ["a[3] — это:",["4-й элемент","3-й элемент","Ошибка"],0],
+      ["Строка в C++ — это:",["int[]","char[]","bool[]"],1],
+      ["strlen() возвращает:",["Размер памяти","Длину строки","Тип строки"],1]
+    ]),
+    5:mkTest([
+      ["Указатель хранит:",["Значение","Адрес в памяти","Тип данных"],1],
+      ["Оператор & возвращает:",["Значение переменной","Адрес переменной","Размер"],1],
+      ["Оператор * разыменовывает:",["Адрес","Значение по адресу","Тип"],1],
+      ["int* p; — объявление:",["Переменной int","Указателя на int","Массива"],1],
+      ["Ссылка int& r = x; — это:",["Новая переменная","Псевдоним x","Указатель на x"],1]
+    ])
+  },
+  'Информатика':{
+    0:mkTest([
+      ["Десятичное 10 в двоичной системе:",["1001","1010","1100"],1],
+      ["Основание шестнадцатеричной системы:",["8","16","2"],1],
+      ["1 байт = __ бит",["4","8","16"],1],
+      ["Двоичное 1111 в десятичной:",["14","15","16"],1],
+      ["Hex F = десятичное:",["14","15","16"],1]
+    ]),
+    1:mkTest([
+      ["Конъюнкция (И) истинна, когда:",["Хотя бы одно истинно","Оба истинны","Оба ложны"],1],
+      ["Дизъюнкция (ИЛИ) ложна, когда:",["Оба ложны","Хотя бы одно ложно","Оба истинны"],0],
+      ["Инверсия (НЕ) меняет:",["Значение на противоположное","Тип данных","Порядок"],0],
+      ["Таблица истинности для И с 2 входами имеет строк:",["2","3","4"],2],
+      ["Логическая схема реализует:",["Алгоритм","Логическую функцию","Базу данных"],1]
+    ]),
+    2:mkTest([
+      ["Алгоритм должен быть:",["Бесконечным","Конечным и результативным","Случайным"],1],
+      ["Линейный алгоритм выполняет шаги:",["В случайном порядке","Последовательно","С условиями"],1],
+      ["Блок-схема — это:",["Код программы","Графическое представление алгоритма","База данных"],1],
+      ["Ромб в блок-схеме обозначает:",["Начало","Условие","Вывод"],1],
+      ["Рекурсивный алгоритм:",["Использует циклы","Вызывает себя","Не имеет условия"],1]
+    ]),
+    3:mkTest([
+      ["СУБД — это:",["Язык программирования","Система управления БД","Браузер"],1],
+      ["SQL-запрос SELECT выбирает:",["Удаляет данные","Читает данные","Изменяет таблицу"],1],
+      ["Первичный ключ (PK) — это:",["Поле с произвольными данными","Уникальный идентификатор записи","Пароль БД"],1],
+      ["Связь один-ко-многим означает:",["Одна запись ↔ одна","Одна запись ↔ много","Много ↔ много"],1],
+      ["WHERE в SQL используется для:",["Сортировки","Фильтрации","Объединения таблиц"],1]
+    ]),
+    4:mkTest([
+      ["Протокол TCP/IP работает на:",["Физическом уровне","Транспортном/сетевом","Прикладном"],1],
+      ["IP-адрес идентифицирует:",["Пользователя","Устройство в сети","Браузер"],1],
+      ["DNS расшифровывается как:",["Digital Network Service","Domain Name System","Data Network Standard"],1],
+      ["Маршрутизатор (роутер) выполняет:",["Хранение данных","Маршрутизацию пакетов","Шифрование"],1],
+      ["HTTP используется для:",["Отправки e-mail","Передачи веб-страниц","FTP-соединений"],1]
+    ]),
+    5:mkTest([
+      ["Фишинг — это:",["Вирус","Попытка кражи данных через поддельные сайты","Спам"],1],
+      ["Шифрование защищает данные, делая их:",["Удалёнными","Нечитаемыми без ключа","Сжатыми"],1],
+      ["Двухфакторная аутентификация:",["Один пароль","Пароль + второй фактор","Биометрия только"],1],
+      ["Брандмауэр (firewall):",["Ускоряет сеть","Фильтрует трафик","Хранит пароли"],1],
+      ["Обновления ПО важны для:",["Красивого интерфейса","Исправления уязвимостей","Скорости"],1]
+    ])
+  },
+  'App Inventor':{
+    0:mkTest([
+      ["App Inventor — платформа для создания:",["Веб-сайтов","Android-приложений","Игр ПК"],1],
+      ["Designer в App Inventor — это:",["Редактор блоков","Визуальный конструктор интерфейса","Хранилище данных"],1],
+      ["Blocks — это:",["Дизайнер","Редактор логики приложения","База данных"],1],
+      ["Screen — это:",["Кнопка","Экран приложения","Переменная"],1],
+      ["Как запустить приложение без компиляции?",["MIT AI2 Companion","Google Play","App Store"],0]
+    ]),
+    1:mkTest([
+      ["Компонент Button генерирует событие:",["Button.Click","Button.Load","Button.Open"],0],
+      ["Чтобы показать текст при нажатии, используют:",["Label.Text","Button.Text","TextBox.Text"],0],
+      ["Какое свойство Button отвечает за текст кнопки?",["Text","Name","Enabled"],0],
+      ["Блок 'when Button.Click do' выполняется:",["При загрузке","При нажатии кнопки","При закрытии"],1],
+      ["Чтобы спрятать компонент, установить Visible в:",["True","False","0"],1]
+    ]),
+    2:mkTest([
+      ["TinyDB сохраняет данные:",["В облаке","На устройстве локально","В Excel"],1],
+      ["TinyDB.StoreValue хранит значение по:",["Индексу","Тегу (ключу)","Имени экрана"],1],
+      ["TinyDB.GetValue возвращает:",["Случайное значение","Значение по ключу","Список всех"],1],
+      ["Для хранения настроек лучше использовать:",["Label","TinyDB","Button"],1],
+      ["При первом запуске TinyDB.GetValue без данных вернёт:",["Ошибку","valueIfTagNotThere","Null"],1]
+    ]),
+    3:mkTest([
+      ["Компонент Clock.Timer срабатывает:",["Один раз","По заданному интервалу","Никогда"],1],
+      ["TimerInterval задаётся в:",["Секундах","Миллисекундах","Минутах"],1],
+      ["Чтобы остановить таймер, установить TimerEnabled =",["True","False","0"],1],
+      ["Canvas позволяет:",["Рисовать и анимировать","Хранить данные","Отправлять email"],0],
+      ["ImageSprite движется по:",["Координатам X,Y","Нажатию кнопки","Таймеру и координатам"],2]
+    ]),
+    4:mkTest([
+      ["Компонент Sound воспроизводит:",["Видео","Звуковые файлы","Изображения"],1],
+      ["Sound.Play запускает:",["Запись звука","Воспроизведение","Паузу"],1],
+      ["Для записи звука используют:",["Sound","SoundRecorder","Player"],1],
+      ["Формат звука для App Inventor:",["MP4","MP3/WAV","AVI"],1],
+      ["Vibrate(500) заставляет телефон вибрировать:",["0.5 секунды","5 секунд","500 секунд"],0]
+    ]),
+    5:mkTest([
+      ["Чтобы создать APK, нужно выбрать:",["Build → App","Run → APK","Share → Google Play"],0],
+      ["MIT AI2 Companion используется для:",["Публикации","Тестирования в реальном времени","Создания APK"],1],
+      ["Для публикации в Google Play нужен:",["Apple ID","Google Developer Account","MIT аккаунт"],1],
+      ["Размер APK зависит от:",["Количества экранов","Используемых ресурсов","Имени проекта"],1],
+      ["Минимальная версия Android для App Inventor:",["Android 2+","Android 5+","Android 8+"],0]
+    ])
+  }
+};
+
+// --- ФИЗИКА ---
+TESTS['Физика'] = {
+  '7 класс':{
+    0:mkTest([
+      ["Физика изучает:",["Живые организмы","Природные явления и законы","Исторические события"],1],
+      ["СИ — это:",["Система измерений","Физический прибор","Тип уравнений"],0],
+      ["Единица длины в СИ:",["Сантиметр","Метр","Километр"],1],
+      ["Гипотеза в науке — это:",["Доказанный факт","Предположение","Закон"],1],
+      ["Физический эксперимент необходим для:",["Описания","Проверки гипотезы","Создания теории"],1]
+    ]),
+    1:mkTest([
+      ["Скорость определяется как:",["Путь умноженный на время","Путь делённый на время","Время делённое на путь"],1],
+      ["Равномерное движение — это движение с:",["Постоянным ускорением","Постоянной скоростью","Изменяющейся скоростью"],1],
+      ["Единица скорости в СИ:",["км/ч","м/с","см/с"],1],
+      ["За 10 с тело прошло 50 м. Скорость =",["5 м/с","500 м/с","0.2 м/с"],0],
+      ["Расстояние при равномерном движении: s=",["v/t","vt","t/v"],1]
+    ]),
+    2:mkTest([
+      ["Плотность — это:",["Масса / объём","Объём / масса","Масса × объём"],0],
+      ["Единица плотности:",["кг","кг/м³","м³/кг"],1],
+      ["Плотность воды примерно:",["500 кг/м³","1000 кг/м³","2000 кг/м³"],1],
+      ["m=ρV. Масса тела объёмом 2 м³ при ρ=800 кг/м³:",["400 кг","1600 кг","4 кг"],1],
+      ["Тело с наибольшей плотностью утонет в воде:","['Лёгкое дерево','Железо','Пробка']",1]
+    ]),
+    3:mkTest([
+      ["Давление P = F/S. Единица давления:",["Ньютон","Паскаль","Ватт"],1],
+      ["Давление увеличивается при:",["Уменьшении силы","Уменьшении площади опоры","Увеличении площади"],1],
+      ["Атмосферное давление на уровне моря ≈",["100000 Па","10 Па","1000000 Па"],0],
+      ["Острый нож режет лучше тупого, потому что:",["Больше сила","Меньше площадь → больше давление","Меньше масса"],1],
+      ["1 Па =",["1 Н/м²","1 кг/м","1 Н·м"],0]
+    ]),
+    4:mkTest([
+      ["Архимедова сила действует на тела в:",["Вакууме","Жидкости и газе","Только жидкости"],1],
+      ["FA = ρжgV. ρж — это:",["Плотность тела","Плотность жидкости","Ускорение"],1],
+      ["Тело всплывает, если:",["FA < Fтяж","FA > Fтяж","FA = Fтяж"],1],
+      ["Фа зависит от объёма погружённой части:",["Да","Нет","Только при плавании"],0],
+      ["Закон Архимеда открыт в:",["Средневековье","Древней Греции","XIX веке"],1]
+    ])
+  },
+  '8 класс':{
+    0:mkTest([
+      ["Температура измеряется в:",["Метрах","Кельвинах и Цельсиях","Ваттах"],1],
+      ["Q = mcΔT. c — это:",["Теплоёмкость","Масса","Температура"],0],
+      ["Конвекция — передача тепла через:",["Излучение","Движение вещества","Контакт"],1],
+      ["При нагревании тела обычно:",["Сжимаются","Расширяются","Не меняются"],1],
+      ["Теплопроводность металлов:",["Низкая","Высокая","Нулевая"],1]
+    ]),
+    1:mkTest([
+      ["При плавлении вещество переходит из:",["Жидкого в газ","Твёрдого в жидкое","Газа в твёрдое"],1],
+      ["Кипение — переход из:",["Жидкого в газ","Газа в жидкое","Твёрдого в газ"],0],
+      ["Температура кипения воды при норм. давлении:",["0°C","100°C","50°C"],1],
+      ["Конденсация — это:",["Испарение","Переход газа в жидкость","Плавление"],1],
+      ["При сублимации вещество переходит из:",["Жидкого в газ","Твёрдого в газ","Газа в твёрдое"],1]
+    ]),
+    2:mkTest([
+      ["Единица заряда в СИ:",["Ампер","Кулон","Вольт"],1],
+      ["Заряд электрона:",["Положительный","Отрицательный","Нейтральный"],1],
+      ["Одноимённые заряды:",["Притягиваются","Отталкиваются","Не взаимодействуют"],1],
+      ["Проводники пропускают электрический ток:",["Плохо","Хорошо","Не пропускают"],1],
+      ["Диэлектрики — это:",["Хорошие проводники","Плохие проводники","Полупроводники"],1]
+    ]),
+    3:mkTest([
+      ["Сила тока I = Q/t. Единица:",["Вольт","Ампер","Ом"],1],
+      ["Напряжение U измеряется в:",["Амперах","Вольтах","Ваттах"],1],
+      ["Сопротивление R измеряется в:",["Омах","Вольтах","Амперах"],0],
+      ["Закон Ома: I = U/R. При U=10В, R=5Ом: I=?",["2А","50А","0.5А"],0],
+      ["Амперметр включается в цепь:",["Параллельно","Последовательно","Не имеет значения"],1]
+    ]),
+    4:mkTest([
+      ["При последовательном соединении R_общ =",["R₁ + R₂","R₁·R₂/(R₁+R₂)","R₁/R₂"],0],
+      ["При параллельном соединении напряжение на каждом элементе:",["Разное","Одинаковое","Нулевое"],1],
+      ["Мощность P = UI. При U=220В, I=2А: P=?",["110Вт","440Вт","222Вт"],1],
+      ["КПД нагревательного прибора:",[">100%","≤100%","=0"],1],
+      ["Электрическая работа W = Pt. Единица:",["Вольт·ампер","Джоуль","Ватт"],1]
+    ])
+  },
+  '9 класс':{
+    0:mkTest([
+      ["Первый закон Ньютона (инерция): тело движется равномерно если:",["Нет сил","Нет равнодействующей силы","Скорость постоянна"],1],
+      ["Второй закон Ньютона: F = ma. a — это:",["Масса","Ускорение","Скорость"],1],
+      ["Третий закон Ньютона: действию равно:",["Ускорение","Противодействие","Инерция"],1],
+      ["Единица силы в СИ:",["Паскаль","Ньютон","Джоуль"],1],
+      ["Сила тяжести F = mg. g ≈",["9.8 м/с²","9.8 Н","9.8 кг"],0]
+    ]),
+    1:mkTest([
+      ["Импульс тела p = mv. Единица:",["кг·м/с","Н/м","Дж"],0],
+      ["Закон сохранения импульса: суммарный импульс замкнутой системы:",["Увеличивается","Не изменяется","Уменьшается"],1],
+      ["При взрыве (начальный импульс=0) суммарный импульс частей:",["Больше 0","Равен 0","Зависит от масс"],1],
+      ["Импульс силы I = Ft. F=10Н, t=5с: I=?",["2","50","15"],1],
+      ["Реактивное движение основано на законе:",["Архимеда","Сохранения импульса","Гравитации"],1]
+    ]),
+    2:mkTest([
+      ["Работа A = Fs·cosα. При α=90° работа равна:",["fs","0","F/s"],1],
+      ["Единица работы:",["Ньютон","Джоуль","Ватт"],1],
+      ["Мощность P = A/t. Единица:",["Джоуль","Ватт","Ампер"],1],
+      ["КПД = Aполезн/Aполн × 100%. КПД всегда:",[">100%","≤100%","=100%"],1],
+      ["Работа против силы трения переходит в:",["Кинетическую энергию","Тепло","Потенциальную"],1]
+    ]),
+    3:mkTest([
+      ["Кинетическая энергия Ek = mv²/2. Зависит от:",["Только массы","Массы и скорости","Только скорости"],1],
+      ["Потенциальная энергия Ep = mgh. h — это:",["Скорость","Высота","Ускорение"],1],
+      ["Закон сохранения энергии: полная механическая энергия:",["Уменьшается","Увеличивается","Сохраняется (без трения)"],2],
+      ["При падении тела Ep переходит в:",["Тепло","Ek","Химическую"],1],
+      ["В точке наибольшей скорости при маятнике:",["Ep максимальна","Ek максимальна","Обе нулевые"],1]
+    ]),
+    4:mkTest([
+      ["Период колебаний T = 1/ν. ν — это:",["Амплитуда","Частота","Длина волны"],1],
+      ["Единица частоты:",["Секунда","Герц","Метр"],1],
+      ["Длина волны λ = v/ν. Чем больше частота, тем:",["Больше длина","Меньше длина","Не меняется"],1],
+      ["Звук — это волна:",["Поперечная","Продольная","Электромагнитная"],1],
+      ["Скорость звука в воздухе ≈",["340 м/с","3×10⁸ м/с","150 м/с"],0]
+    ])
+  },
+  '10 класс':{
+    0:mkTest([
+      ["МКТ расшифровывается как:",["Молекулярно-квантовая теория","Молекулярно-кинетическая теория","Международная квантовая теория"],1],
+      ["Основное уравнение МКТ для давления газа: P =",["⅔n⟨Ek⟩","nkT","RT/V"],0],
+      ["Число Авогадро Nₐ ≈",["6×10²³","6×10¹⁰","6×10³"],0],
+      ["Постоянная Больцмана k =",["R/Nₐ","RNₐ","R+Nₐ"],0],
+      ["Идеальный газ — это газ с:",["Межмолекулярными взаимодействиями","Пренебрежимо малыми взаимодействиями","Нулевой температурой"],1]
+    ]),
+    1:mkTest([
+      ["Первое начало термодинамики: ΔU = Q - A. A — это:",["Температура","Работа газа","Теплоёмкость"],1],
+      ["КПД теплового двигателя η = (Q₁-Q₂)/Q₁. Максимален у:",["Паровой машины","Цикла Карно","Электродвигателя"],1],
+      ["При изотермическом процессе постоянна:",["Давление","Объём","Температура"],2],
+      ["Адиабатный процесс происходит без обмена:",["Работой","Теплотой","Давлением"],1],
+      ["Энтропия изолированной системы:",["Уменьшается","Не меняется","Возрастает"],2]
+    ]),
+    2:mkTest([
+      ["Напряжённость электрического поля E = F/q. Единица:",["Вольт","В/м","Кулон"],1],
+      ["Закон Кулона: F = kq₁q₂/r². k ≈",["9×10⁹ Н·м²/Кл²","9×10⁶","9×10³"],0],
+      ["Потенциал φ = W/q. Единица:",["Кулон","Вольт","Джоуль"],1],
+      ["Электроёмкость C = Q/U. Единица:",["Фарад","Ом","Вольт"],0],
+      ["Диэлектрик в конденсаторе:",["Уменьшает ёмкость","Увеличивает ёмкость","Не влияет"],1]
+    ]),
+    3:mkTest([
+      ["Магнитное поле создаётся:",["Неподвижными зарядами","Движущимися зарядами","Постоянным потенциалом"],1],
+      ["Единица магнитной индукции:",["Ампер","Тесла","Вольт"],1],
+      ["Сила Лоренца действует на:",["Неподвижный заряд","Движущийся заряд в поле","Нейтральное тело"],1],
+      ["Правило левой руки определяет:",["Направление тока","Направление силы Ампера","Полярность"],1],
+      ["Магнитный поток Ф = BS·cosα. При α=90°: Ф=",["BS","0","B/S"],1]
+    ]),
+    4:mkTest([
+      ["ЭМИ открыл:",["Ампер","Фарадей","Герц"],1],
+      ["Закон ФарадеяЕМФ: ε = -ΔΦ/Δt. ΔΦ — это:",["Изменение тока","Изменение магнитного потока","Изменение напряжения"],1],
+      ["Правило Ленца: индукционный ток направлен так, чтобы:",["Усилить изменение потока","Препятствовать изменению потока","Остановить проводник"],1],
+      ["Трансформатор изменяет:",["Частоту","Напряжение","Мощность (в идеале не изменяет)"],1],
+      ["Коэффициент трансформации n = U₂/U₁ = N₂/N₁",["Верно","Неверно","Только для тока"],0]
+    ])
+  },
+  '11 класс':{
+    0:mkTest([
+      ["Скорость электромагнитных волн в вакууме c ≈",["3×10⁸ м/с","3×10⁶ м/с","300 м/с"],0],
+      ["Длина волны λ = c/ν. При ν=6×10¹⁴Гц: λ ≈",["500 нм (видимый свет)","500 мм","500 км"],0],
+      ["Радиоволны имеют длину волны:",["Нанометры","Миллиметры-километры","Фемтометры"],1],
+      ["Гамма-излучение имеет наибольшую:",["Длину волны","Энергию фотонов","Скорость в среде"],1],
+      ["Рентгеновские лучи используют в:",["Связи","Медицинской диагностике","Кулинарии"],1]
+    ]),
+    1:mkTest([
+      ["Закон отражения: угол падения = углу:",["Преломления","Отражения","Дифракции"],1],
+      ["Закон Снеллиуса: n₁sinα₁ = n₂sinα₂. n — это:",["Порядок спектра","Показатель преломления","Длина волны"],1],
+      ["Полное внутреннее отражение при:",["Угле Брюстера","Угле больше критического","Нормальном падении"],1],
+      ["Линза, собирающая лучи, называется:",["Рассеивающей","Собирающей","Плоской"],1],
+      ["Формула тонкой линзы: 1/f = 1/d + 1/f'. f — это:",["Расстояние до предмета","Фокусное расстояние","Расстояние до изображения"],1]
+    ]),
+    2:mkTest([
+      ["Постулаты СТО Эйнштейна: скорость света с =",["Зависит от наблюдателя","Постоянна в любой ИСО","Равна скорости источника"],1],
+      ["Масса тела растёт при:",["Уменьшении скорости","Увеличении скорости","Неподвижности"],1],
+      ["Энергия покоя E₀ = mc². c — это:",["Скорость звука","Скорость света","Коэффициент"],1],
+      ["При v→c время в движущейся системе:",["Идёт быстрее","Замедляется","Не меняется"],1],
+      ["Лоренцево сокращение — это сокращение:",["Массы","Длины","Времени"],1]
+    ]),
+    3:mkTest([
+      ["Фотон — это квант:",["Электромагнитного излучения","Вещества","Заряда"],0],
+      ["Энергия фотона E = hν. h — постоянная:",["Больцмана","Планка","Авогадро"],1],
+      ["Фотоэффект — выбивание электронов:",["Магнитным полем","Светом","Звуком"],1],
+      ["Красная граница фотоэффекта — это:",["Максимальная частота","Минимальная частота для фотоэффекта","Длина волны"],1],
+      ["Корпускулярно-волновой дуализм: электрон обладает свойствами:",["Только частицы","Только волны","Частицы и волны"],2]
+    ]),
+    4:mkTest([
+      ["Ядро атома состоит из:",["Электронов и позитронов","Протонов и нейтронов","Только протонов"],1],
+      ["Радиоактивный распад — это:",["Синтез ядра","Самопроизвольное превращение ядра","Ионизация"],1],
+      ["Период полураспада T½ — время, за которое распадается:",["Всё вещество","Половина ядер","Четверть"],1],
+      ["Альфа-частица — это ядро:",["Водорода","Гелия","Лития"],1],
+      ["Ядерный реактор использует реакцию:",["Синтеза","Деления (цепную)","Радиоактивного распада"],1]
+    ])
+  }
+};
+
+// --- БИОЛОГИЯ ---
+TESTS['Биология'] = {
+  '5 класс':{
+    0:mkTest([
+      ["Что изучает биология?",["Неживую природу","Живые организмы","Химические соединения"],1],
+      ["Клетка — основная единица:",["Минерала","Живого организма","Горной породы"],1],
+      ["Микроскоп используется для:",["Измерения температуры","Наблюдения мельчайших объектов","Химических опытов"],1],
+      ["Одноклеточный организм — пример:",["Человек","Амёба","Гриб"],1],
+      ["Царства живой природы включают:",["Только растения и животных","Растения, животные, грибы, бактерии","Только животных"],1]
+    ]),
+    1:mkTest([
+      ["Клетка открыта:",["Ньютоном","Гуком","Дарвином"],1],
+      ["Митохондрия производит:",["Белок","Энергию (АТФ)","Хлорофилл"],1],
+      ["Рибосомы — место синтеза:",["Белков","Жиров","Углеводов"],0],
+      ["Хлоропласт содержит хлорофилл и отвечает за:",["Дыхание","Фотосинтез","Деление"],1],
+      ["Клеточная мембрана:",["Жёсткая оболочка","Полупроницаемый барьер","Ядро"],1]
+    ]),
+    2:mkTest([
+      ["Растения относятся к царству:",["Animalia","Plantae","Fungi"],1],
+      ["Орган фотосинтеза у растений:",["Корень","Лист","Стебель"],1],
+      ["Покрытосеменные растения имеют:",["Открытые семена","Семена в плоде","Споры"],1],
+      ["Мхи размножаются:",["Семенами","Спорами","Черенками"],1],
+      ["Хвойные растения относятся к:",["Покрытосеменным","Голосеменным","Папоротникам"],1]
+    ]),
+    3:mkTest([
+      ["Фотосинтез происходит в:",["Митохондриях","Хлоропластах","Ядре"],1],
+      ["Уравнение фотосинтеза: CO₂ + H₂O + свет →",["O₂ + сахар","N₂ + вода","CO + H₂"],0],
+      ["Кислород при фотосинтезе:",["Поглощается","Выделяется","Не участвует"],1],
+      ["Для фотосинтеза необходим:",["Кислород","Свет","Азот"],1],
+      ["Хлорофилл поглощает лучше всего:",["Жёлтый свет","Зелёный свет","Красный и синий свет"],2]
+    ]),
+    4:mkTest([
+      ["Бесполое размножение растений:",["Опыление","Черенкование","Оплодотворение"],1],
+      ["Половое размножение требует:",["Споры","Гаметы","Части стебля"],1],
+      ["Семя образуется из:",["Пыльцы","Оплодотворённой семяпочки","Листа"],1],
+      ["Двойное оплодотворение характерно для:",["Голосеменных","Покрытосеменных","Мхов"],1],
+      ["Вегетативное размножение — это:",["Половое","Бесполое","Спорообразование"],1]
+    ])
+  },
+  '6 класс':{
+    0:mkTest([
+      ["Грибы питаются:",["Фотосинтезом","Готовыми органическими веществами","Минералами"],1],
+      ["Мицелий — это:",["Плодовое тело","Тело гриба из нитей","Спора"],1],
+      ["Шляпочные грибы размножаются:",["Семенами","Спорами","Черенками"],1],
+      ["Микориза — это симбиоз гриба с:",["Бактерией","Корнями растения","Водорослью"],1],
+      ["Дрожжи — это:",["Одноклеточные грибы","Бактерии","Водоросли"],0]
+    ]),
+    1:mkTest([
+      ["Бактерии — организмы:",["Многоклеточные","Одноклеточные прокариоты","Эукариоты"],1],
+      ["Прокариоты — это клетки без:",["Рибосом","Оформленного ядра","Мембраны"],1],
+      ["Бактерии размножаются:",["Половым путём","Делением","Спорами как грибы"],1],
+      ["Болезнетворные бактерии называют:",["Сапрофитами","Патогенами","Симбионтами"],1],
+      ["Азотфиксирующие бактерии полезны для:",["Разрушения почвы","Обогащения почвы азотом","Разложения нефти"],1]
+    ]),
+    2:mkTest([
+      ["Вирусы — это:",["Клетки","Внеклеточные формы жизни","Одноклеточные организмы"],1],
+      ["Вирус размножается:",["Самостоятельно","Только внутри клетки-хозяина","Делением"],1],
+      ["Капсид — это:",["Ядро вируса","Белковая оболочка вируса","РНК вируса"],1],
+      ["ВИЧ поражает:",["Нейроны","Т-лимфоциты","Эритроциты"],1],
+      ["Вакцина создаёт:",["Активный иммунитет","Пассивный иммунитет","Аллергию"],0]
+    ]),
+    3:mkTest([
+      ["Экосистема — это:",["Только живые организмы","Совокупность живых организмов и среды обитания","Только неживая природа"],1],
+      ["Продуценты — организмы, создающие:",["Готовые органические вещества","Органические вещества из неорганических","Минеральные соединения"],1],
+      ["Консументы — это:",["Растения","Животные, поедающие других","Грибы"],1],
+      ["Цепь питания начинается с:",["Хищника","Продуцента","Редуцента"],1],
+      ["Редуценты разлагают:",["Живых организмов","Мёртвые органические вещества","Минералы"],1]
+    ]),
+    4:mkTest([
+      ["Биологический круговорот включает обмен:",["Только кислородом","Веществами между организмами и средой","Только водой"],1],
+      ["Азот фиксируют в почве:",["Грибы","Бактерии","Водоросли"],1],
+      ["Кислород поступает в атмосферу при:",["Дыхании","Фотосинтезе","Горении"],1],
+      ["CO₂ поглощается при:",["Дыхании","Фотосинтезе","Испарении"],1],
+      ["Водный цикл поддерживается:",["Ветром","Испарением и осадками","Только морями"],1]
+    ])
+  },
+  '7 класс':{
+    0:mkTest([
+      ["Беспозвоночные не имеют:",["Клеток","Позвоночника","Тканей"],1],
+      ["Губки — самые примитивные:",["Позвоночные","Многоклеточные животные","Растения"],1],
+      ["Тип Кишечнополостные имеет симметрию:",["Двустороннюю","Лучевую","Отсутствует"],1],
+      ["Насекомые имеют ног:",["4","6","8"],1],
+      ["Паукообразные имеют ног:",["6","8","10"],1]
+    ]),
+    1:mkTest([
+      ["Хорду имеют:",["Только рыбы","Все хордовые","Все позвоночные"],1],
+      ["Ланцетник — пример:",["Бесчерепных хордовых","Рыб","Амфибий"],0],
+      ["Позвоночник — производное:",["Хорды","Кишечника","Кожи"],0],
+      ["Череп защищает:",["Спинной мозг","Головной мозг","Сердце"],1],
+      ["Эволюция хордовых идёт от:",["Беспозвоночных","Прокариот","Грибов"],0]
+    ]),
+    2:mkTest([
+      ["Рыбы дышат:",["Лёгкими","Жабрами","Трахеями"],1],
+      ["Плавательный пузырь рыб нужен для:",["Дыхания","Регуляции плавучести","Пищеварения"],1],
+      ["Амфибии имеют кожное дыхание:",["Нет","Да","Только личинки"],1],
+      ["Личинки амфибий живут в:",["Земле","Воде","Воздухе"],1],
+      ["Икринки рыб оплодотворяются:",["Внутри тела","Снаружи в воде","В почве"],1]
+    ]),
+    3:mkTest([
+      ["Рептилии — холоднокровные, потому что:",["Дышат жабрами","Температура тела зависит от среды","Имеют чешую"],1],
+      ["Птицы — теплокровные, значит:",["Постоянная температура тела","Переменная температура","Нет терморегуляции"],0],
+      ["Перья птиц — это изменённые:",["Шипы","Чешуи","Когти"],1],
+      ["Птицы дышат:",["Жабрами","Лёгкими с воздушными мешками","Кожей"],1],
+      ["Откладывают яйца с твёрдой скорлупой:",["Амфибии","Рептилии и птицы","Только птицы"],1]
+    ]),
+    4:mkTest([
+      ["Млекопитающие кормят детёнышей:",["Нектаром","Молоком","Кровью"],1],
+      ["Теплокровность и волосяной покров — признаки:",["Птиц","Млекопитающих","Рептилий"],1],
+      ["Диафрагма — мышца, участвующая в:",["Пищеварении","Дыхании","Кровообращении"],1],
+      ["Четырёхкамерное сердце есть у:",["Рыб","Амфибий","Млекопитающих и птиц"],2],
+      ["Плацента — орган для:",["Дыхания","Питания и связи зародыша с матерью","Движения"],1]
+    ])
+  },
+  '8 класс':{
+    0:mkTest([
+      ["Скелет выполняет функции:",["Только опоры","Опоры, защиты, кроветворения","Только защиты"],1],
+      ["Мышцы крепятся к костям:",["Сухожилиями","Хрящами","Связками"],0],
+      ["Суставы соединяют кости:",["Неподвижно","Полуподвижно","Подвижно"],2],
+      ["Красный костный мозг производит:",["Жир","Клетки крови","Желчь"],1],
+      ["Переломы костей заживают за счёт:",["Мышц","Надкостницы и остеобластов","Хрящей"],1]
+    ]),
+    1:mkTest([
+      ["Сердце — это мышца:",["Гладкая","Поперечнополосатая сердечная","Скелетная"],1],
+      ["Артерии несут кровь:",["К сердцу","От сердца","Туда и обратно"],1],
+      ["Эритроциты переносят:",["CO₂","O₂","Антитела"],1],
+      ["Тромбоциты нужны для:",["Иммунитета","Свёртывания крови","Транспорта газов"],1],
+      ["Давление крови измеряется в:",["Паскалях","мм рт.ст.","Амперах"],1]
+    ]),
+    2:mkTest([
+      ["Дыхательные пути: нос → глотка → гортань →",["Бронхи → лёгкие","Желудок","Пищевод"],0],
+      ["Газообмен в лёгких происходит в:",["Бронхах","Альвеолах","Трахее"],1],
+      ["Диафрагма при вдохе:",["Расслабляется","Сокращается","Не участвует"],1],
+      ["Углекислый газ выводится при:",["Вдохе","Выдохе","Пережёвывании"],1],
+      ["Жизненная ёмкость лёгких у взрослого ≈",["500 мл","3500 мл","50 мл"],1]
+    ]),
+    3:mkTest([
+      ["Пищеварение начинается в:",["Желудке","Ротовой полости","Тонком кишечнике"],1],
+      ["Фермент амилаза расщепляет:",["Белки","Жиры","Углеводы (крахмал)"],2],
+      ["Желчь вырабатывается в:",["Поджелудочной железе","Печени","Желудке"],1],
+      ["Основное всасывание питательных веществ:",["Желудок","Тонкий кишечник","Толстый кишечник"],1],
+      ["Ворсинки тонкого кишечника увеличивают:",["Скорость движения","Площадь всасывания","Выработку сока"],1]
+    ]),
+    4:mkTest([
+      ["Нейрон состоит из:",["Ядра и мембраны","Тела, дендритов и аксона","Только аксона"],1],
+      ["Синапс — место:",["Деления нейрона","Передачи импульса между нейронами","Питания нейрона"],1],
+      ["ЦНС включает:",["Только головной мозг","Головной и спинной мозг","Все нервы"],1],
+      ["Рефлекс — это:",["Произвольное движение","Автоматический ответ на раздражитель","Сознательное решение"],1],
+      ["Большие полушария мозга отвечают за:",["Рефлексы","Высшую нервную деятельность","Дыхание"],1]
+    ])
+  },
+  '9 класс':{
+    0:mkTest([
+      ["Генетика изучает:",["Эволюцию","Наследственность и изменчивость","Клетку"],1],
+      ["Ген — это:",["Тип клетки","Участок ДНК, кодирующий признак","Хромосома"],1],
+      ["Генотип — это:",["Совокупность видимых признаков","Набор генов организма","Хромосомный набор"],1],
+      ["Фенотип — это:",["Генетическая информация","Совокупность проявившихся признаков","ДНК"],1],
+      ["Аллели — это:",["Разные формы одного гена","Типы хромосом","Виды мутаций"],0]
+    ]),
+    1:mkTest([
+      ["Первый закон Менделя — закон:",["Расщепления","Единообразия гибридов F1","Независимого расщепления"],1],
+      ["Второй закон Менделя — расщепление 3:1 в:",["F1","F2","F3"],1],
+      ["Доминантный признак:",["Подавляется","Проявляется у гетерозигот","Исчезает"],1],
+      ["Рецессивный признак проявляется при:",["Гетерозиготе Aa","Гомозиготе aa","Любом генотипе"],1],
+      ["Дигибридное скрещивание изучает наследование:",["1 пары генов","2 пар генов","3 пар"],1]
+    ]),
+    2:mkTest([
+      ["ДНК расшифровывается как:",["Дезоксирибонуклеиновая кислота","Двойная нуклеиновая аминокислота","Дезоксирибоза нуклеин"],0],
+      ["Мономеры ДНК — это:",["Аминокислоты","Нуклеотиды","Глюкоза"],1],
+      ["Комплементарные пары азотистых оснований ДНК:",["A-T и G-C","A-G и T-C","A-C и T-G"],0],
+      ["РНК отличается от ДНК наличием:",["Тимина вместо урацила","Урацила вместо тимина","Двойной спирали"],1],
+      ["Трансляция — это синтез:",["ДНК на матрице РНК","Белка на матрице мРНК","РНК на матрице ДНК"],1]
+    ]),
+    3:mkTest([
+      ["Мутация — это:",["Закономерное изменение","Случайное изменение генотипа","Фенотипическое изменение"],1],
+      ["Хромосомные мутации — изменения в:",["Одном нуклеотиде","Структуре хромосом","Числе хромосом"],1],
+      ["Синдром Дауна связан с:",["Нехваткой хромосомы","Трисомией 21 хромосомы","Мутацией гена"],1],
+      ["Мутагены вызывают:",["Нормальное деление","Мутации","Иммунитет"],1],
+      ["Соматические мутации передаются:",["Потомкам","Не передаются потомкам","Всегда передаются"],1]
+    ]),
+    4:mkTest([
+      ["Генная инженерия манипулирует:",["Фенотипом","Генами (ДНК)","Клетками"],1],
+      ["ГМО — это:",["Мутантный организм","Организм с изменёнными генами","Гибрид"],1],
+      ["Инсулин с помощью бактерий производят методом:",["Гибридизации","Рекомбинантной ДНК","Полиплоидии"],1],
+      ["Клонирование — это получение:",["Мутантов","Генетически идентичных копий","Гибридов"],1],
+      ["ПЦР используется для:",["Синтеза белка","Копирования ДНК","Секвенирования"],1]
+    ])
+  },
+  '10 класс':{
+    0:mkTest([
+      ["Дарвин выдвинул теорию:",["Ламаркизма","Естественного отбора","Катастрофизма"],1],
+      ["Движущие силы эволюции:",["Только мутации","Наследственность, изменчивость, отбор","Только среда"],1],
+      ["Борьба за существование — конкуренция за:",["Место в пищевой цепи","Ресурсы","Размножение"],1],
+      ["Искусственный отбор проводит:",["Природа","Человек","Случай"],1],
+      ["Адаптация — это приспособленность к:",["Изменению генома","Условиям среды","Конкуренции"],1]
+    ]),
+    1:mkTest([
+      ["Естественный отбор — выживание:",["Самых больших","Наиболее приспособленных","Самых быстрых"],1],
+      ["Движущий отбор смещает норму:",["В сторону среднего","В сторону крайнего признака","Не меняет"],1],
+      ["Стабилизирующий отбор сохраняет:",["Крайние формы","Среднюю норму","Все формы"],1],
+      ["Половой отбор действует на признаки:",["Выживания","Привлечения партнёра","Защиты от хищников"],1],
+      ["Примером адаптации к маскировке служит:",["Рост","Окраска под среду","Скорость"],1]
+    ]),
+    2:mkTest([
+      ["Предки человека — приматы:",["Современные обезьяны","Древние общие предки","Шимпанзе"],1],
+      ["Первые Homo sapiens появились в:",["Азии","Африке","Европе"],1],
+      ["Прямохождение связано с:",["Увеличением мозга","Освобождением рук","Изменением диеты"],1],
+      ["Неандерталец — это:",["Вид Homo sapiens","Вымерший вид рода Homo","Обезьяна"],1],
+      ["Биологические факторы эволюции человека:",["Социальные нормы","Мутации и отбор","Технологии"],1]
+    ]),
+    3:mkTest([
+      ["Экология изучает:",["Клетки","Взаимодействие организмов со средой","Генетику"],1],
+      ["Популяция — группа особей одного вида на:",["Любой территории","Одной территории","Всём ареале"],1],
+      ["Биотические факторы среды:",["Температура","Свет","Взаимодействие организмов"],2],
+      ["Симбиоз — взаимоотношения:",["Вредные для обоих","Взаимовыгодные","Нейтральные"],1],
+      ["Паразитизм — взаимоотношения где хозяин:",["Получает пользу","Не замечает паразита","Испытывает вред"],2]
+    ]),
+    4:mkTest([
+      ["Биоразнообразие — это разнообразие:",["Только видов","Генов, видов и экосистем","Только экосистем"],1],
+      ["Красная книга фиксирует виды:",["Доминантные","Охраняемые и редкие","Инвазивные"],1],
+      ["Сокращение биоразнообразия опасно:",["Только для редких видов","Для устойчивости экосистем","Только для человека"],1],
+      ["Эндемики — виды, обитающие:",["Везде","Только в данном регионе","В море"],1],
+      ["Охраняемые территории называются:",["Фермами","Заповедниками","Заводами"],1]
+    ])
+  },
+  '11 класс':{
+    0:mkTest([
+      ["Биотехнология использует живые организмы для:",["Только размножения","Производства веществ и решения задач","Уничтожения вредителей"],1],
+      ["Ферментация — процесс с участием:",["Физических сил","Микроорганизмов","Химических реактивов"],1],
+      ["ПЦР-диагностика определяет:",["Антитела","ДНК патогена","Тип клетки"],1],
+      ["Трансгенные организмы получают методом:",["Скрещивания","Введения чужих генов","Мутагенеза"],1],
+      ["Стволовые клетки способны к:",["Только делению","Дифференцировке в любые клетки","Только росту"],1]
+    ]),
+    1:mkTest([
+      ["Иммунитет — защита организма от:",["Холода","Чужеродных веществ и патогенов","Голода"],1],
+      ["Антитела вырабатывают:",["Эритроциты","B-лимфоциты","Тромбоциты"],1],
+      ["Фагоцитоз — захват:",["Антителами","Клетками-фагоцитами","Лимфоузлами"],1],
+      ["Вакцинация создаёт:",["Пассивный иммунитет","Активный иммунитет","Аллергию"],1],
+      ["Аутоиммунные заболевания — атака иммунитетом:",["Чужих клеток","Собственных клеток","Вирусов"],1]
+    ]),
+    2:mkTest([
+      ["Гормоны — биологически активные вещества, вырабатываемые:",["Нейронами","Железами внутренней секреции","Мышцами"],1],
+      ["Инсулин регулирует:",["Давление","Уровень глюкозы в крови","Рост костей"],1],
+      ["Адреналин вырабатывается при:",["Сне","Стрессе","Пищеварении"],1],
+      ["Щитовидная железа регулирует:",["Иммунитет","Обмен веществ и рост","Давление"],1],
+      ["Гипофиз — главная железа, управляющая:",["Только ростом","Другими железами внутренней секреции","Только щитовидкой"],1]
+    ]),
+    3:mkTest([
+      ["Оплодотворение у человека происходит в:",["Матке","Маточной трубе","Яичнике"],1],
+      ["Зигота — это:",["Сперматозоид","Яйцеклетка","Оплодотворённая яйцеклетка"],2],
+      ["Плацента формируется для:",["Дыхания матери","Питания и защиты плода","Выработки гормонов"],1],
+      ["Период беременности у человека ≈",["9 недель","9 месяцев","9 лет"],1],
+      ["Эмбриональный период — это:",["Весь период развития","До образования органов","После рождения"],1]
+    ]),
+    4:mkTest([
+      ["Охрана природы включает:",["Только запреты","Рациональное использование и воспроизводство ресурсов","Только наблюдение"],1],
+      ["Ноосфера — сфера:",["Атмосферы","Разумной деятельности человека","Гидросферы"],1],
+      ["Биосфера — совокупность:",["Всех экосистем","Всех живых организмов и их среды","Только животных"],1],
+      ["Устойчивое развитие — это:",["Развитие только экономики","Сохранение природы для будущих поколений","Остановка промышленности"],1],
+      ["Основная угроза биоразнообразию от человека:",["Наблюдение","Разрушение мест обитания","Изучение"],1]
+    ])
+  }
+};
+
+// --- ИСТОРИЯ ---
+TESTS['История'] = {
+  'История Таджикистана':{
+    0:mkTest([
+      ["Государство Ахеменидов на территории Средней Азии существовало:",["V-IV вв до н.э.","I-II вв н.э.","VII-VIII вв н.э."],0],
+      ["Согд — историческая область современного:",["Ирана","Таджикистана и Узбекистана","Афганистана"],1],
+      ["Основатель государства Кушан:",["Тимур","Кадфиз I","Саман-худат"],1],
+      ["Государство Саманидов было основано в:",["538 году","875 году","1220 году"],1],
+      ["Рудаки — поэт эпохи:",["Монгольского нашествия","Саманидов","Тимуридов"],1]
+    ]),
+    1:mkTest([
+      ["Саманидское государство со столицей Бухара процветало в:",["V-VI вв","IX-X вв","XII-XIII вв"],1],
+      ["Авиценна (Ибн Сина) жил в эпоху:",["Монголов","Саманидов/Газневидов","Тимуридов"],1],
+      ["Фирдоуси написал эпос:",["Маснави","Шахнаме","Дивони Кабир"],1],
+      ["Столица Саманидов:",["Самарканд","Бухара","Худжанд"],1],
+      ["Распад Саманидского государства произошёл из-за:",["Монгольского нашествия","Внутренних распрей и натиска Газневидов","Крестовых походов"],1]
+    ]),
+    2:mkTest([
+      ["Монгольское нашествие на Среднюю Азию произошло в:",["XI веке","1219-1221 гг.","VIII веке"],1],
+      ["Чингисхан — основатель:",["Саманидов","Монгольской империи","Тимуридов"],1],
+      ["Города Хорезма и Согда были разрушены:",["Арабами","Монголами","Тюрками"],1],
+      ["Последствия нашествия для региона:",["Расцвет культуры","Разрушение городов и спад населения","Объединение государств"],1],
+      ["После монголов регион оказался под властью:",["Саманидов","Чагатаидов","Тимуридов сразу"],1]
+    ]),
+    3:mkTest([
+      ["Бухарский эмират образовался в:",["XII веке","1756 году","X веке"],1],
+      ["Бухарский эмир Насрулла-хан правил в:",["XIX веке","XVII веке","XV веке"],0],
+      ["Российский протекторат над эмиратом установлен в:",["1868 году","1917 году","1800 году"],0],
+      ["Таджикское население эмирата жило в основном в:",["Городах","Кишлаках","Пустынях"],1],
+      ["Официальный язык Бухарского эмирата:",["Русский","Таджикский/персидский","Узбекский"],1]
+    ]),
+    4:mkTest([
+      ["Таджикская ССР образована в:",["1917","1929","1991"],1],
+      ["Советизация принесла:",["Упадок образования","Ликвидацию безграмотности","Уход религии из жизни"],1],
+      ["В годы СССР в Таджикистане строились:",["Только мечети","Заводы, школы, больницы","Только дороги"],1],
+      ["Колхозы в СССР — это:",["Частные фермы","Коллективные хозяйства","Торговые предприятия"],1],
+      ["В годы ВОВ таджикистанцы:",["Не участвовали","Воевали на фронтах","Оставались нейтральными"],1]
+    ]),
+    5:mkTest([
+      ["Независимость Таджикистана провозглашена:",["1990","9 сентября 1991","1992"],1],
+      ["Первый президент Таджикистана:",["Рустам Эмомали","Эмомали Рахмон","Кахар Махкамов"],1],
+      ["Гражданская война в Таджикистане:",["1985-1990","1992-1997","1999-2001"],1],
+      ["Столица Таджикистана:",["Худжанд","Куляб","Душанбе"],2],
+      ["Национальная валюта Таджикистана:",["Сум","Сомони","Манат"],1]
+    ])
+  },
+  'Всемирная история':{
+    0:mkTest([
+      ["Первые цивилизации возникли в:",["Горах","Речных долинах","Лесах"],1],
+      ["Месопотамия расположена между реками:",["Нил и Конго","Тигр и Евфрат","Инд и Ганг"],1],
+      ["Изобретение письменности:",["~5000 лет назад","~2000 лет назад","~1000 лет назад"],0],
+      ["Колесо изобретено примерно в:",["5000 лет назад","2000 лет назад","500 лет назад"],0],
+      ["Неолитическая революция — переход к:",["Охоте","Земледелию и скотоводству","Торговле"],1]
+    ]),
+    1:mkTest([
+      ["Античность — эпоха Греции и Рима:",["До н.э. - V в н.э.","V-XV вв","XV-XVII вв"],0],
+      ["Демократия впервые возникла в:",["Риме","Афинах","Спарте"],1],
+      ["Юлий Цезарь — правитель:",["Греции","Рима","Египта"],1],
+      ["Падение Западной Римской империи:",["476 г н.э.","1453 г","330 г"],0],
+      ["Александр Македонский создал империю в:",["V в до н.э.","IV в до н.э.","III в до н.э."],1]
+    ]),
+    2:mkTest([
+      ["Средневековье — период:",["V-XV вв","I-V вв","XV-XVIII вв"],0],
+      ["Феодализм основан на:",["Торговле","Земельных отношениях и вассалитете","Промышленности"],1],
+      ["Крестовые походы направлены в:",["Индию","Иерусалим","Китай"],1],
+      ["Великая Хартия вольностей подписана в:",["1066","1215","1492"],1],
+      ["Чума XIV века унесла жизней:",["~10 млн","~25 млн","~100 млн"],1]
+    ]),
+    3:mkTest([
+      ["Великие географические открытия начались в:",["XIII веке","XV веке","XVIII веке"],1],
+      ["Колумб достиг Америки в:",["1488","1492","1498"],1],
+      ["Реформация началась с:",["Кальвина","Лютера","Цвингли"],1],
+      ["Промышленная революция началась в:",["Франции","Англии","Германии"],1],
+      ["Французская революция:",["1689","1789","1848"],1]
+    ]),
+    4:mkTest([
+      ["Первая мировая война:",["1905-1907","1914-1918","1939-1945"],1],
+      ["Вторая мировая война:",["1933-1939","1939-1945","1941-1945"],1],
+      ["ООН создана в:",["1919","1945","1991"],1],
+      ["Холодная война — противостояние:",["США и Китая","СССР и США","Европы и Азии"],1],
+      ["Распад СССР произошёл в:",["1985","1989","1991"],2]
+    ]),
+    5:mkTest([
+      ["Глобализация — это:",["Изоляция стран","Усиление мировых связей","Национализм"],1],
+      ["Интернет массово появился в:",["1970-х","1990-х","2000-х"],1],
+      ["ВТО расшифровывается как:",["Всемирная торговая организация","Военная таможенная организация","Всемирная туристическая организация"],0],
+      ["ООН насчитывает членов (на 2024):",["~50","~193","~100"],1],
+      ["21 век начался в:",["2000","2001","1999"],1]
+    ])
+  },
+  'Древний мир':{
+    0:mkTest([
+      ["Первое государство Месопотамии:",["Вавилон","Шумер","Ассирия"],1],
+      ["Хаммурапи — правитель:",["Шумера","Вавилона","Египта"],1],
+      ["Клинопись изобрели:",["Египтяне","Шумеры","Китайцы"],1],
+      ["Зиккурат — это:",["Пирамида","Ступенчатый храм Месопотамии","Дворец"],1],
+      ["Вавилонская башня упоминается в:",["Греческих мифах","Библии","Иллиаде"],1]
+    ]),
+    1:mkTest([
+      ["Древний Египет расположен в:",["Азии","Африке","Европе"],1],
+      ["Фараон — правитель:",["Месопотамии","Египта","Греции"],1],
+      ["Пирамиды строились как:",["Дворцы","Гробницы","Храмы"],1],
+      ["Иероглифы — письменность:",["Шумеров","Египтян","Китайцев"],1],
+      ["Нил имеет направление течения:",["С юга на север","С севера на юг","С запада на восток"],0]
+    ]),
+    2:mkTest([
+      ["Полисы — это:",["Провинции Рима","Города-государства Греции","Армии"],1],
+      ["Олимпийские игры зародились в:",["Риме","Греции","Египте"],1],
+      ["Афинская демократия — правление:",["Тирана","Граждан","Аристократии"],1],
+      ["Сократ, Платон, Аристотель — философы:",["Рима","Греции","Персии"],1],
+      ["Марафонская битва — победа над:",["Персами","Спартанцами","Македонцами"],0]
+    ]),
+    3:mkTest([
+      ["Рим основан по легенде в:",["753 г до н.э.","500 г до н.э.","100 г до н.э."],0],
+      ["Республика в Риме — управление через:",["Императора","Сенат и консулов","Тиранов"],1],
+      ["Гладиаторские бои — зрелища:",["Греции","Рима","Карфагена"],1],
+      ["Пунические войны — против:",["Греции","Карфагена","Персии"],1],
+      ["Колизей построен в:",["Афинах","Риме","Карфагене"],1]
+    ]),
+    4:mkTest([
+      ["Древний Китай известен изобретением:",["Алфавита","Бумаги и пороха","Колеса"],1],
+      ["Великая Китайская стена строилась против:",["Монголов и кочевников","Японцев","Персов"],0],
+      ["Конфуций — мыслитель:",["Индии","Китая","Японии"],1],
+      ["Буддизм возник в:",["Китае","Индии","Египте"],1],
+      ["Касты в Индии — это:",["Классы граждан","Наследственные социальные группы","Военные отряды"],1]
+    ]),
+    5:mkTest([
+      ["Персидская империя Ахеменидов создана:",["Киром Великим","Александром","Дарием III"],0],
+      ["Персидские войны — против:",["Египта","Греции","Рима"],1],
+      ["Марафон, Фермопилы — сражения Persian Wars:",["Греко-персидских войн","Пунических войн","Пелопоннесских"],0],
+      ["Столица Ахеменидов:",["Вавилон","Персеполь","Ниневия"],1],
+      ["Ахеменидская империя завоёвана:",["Цезарем","Александром Македонским","Аттилой"],1]
+    ])
+  },
+  'Средневековье':{
+    0:mkTest([
+      ["Рим пал под ударом:",["Гуннов","Вестготов (476 г)","Монголов"],1],
+      ["После Рима в Западной Европе установилось:",["Единое государство","Варварские королевства","Демократия"],1],
+      ["Карл Великий правил:",["Англией","Франкским королевством","Россией"],1],
+      ["Феод — это:",["Налог","Земельное владение вассала","Войско"],1],
+      ["Рыцарство — военное сословие:",["Крестьян","Феодалов","Духовенства"],1]
+    ]),
+    1:mkTest([
+      ["Церковь в средневековой Европе:",["Не имела влияния","Играла огромную роль","Была запрещена"],1],
+      ["Папа Римский — глава:",["Православной церкви","Католической церкви","Протестантов"],1],
+      ["Инквизиция преследовала:",["Еретиков","Мусульман","Евреев"],0],
+      ["Крестовые походы начались в:",["1096 г","1200 г","1300 г"],0],
+      ["Иерусалим был целью:",["1-го крестового похода","4-го","7-го"],0]
+    ]),
+    2:mkTest([
+      ["Халифат — государство мусульман, расцвет в:",["VI-VII вв","VII-X вв","XII-XIV вв"],1],
+      ["Мухаммад — основатель ислама, жил:",["IV в н.э.","VI-VII вв н.э.","IX в н.э."],1],
+      ["Коран — священная книга:",["Христиан","Мусульман","Буддистов"],1],
+      ["Арабы сохранили знания:",["Только религиозные","Греческие, персидские, индийские","Только военные"],1],
+      ["Арабская цифровая система пришла из:",["Египта","Индии через арабов","Китая"],1]
+    ]),
+    3:mkTest([
+      ["Монгольская империя создана:",["Чингисханом","Тимуром","Хубилаем"],0],
+      ["Монголы захватили Китай в:",["XII","XIII","XIV вв"],1],
+      ["Золотая Орда управляла:",["Восточной Европой","Русью","Западной Европой"],1],
+      ["Тимур (Тамерлан) правил из:",["Монголии","Самарканда","Бухары"],1],
+      ["Монгольская империя распалась на:",["2 части","4 улуса","Единое государство"],1]
+    ]),
+    4:mkTest([
+      ["Возрождение началось в:",["Германии","Италии","Франции"],1],
+      ["Данте, Петрарка, Боккаччо — писатели:",["Средневековья/начала Возрождения","Античности","Нового времени"],0],
+      ["Леонардо да Винчи — художник и учёный:",["Средневековья","Возрождения","Просвещения"],1],
+      ["Гуманизм — философия, ставящая в центр:",["Бога","Человека","Природу"],1],
+      ["Книгопечатание изобрёл:",["Да Винчи","Гутенберг","Колумб"],1]
+    ])
+  },
+  'Новое время':{
+    0:mkTest([
+      ["Реформация — движение против:",["Монархии","Католической церкви","Феодализма"],1],
+      ["Мартин Лютер прибил тезисы к воротам церкви в:",["1492","1517","1600"],1],
+      ["Протестантизм возник как результат:",["Крестовых походов","Реформации","Просвещения"],1],
+      ["Кальвинизм зародился в:",["Германии","Швейцарии","Англии"],1],
+      ["Тридцатилетняя война закончилась:",["Вестфальским миром 1648","Парижским миром","Венским конгрессом"],0]
+    ]),
+    1:mkTest([
+      ["Английская революция XVII в. привела к:",["Монархии без ограничений","Конституционной монархии","Республике навсегда"],1],
+      ["Кромвель во время революции:",["Поддержал короля","Возглавил парламент и армию","Бежал в Францию"],1],
+      ["Карл I Английский был:",["Изгнан","Казнён","Помилован"],1],
+      ["Хабеас корпус (1679) защищал права:",["Короля","Личности от незаконного ареста","Парламента"],1],
+      ["Великая хартия вольностей и парламент — основы:",["Абсолютизма","Английского конституционализма","Диктатуры"],1]
+    ]),
+    2:mkTest([
+      ["Французская революция: начало взятие:",["Версаля","Бастилии","Парижа"],1],
+      ["Девиз революции: Свобода, Равенство,",["Братство","Справедливость","Процветание"],0],
+      ["Наполеон пришёл к власти в:",["1789","1799","1804"],1],
+      ["Декларация прав человека и гражданина принята в:",["1789","1793","1800"],0],
+      ["Якобинцы — радикальная фракция:",["Дворян","Революционеров","Роялистов"],1]
+    ]),
+    3:mkTest([
+      ["Наполеон Бонапарт — уроженец:",["Франции","Корсики","Италии"],1],
+      ["Наполеон провозглашён императором в:",["1799","1804","1810"],1],
+      ["Поход в Россию:",["1810","1812","1815"],1],
+      ["Наполеон окончательно побеждён при:",["Аустерлице","Ватерлоо","Бородино"],1],
+      ["Наполеоновский кодекс (Code civil) — свод:",["Военных уставов","Гражданских законов","Налогов"],1]
+    ]),
+    4:mkTest([
+      ["Промышленная революция — переход к:",["Ремеслу","Машинному производству","Сельскому хозяйству"],1],
+      ["Паровую машину усовершенствовал:",["Ньютон","Уатт","Дарвин"],1],
+      ["Пролетариат — это:",["Землевладельцы","Наёмные рабочие","Крестьяне"],1],
+      ["Маркс и Энгельс написали:",["Библию рабочих","Коммунистический манифест","Капитал вдвоём"],1],
+      ["Колонии давали метрополиям:",["Только рынки сбыта","Сырьё и рынки","Только рабов"],1]
+    ]),
+    5:mkTest([
+      ["Колониализм — подчинение одних стран другими через:",["Торговлю","Военное и политическое господство","Культуру"],1],
+      ["Британская империя в XIX в. включала:",["Только Европу","Части всех континентов","Только Азию"],1],
+      ["Опиумные войны — Китай против:",["Франции","Великобритании","России"],1],
+      ["Берлинская конференция 1884-85 — раздел:",["Азии","Африки","Америки"],1],
+      ["Независимость США провозглашена в:",["1775","1776","1783"],1]
+    ])
+  },
+  'Новейшая история':{
+    0:mkTest([
+      ["Первая мировая война началась с убийства:",["Кайзера","Ф.Фердинанда","Царя"],1],
+      ["Тройственное согласие (Антанта) — союз:",["Германии, Австро-Венгрии, Италии","Франции, России, Великобритании","США, Японии, Китая"],1],
+      ["Версальский договор подписан в:",["1917","1919","1921"],1],
+      ["Оружие массового поражения в ПМВ:",["Ядерное","Химическое (газы)","Биологическое"],1],
+      ["Потери в ПМВ составили около:",["1 млн","17 млн","50 млн"],1]
+    ]),
+    1:mkTest([
+      ["Русская революция 1917 г.:",["Только Февральская","Февральская и Октябрьская","Только Октябрьская"],1],
+      ["Большевики пришли к власти в:",["Феврале","Октябре","Декабре"],1],
+      ["Ленин возглавил:",["Меньшевиков","Большевиков","Эсеров"],1],
+      ["СССР образован в:",["1917","1922","1924"],1],
+      ["Коллективизация — объединение в:",["Частные фермы","Колхозы","Заводы"],1]
+    ]),
+    2:mkTest([
+      ["Вторая мировая война началась:",["1 сентября 1939","22 июня 1941","1 января 1940"],0],
+      ["Нападение Германии на СССР:",["1940","22 июня 1941","1942"],1],
+      ["Холокост — геноцид:",["Поляков","Евреев","Цыган и евреев"],2],
+      ["День Победы в Европе:",["8 мая 1945","9 мая 1945","2 сентября 1945"],0],
+      ["Ядерные бомбардировки Японии:",["Берлина","Хиросимы и Нагасаки","Токио"],1]
+    ]),
+    3:mkTest([
+      ["Холодная война — противостояние:",["Горячими войнами","Политическим и экономическим давлением","Только пропагандой"],1],
+      ["НАТО создано в:",["1945","1949","1955"],1],
+      ["Берлинская стена возведена в:",["1955","1961","1968"],1],
+      ["Карибский кризис:",["1960","1962","1965"],1],
+      ["Распад СССР:",["1989","1991","1993"],1]
+    ]),
+    4:mkTest([
+      ["Деколонизация — получение независимости:",["Колоний","Метрополий","Союзных государств"],0],
+      ["Индия получила независимость от:",["Франции","Великобритании","США"],1],
+      ["Индия и Пакистан разделились в:",["1945","1947","1950"],1],
+      ["Апартеид был режимом в:",["Кении","ЮАР","Нигерии"],1],
+      ["Нельсон Мандела:",["Ввёл апартеид","Боролся против апартеида","Первый президент Ганы"],1]
+    ]),
+    5:mkTest([
+      ["Интернет создан на основе:",["ARPANET","NASA сети","IBM сети"],0],
+      ["11 сентября 2001 — теракт в:",["Лондоне","Нью-Йорке","Москве"],1],
+      ["Глобальный финансовый кризис:",["2001","2008","2015"],1],
+      ["Арабская весна — события:",["2001","2010-2011","2015"],1],
+      ["COVID-19 пандемия началась в:",["2018","2019-2020","2022"],1]
+    ])
+  }
+};
+
+// ================================================================
+// APP STATE
+// ================================================================
+const AVATARS = ['🎓','🚀','🧠','⚡','🔬'];
+let state = {
+  subject: 'Алгебра',
+  level: '9 класс',
+  userName: '',
+  avatarIdx: 0,
+  progress: {}, // subject → level → [doneTopicIndices]
+  chatHistory: [],
+  dailyGoalDate: '',
+  dailyGoalDone: false,
+  achievements: {},
+  totalTestsDone: 0,
+  timerEnabled: false
+};
+let currentTestData = null; // {subject, level, topicIdx, questions}
+let testTimerInterval = null;
+let testTimeLeft = 0;
+
+// ================================================================
+// QUOTES
+// ================================================================
+const QUOTES = [
+  "Образование — это не заполнение ведра, а зажжение огня. — У.Б. Йейтс",
+  "Учиться никогда не поздно. — Сенека",
+  "Знание — сила. — Фрэнсис Бэкон",
+  "Умный человек учится всю жизнь. — Аристотель",
+  "Чем больше я знаю, тем больше понимаю, что ничего не знаю. — Сократ",
+  "Образованный человек отличается от необразованного, как живой от мёртвого. — Аристотель",
+  "Инвестиции в знания приносят лучший процент. — Бенджамин Франклин",
+  "Единственный способ стать умным — читать хорошие книги. — Горький",
+  "Учёба — это открытие того, что ты уже знал. — Ричард Бах",
+  "Не стыдно не знать, стыдно не учиться.",
+  "Тот, кто учится, но не думает, — потерян. Тот, кто думает, но не учится, — в опасности. — Конфуций",
+  "Любое знание полезно. — М. Пришвин",
+  "Мудрость начинается с удивления. — Сократ",
+  "Образование — лучшая защита от бедности. — Аристотель",
+  "Учись так, как будто тебе предстоит жить вечно. — Ганди",
+  "Знание без мудрости — это книга без страниц.",
+  "Великие умы обсуждают идеи; средние — события; мелкие — людей. — Э. Рузвельт",
+  "Дорогу осилит идущий.",
+  "Каждый эксперт когда-то был новичком.",
+  "Наука — организованное знание. Мудрость — организованная жизнь. — И. Кант"
+];
+
+// ================================================================
+// FORMULAS for nudge
+// ================================================================
+const FORMULAS = [
+  {f:"a² - b² = (a+b)(a-b)", e:"Разность квадратов раскладывается в произведение суммы и разности"},
+  {f:"(a+b)² = a²+2ab+b²", e:"Квадрат суммы: каждый член в квадрат плюс удвоенное произведение"},
+  {f:"sin²x + cos²x = 1", e:"Основное тригонометрическое тождество"},
+  {f:"v = s/t", e:"Скорость равна пути, делённому на время"},
+  {f:"F = ma", e:"Второй закон Ньютона: сила = масса × ускорение"},
+  {f:"E = mc²", e:"Энергия покоя Эйнштейна: масса умножается на квадрат скорости света"},
+  {f:"P = F/S", e:"Давление = сила / площадь опоры"},
+  {f:"S_n = n(a₁+aₙ)/2", e:"Сумма арифметической прогрессии"},
+  {f:"∫xⁿdx = xⁿ⁺¹/(n+1)+C", e:"Табличный интеграл степенной функции"},
+  {f:"D = b²-4ac", e:"Дискриминант квадратного трёхчлена"},
+  {f:"log_a(xy)=log_a(x)+log_a(y)", e:"Логарифм произведения = сумма логарифмов"},
+  {f:"aⁿ·aᵐ = aⁿ⁺ᵐ", e:"При умножении степеней с одинаковым основанием показатели складываются"}
+];
+
+// ================================================================
+// LOCAL STORAGE
+// ================================================================
+function loadState(){
+  const s = localStorage.getItem('doroslearn_ultra_v3');
+  if(s){ try{ Object.assign(state, JSON.parse(s)); }catch(e){} }
+}
+function saveState(){
+  localStorage.setItem('doroslearn_ultra_v3', JSON.stringify(state));
+}
+function getProgress(subj, lev){ return (state.progress[subj]||{})[lev]||[]; }
+function markTopicDone(subj, lev, idx){
+  if(!state.progress[subj]) state.progress[subj]={};
+  if(!state.progress[subj][lev]) state.progress[subj][lev]=[];
+  if(!state.progress[subj][lev].includes(idx)) state.progress[subj][lev].push(idx);
+  saveState();
+  checkAchievements();
+}
+function isTopicDone(subj, lev, idx){ return getProgress(subj,lev).includes(idx); }
+
+// ================================================================
+// INIT
+// ================================================================
+loadState();
+document.addEventListener('DOMContentLoaded', init);
+function init(){
+  buildSubjectTabs();
+  // first launch name modal
+  if(!state.userName){
+    buildAvatarPicker();
+    document.getElementById('nameModal').classList.add('open');
+  } else {
+    document.getElementById('nameModal').classList.remove('open');
+    refreshUI();
+  }
+  loadChatHistory();
+  initDailyGoal();
+  setQuote();
+  refreshAchievements();
+  scheduleFormulaNudge();
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(ov=>{
+    ov.addEventListener('click', e=>{ if(e.target===ov) closeModal(ov.id); });
+  });
+}
+
+// ================================================================
+// AVATAR PICKER
+// ================================================================
+function buildAvatarPicker(){
+  const p = document.getElementById('avatarPicker');
+  p.innerHTML='';
+  AVATARS.forEach((a,i)=>{
+    const d = document.createElement('div');
+    d.className='avatar-pick-item'+(i===state.avatarIdx?' selected':'');
+    d.textContent=a;
+    d.onclick=()=>{
+      state.avatarIdx=i;
+      document.querySelectorAll('.avatar-pick-item').forEach(x=>x.classList.remove('selected'));
+      d.classList.add('selected');
     };
-    let currentGrade = 9;
-    let progress = {}; // { grade: maxLessonIndexCompleted }
-    let currentTestLessonMeta = null; // { grade, topic, lessonIndex }
-    let chatHistory = [{role:"assistant", content:"Добро пожаловать в DOROSlearn ULTRA! Выбери класс и тему, я помогу с видео и тестами."}];
+    p.appendChild(d);
+  });
+}
 
-    // YouTube API (можно заменить своим ключом, но fallback работает)
-    const YOUTUBE_API_KEY = ""; // если пусто, используем fallback поиск
-    async function searchYouTubeVideo(topic, grade) {
-        const query = `${topic} ${grade} класс алгебра урок`;
-        if (YOUTUBE_API_KEY) {
-            try {
-                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                if (data.items && data.items[0]) return `https://www.youtube.com/embed/${data.items[0].id.videoId}`;
-            } catch(e) { console.warn(e); }
-        }
-        // fallback: ссылка на поиск youtube
-        return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-    }
+function saveName(){
+  const n = document.getElementById('nameInput').value.trim();
+  if(!n){ toastMsg('Введи имя!','⚠️'); return; }
+  state.userName=n;
+  saveState();
+  closeModal('nameModal');
+  refreshUI();
+}
 
-    // ИИ вызов (Pollinations)
-    async function callAI(prompt, model = 'openai') {
-        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${model}`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('AI error');
-        return await resp.text();
-    }
+// ================================================================
+// UI REFRESH
+// ================================================================
+function refreshUI(){
+  updateWelcome();
+  buildGradeSelector();
+  renderLessons();
+  updateProgress();
+  updateNavAvatar();
+}
 
-    // Генерация теста через ИИ
-    async function generateTestFromAI(topic, grade) {
-        const prompt = `Сгенерируй тест из 5 вопросов по теме "${topic}" для ${grade} класса по алгебре. Каждый вопрос имеет 4 варианта ответа (а,б,в,г). После каждого вопроса в скобках напиши номер правильного ответа (1,2,3,4). Вопросы с новой строки.`;
-        const raw = await callAI(prompt, 'openai');
-        return parseTestFromAI(raw);
-    }
+function updateWelcome(){
+  const el = document.getElementById('welcomeText');
+  const sub = document.getElementById('welcomeSub');
+  if(el) el.textContent = `Привет, ${state.userName}! Давай учиться дальше →`;
+  if(sub) sub.textContent = `${state.subject} · ${state.level}`;
+  document.getElementById('welcomeAvatar').textContent = AVATARS[state.avatarIdx]||'🎓';
+}
+function updateNavAvatar(){
+  const el = document.getElementById('navAvatar');
+  if(el) el.textContent = AVATARS[state.avatarIdx]||'🎓';
+}
+function setQuote(){
+  const el = document.getElementById('quoteStrip');
+  if(el) el.textContent = '"'+QUOTES[Math.floor(Math.random()*QUOTES.length)]+'"';
+}
 
-    function parseTestFromAI(text) {
-        const lines = text.split('\n');
-        let questions = [];
-        let current = null;
-        for (let line of lines) {
-            if (line.match(/^\d+[\.\)]?\s*Вопрос\s*\d+/i) || line.match(/^\d+\./)) {
-                if (current) questions.push(current);
-                current = { text: line.replace(/^\d+[\.\)]?\s*/, ''), options: [], correct: 0 };
-            } else if (current && line.match(/[а-г]\)/)) {
-                let optText = line.trim();
-                current.options.push(optText);
-                let match = line.match(/\((\d)\)/);
-                if (match) current.correct = parseInt(match[1]) - 1;
-            } else if (current && line.trim() && current.options.length < 4) {
-                current.options.push(line.trim());
-            }
-        }
-        if (current && current.options.length===4) questions.push(current);
-        while(questions.length < 5) questions.push({text:"Дополнительный вопрос: Чему равен квадратный корень из 9?", options:["2","3","4","5"], correct:1});
-        return questions.slice(0,5);
-    }
+// ================================================================
+// SUBJECT TABS
+// ================================================================
+function buildSubjectTabs(){
+  const container = document.getElementById('subjectTabs');
+  container.innerHTML='';
+  Object.keys(SUBJECTS).forEach(subj=>{
+    const btn = document.createElement('button');
+    btn.className='stab'+(subj===state.subject?' active':'');
+    btn.innerHTML=`${SUBJECTS[subj].icon} ${subj}`;
+    btn.onclick=()=>selectSubject(subj);
+    container.appendChild(btn);
+  });
+}
+function selectSubject(subj){
+  state.subject=subj;
+  const levels=Object.keys(SUBJECTS[subj].levels);
+  // keep same level if exists, else first
+  if(!levels.includes(state.level)) state.level=levels[0];
+  saveState();
+  buildSubjectTabs();
+  buildGradeSelector();
+  renderLessons();
+  updateProgress();
+  updateWelcome();
+}
 
-    // сохранение прогресса
-    function loadProgress() { const p = localStorage.getItem('doros_progress_v2'); if(p) progress = JSON.parse(p); else progress = {}; }
-    function saveProgress() { localStorage.setItem('doros_progress_v2', JSON.stringify(progress)); updateGlobalProgressBar(); }
-    function updateGlobalProgressBar() {
-        let lessonsLen = curriculum[currentGrade].length;
-        let completed = progress[currentGrade] || 0;
-        let percent = (completed / lessonsLen) * 100;
-        document.getElementById('globalProgressFill').style.width = percent + '%';
-    }
-    function markLessonCompleted(grade, idx) {
-        let currentMax = progress[grade] || 0;
-        if (idx > currentMax) { progress[grade] = idx; saveProgress(); renderLessons(); }
-    }
-    function resetProgress() { if(confirm('Сбросить весь прогресс по всем классам?')){ progress={}; saveProgress(); renderLessons(); } }
+// ================================================================
+// GRADE/LEVEL SELECTOR
+// ================================================================
+function buildGradeSelector(){
+  const container = document.getElementById('gradeSelector');
+  container.innerHTML='';
+  const levels = Object.keys(SUBJECTS[state.subject].levels);
+  levels.forEach(lev=>{
+    const btn=document.createElement('button');
+    btn.className='grade-btn'+(lev===state.level?' active':'');
+    btn.textContent=lev;
+    btn.onclick=()=>selectLevel(lev);
+    container.appendChild(btn);
+  });
+}
+function selectLevel(lev){
+  state.level=lev;
+  saveState();
+  document.querySelectorAll('.grade-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent===lev);
+  });
+  renderLessons();
+  updateProgress();
+  updateWelcome();
+}
 
-    // рендер уроков
-    function renderLessons() {
-        const container = document.getElementById('lessonsContainer');
-        const topics = curriculum[currentGrade];
-        const completedIdx = progress[currentGrade] || 0;
-        let html = '';
-        topics.forEach((topic, idx) => {
-            const locked = idx > completedIdx;
-            html += `<div class="lesson-card ${locked ? 'locked' : ''}" data-lesson-index="${idx}">
-                <div class="lesson-title"><span>📘 ${topic}</span><span>${idx+1}/${topics.length}</span></div>
-                <div class="lesson-actions">
-                    <button class="btn-neon primary" onclick="watchVideo('${topic.replace(/'/g,"\\'")}', ${currentGrade})"><i class="fab fa-youtube"></i> Смотреть</button>
-                    <button class="btn-neon" onclick="openTestForTopic('${topic.replace(/'/g,"\\'")}', ${currentGrade}, ${idx})"><i class="fas fa-pencil-alt"></i> Тест (ИИ)</button>
-                    <button class="btn-neon" onclick="markUnderstood(${idx})">✅ Понял</button>
-                    <button class="btn-neon" onclick="markConfused('${topic.replace(/'/g,"\\'")}')">❓ Вопрос в чат</button>
-                </div>
-                <div id="videoEmbed-${idx}" class="video-preview" style="display:none;"></div>
-            </div>`;
-        });
-        container.innerHTML = html;
-        updateGlobalProgressBar();
-    }
+// ================================================================
+// PROGRESS
+// ================================================================
+function getSubjectProgress(subj){
+  let total=0, done=0;
+  Object.entries(SUBJECTS[subj].levels).forEach(([lev,topics])=>{
+    total+=topics.length;
+    done+=(getProgress(subj,lev)).length;
+  });
+  return total>0?Math.round(done/total*100):0;
+}
+function getLevelProgress(subj,lev){
+  const topics=SUBJECTS[subj].levels[lev]||[];
+  const done=getProgress(subj,lev).length;
+  return topics.length>0?Math.round(done/topics.length*100):0;
+}
+function updateProgress(){
+  const pct = getLevelProgress(state.subject, state.level);
+  const fill = document.getElementById('globalProgressFill');
+  const label = document.getElementById('progressLabel');
+  const donut = document.getElementById('donutFill');
+  if(fill) setTimeout(()=>fill.style.width=pct+'%', 80);
+  if(label) label.textContent=pct+'%';
+  if(donut){
+    const circ=138;
+    const offset=circ-(pct/100)*circ;
+    setTimeout(()=>donut.style.strokeDashoffset=offset, 80);
+  }
+}
+function resetProgress(){
+  if(!confirm('Сбросить весь прогресс?')) return;
+  state.progress={};
+  state.totalTestsDone=0;
+  saveState();
+  renderLessons();
+  updateProgress();
+  toastMsg('Прогресс сброшен','🔄');
+}
 
-    window.watchVideo = async function(topic, grade) {
-        const embedUrl = await searchYouTubeVideo(topic, grade);
-        const lessonIdx = curriculum[grade].indexOf(topic);
-        const containerDiv = document.getElementById(`videoEmbed-${lessonIdx}`);
-        if(containerDiv) {
-            if(embedUrl.includes('youtube.com/embed')) {
-                containerDiv.innerHTML = `<iframe src="${embedUrl}?autoplay=1" allowfullscreen></iframe>`;
-            } else {
-                containerDiv.innerHTML = `<a href="${embedUrl}" target="_blank" class="btn-neon primary" style="display:inline-block;">🔍 Открыть поиск YouTube</a>`;
-            }
-            containerDiv.style.display = 'block';
-            setTimeout(() => containerDiv.scrollIntoView({behavior:'smooth', block:'nearest'}), 100);
-        } else {
-            window.open(embedUrl, '_blank');
-        }
+// ================================================================
+// LESSONS
+// ================================================================
+function renderLessons(){
+  const container = document.getElementById('lessonsContainer');
+  const topics = SUBJECTS[state.subject].levels[state.level]||[];
+  const doneList = getProgress(state.subject, state.level);
+  container.innerHTML='';
+  topics.forEach((topic,idx)=>{
+    const done=doneList.includes(idx);
+    const card=document.createElement('div');
+    card.className='lesson-card'+(done?' done':'');
+    card.style.animationDelay=(idx*0.05)+'s';
+    card.innerHTML=`
+      <div class="lesson-top">
+        <div class="lesson-title">${getTopicEmoji(idx)} ${topic}</div>
+        <div class="lesson-badge ${done?'':'locked-badge'}">${done?'✓ Пройдено':(idx+1)+'/'+topics.length}</div>
+      </div>
+      <div class="lesson-progress-mini">
+        <div class="lesson-progress-fill" style="width:${done?'100':'0'}%"></div>
+      </div>
+      <div class="lesson-actions">
+        <button class="btn-sm primary" onclick="openTest('${esc(state.subject)}','${esc(state.level)}',${idx})">
+          <i class="fas fa-pencil-alt"></i> Тест
+        </button>
+        ${done?`<button class="btn-sm gold" onclick="downloadCert('${esc(state.subject)}','${esc(state.level)}',${idx},'${esc(topic)}')">
+          <i class="fas fa-certificate"></i> Сертификат
+        </button>`:''}
+        <button class="btn-sm" onclick="askChatAbout('${esc(topic)}')">
+          <i class="fas fa-robot"></i> Спросить ИИ
+        </button>
+        <button class="btn-sm green" onclick="markDoneManual(${idx})">
+          <i class="fas fa-check"></i> Понял
+        </button>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+function getTopicEmoji(idx){
+  const emojis=['📘','📗','📙','📕','📔','📒','📓'];
+  return emojis[idx%emojis.length];
+}
+function esc(s){ return (s+'').replace(/'/g,"\\'"); }
+function markDoneManual(idx){
+  markTopicDone(state.subject, state.level, idx);
+  renderLessons(); updateProgress();
+  toastMsg('Тема отмечена пройденной!','✅');
+}
+
+// ================================================================
+// TESTS
+// ================================================================
+function openTest(subj, lev, topicIdx){
+  const questions = (TESTS[subj]||{})[lev]||[];
+  if(!questions[topicIdx]){
+    toastMsg('Тест для этой темы скоро будет добавлен','ℹ️'); return;
+  }
+  currentTestData = { subj, lev, topicIdx, questions: questions[topicIdx] };
+  const topic = SUBJECTS[subj].levels[lev][topicIdx];
+  document.getElementById('testModalTitle').innerHTML=
+    `<i class="fas fa-pencil-alt" style="color:var(--cyan)"></i> Тест: ${topic}
+    <button class="modal-close" onclick="closeModal('testModal')">✕</button>`;
+  renderTestBody();
+  openModal('testModal');
+  document.getElementById('testResult').innerHTML='';
+  if(state.timerEnabled) startTestTimer();
+}
+function renderTestBody(){
+  if(!currentTestData) return;
+  const {questions} = currentTestData;
+  let html='';
+  questions.forEach((q,qi)=>{
+    html+=`<div class="test-question-wrap">
+      <div class="test-q-num">ВОПРОС ${qi+1} / ${questions.length}</div>
+      <div class="test-q-text">${q.t}</div>
+      <div class="test-options">`;
+    q.o.forEach((opt,oi)=>{
+      html+=`<label class="test-opt" id="opt_${qi}_${oi}">
+        <input type="radio" name="q${qi}" value="${oi}" onchange="selectOpt(${qi},${oi})">
+        ${opt}
+      </label>`;
+    });
+    html+=`</div></div>`;
+  });
+  document.getElementById('testBody').innerHTML=html;
+}
+function selectOpt(qi, oi){
+  document.querySelectorAll(`label[id^="opt_${qi}_"]`).forEach(l=>{
+    l.classList.remove('selected');
+  });
+  document.getElementById(`opt_${qi}_${oi}`).classList.add('selected');
+}
+function checkTest(){
+  if(!currentTestData) return;
+  const {subj,lev,topicIdx,questions}=currentTestData;
+  let correct=0;
+  questions.forEach((q,qi)=>{
+    const sel=document.querySelector(`input[name="q${qi}"]:checked`);
+    const ans = sel?parseInt(sel.value):-1;
+    // highlight
+    q.o.forEach((_,oi)=>{
+      const lbl=document.getElementById(`opt_${qi}_${oi}`);
+      if(oi===q.c) lbl.classList.add('correct');
+      else if(oi===ans && ans!==q.c) lbl.classList.add('wrong');
+    });
+    if(ans===q.c) correct++;
+  });
+  stopTestTimer();
+  const passed = correct>=4;
+  const resEl = document.getElementById('testResult');
+  resEl.innerHTML=`<div class="test-result-box ${passed?'success':'fail'}">
+    ${passed?'🎉':'❌'} Правильных ответов: ${correct}/${questions.length}
+    ${passed?' — Тема освоена! Отличная работа!':`— Попробуй ещё раз. Рекомендуем повторить тему.`}
+  </div>`;
+  document.getElementById('checkTestBtn').disabled=true;
+  if(passed){
+    markTopicDone(subj,lev,topicIdx);
+    state.totalTestsDone++;
+    checkDailyGoalDone();
+    saveState();
+    renderLessons(); updateProgress();
+    setTimeout(()=>launchConfetti(),300);
+  }
+  checkAchievements();
+}
+function startTestTimer(){
+  if(!currentTestData) return;
+  const total = currentTestData.questions.length*30;
+  testTimeLeft=total;
+  const fill=document.getElementById('testTimerFill');
+  clearInterval(testTimerInterval);
+  testTimerInterval=setInterval(()=>{
+    testTimeLeft--;
+    if(fill) fill.style.width=(testTimeLeft/total*100)+'%';
+    if(testTimeLeft<=0){ clearInterval(testTimerInterval); checkTest(); }
+  },1000);
+}
+function stopTestTimer(){ clearInterval(testTimerInterval); }
+document.getElementById('timerToggle').onchange=function(){
+  state.timerEnabled=this.checked; saveState();
+};
+
+// ================================================================
+// CERTIFICATES (jsPDF)
+// ================================================================
+function downloadCert(subj, lev, topicIdx, topic){
+  if(!isTopicDone(subj,lev,topicIdx)){
+    toastMsg('Пройди тест, чтобы получить сертификат','⚠️'); return;
+  }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  // Background gradient via rectangles
+  for(let i=0;i<297;i+=3){
+    const r1=[5,7,18], r2=[30,0,60];
+    const t=i/297;
+    const r=Math.round(r1[0]+(r2[0]-r1[0])*t);
+    const g=Math.round(r1[1]+(r2[1]-r1[1])*t);
+    const b=Math.round(r1[2]+(r2[2]-r1[2])*t);
+    doc.setFillColor(r,g,b);
+    doc.rect(i,0,3,210,'F');
+  }
+  // Outer gold border
+  doc.setDrawColor(255,204,0); doc.setLineWidth(2.5);
+  doc.rect(12,12,273,186,'S');
+  // Inner border
+  doc.setLineWidth(0.8);
+  doc.rect(16,16,265,178,'S');
+  // Decorative corner circles
+  [[14,14],[283,14],[14,196],[283,196]].forEach(([x,y])=>{
+    doc.setFillColor(255,204,0);doc.circle(x,y,4,'F');
+  });
+  // Header
+  doc.setTextColor(255,204,0);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(36); doc.text('СЕРТИФИКАТ',148.5,55,{align:'center'});
+  doc.setFontSize(12); doc.setTextColor(180,190,220);
+  doc.text('подтверждает, что',148.5,67,{align:'center'});
+  // Name
+  doc.setFontSize(28); doc.setTextColor(255,255,255);
+  doc.text(state.userName||'Ученик',148.5,85,{align:'center'});
+  // Underline name
+  const nameW=doc.getTextWidth(state.userName||'Ученик');
+  doc.setDrawColor(0,229,255); doc.setLineWidth(0.7);
+  doc.line(148.5-nameW/2,87,148.5+nameW/2,87);
+  // Body text
+  doc.setFontSize(12); doc.setTextColor(180,190,220);
+  doc.text('успешно освоил(а) тему:',148.5,98,{align:'center'});
+  doc.setFontSize(16); doc.setTextColor(0,229,255);
+  doc.text(topic,148.5,108,{align:'center',maxWidth:250});
+  doc.setFontSize(11); doc.setTextColor(160,175,210);
+  doc.text(`Предмет: ${subj}     Уровень: ${lev}`,148.5,122,{align:'center'});
+  // Cert number
+  const certNum = genCertNum();
+  doc.setFontSize(9); doc.setTextColor(100,120,160);
+  doc.text(`Сертификат №: ${certNum}`,148.5,132,{align:'center'});
+  // Date
+  const dateStr = new Date().toLocaleDateString('ru-RU',{year:'numeric',month:'long',day:'numeric'});
+  doc.text(`Дата: ${dateStr}`,148.5,140,{align:'center'});
+  // Seal circle
+  doc.setDrawColor(255,204,0); doc.setLineWidth(1.5);
+  doc.circle(148.5,165,18,'S');
+  doc.circle(148.5,165,14,'S');
+  doc.setFontSize(8); doc.setTextColor(255,204,0);
+  // Text around seal
+  const sealText='DOROSphere · DOROS·learn · ULTRA ·';
+  doc.text(sealText,148.5,165,{align:'center',angle:0});
+  doc.setFontSize(18); doc.text('✦',148.5,168,{align:'center'});
+  doc.setFontSize(7); doc.setTextColor(150,160,200);
+  doc.text('Образовательная платформа DOROSlearn ULTRA',148.5,195,{align:'center'});
+  doc.save(`DOROS_cert_${topic.replace(/\s+/g,'_')}.pdf`);
+  launchStars();
+  toastMsg('Сертификат скачан!','🎓');
+}
+function genCertNum(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let r='';
+  for(let i=0;i<12;i++) r+=chars[Math.floor(Math.random()*chars.length)];
+  return r.match(/.{4}/g).join('-');
+}
+
+// ================================================================
+// CONFETTI
+// ================================================================
+function launchConfetti(){
+  const canvas=document.getElementById('confettiCanvas');
+  canvas.style.display='block';
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const particles=[];
+  for(let i=0;i<160;i++){
+    particles.push({
+      x:Math.random()*canvas.width, y:-10,
+      vx:(Math.random()-0.5)*6, vy:Math.random()*4+2,
+      r:Math.random()*6+3,
+      color:`hsl(${Math.random()*360},80%,60%)`,
+      rot:Math.random()*Math.PI*2, vr:(Math.random()-0.5)*0.2
+    });
+  }
+  let frame=0;
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+      ctx.restore();
+    });
+    frame++;
+    if(frame<120) requestAnimationFrame(tick);
+    else{ ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display='none'; }
+  }
+  tick();
+}
+function launchStars(){
+  const canvas=document.getElementById('confettiCanvas');
+  canvas.style.display='block';
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const stars=[];
+  for(let i=0;i<80;i++){
+    stars.push({
+      x:Math.random()*canvas.width, y:Math.random()*canvas.height/2-20,
+      vy:Math.random()*3+1, size:Math.random()*16+8,
+      alpha:1, color:'#ffcc00'
+    });
+  }
+  let fr=0;
+  function tick2(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s=>{
+      s.y+=s.vy; s.alpha=Math.max(0,1-fr/90);
+      ctx.globalAlpha=s.alpha;
+      ctx.fillStyle=s.color;
+      ctx.font=s.size+'px serif';
+      ctx.fillText('★',s.x,s.y);
+    });
+    ctx.globalAlpha=1; fr++;
+    if(fr<100) requestAnimationFrame(tick2);
+    else{ ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display='none'; }
+  }
+  tick2();
+}
+
+// ================================================================
+// AI CHAT (Pollinations API)
+// ================================================================
+function addMsg(role, text){
+  const container=document.getElementById('chatMessages');
+  const d=document.createElement('div');
+  d.className=`msg ${role}`;
+  const avatar=document.createElement('div');
+  avatar.className='msg-avatar';
+  avatar.textContent=role==='user'?(AVATARS[state.avatarIdx]||'👤'):'🤖';
+  const bubble=document.createElement('div');
+  bubble.className='msg-bubble';
+  bubble.textContent=text;
+  if(role==='user'){ d.appendChild(bubble); d.appendChild(avatar); }
+  else { d.appendChild(avatar); d.appendChild(bubble); }
+  container.appendChild(d);
+  container.scrollTop=container.scrollHeight;
+  // Save to history
+  state.chatHistory.push({role,text});
+  if(state.chatHistory.length>40) state.chatHistory=state.chatHistory.slice(-40);
+  saveState();
+  return bubble;
+}
+function loadChatHistory(){
+  const container=document.getElementById('chatMessages');
+  container.innerHTML='';
+  if(state.chatHistory.length===0){
+    addMsg('bot','👋 Привет! Я DOROSai. Задавай любые вопросы по учёбе — я помогу!');
+    return;
+  }
+  const recent=state.chatHistory.slice(-20);
+  recent.forEach(m=>addMsg(m.role,m.text));
+}
+async function callAI(prompt){
+  const model=document.getElementById('chatModelSelect').value;
+  const url=`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=${model}`;
+  const resp=await fetch(url);
+  if(!resp.ok) throw new Error('AI error');
+  return await resp.text();
+}
+async function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const text=inp.value.trim();
+  if(!text) return;
+  inp.value='';
+  addMsg('user',text);
+  const thinking=addMsg('bot','⏳ DOROSai думает...');
+  try{
+    const answer=await callAI(text);
+    thinking.textContent=answer;
+    // update in history
+    const last=state.chatHistory[state.chatHistory.length-1];
+    if(last&&last.role==='bot') last.text=answer;
+    saveState();
+  }catch(e){ thinking.textContent='Ошибка соединения. Попробуй ещё раз.'; }
+}
+function clearChatHistory(){
+  if(!confirm('Очистить историю чата?')) return;
+  state.chatHistory=[];
+  saveState();
+  document.getElementById('chatMessages').innerHTML='';
+  addMsg('bot','История очищена. Чем могу помочь?');
+}
+async function aiTestCurrentTopic(){
+  const topics=SUBJECTS[state.subject].levels[state.level]||[];
+  const done=getProgress(state.subject,state.level);
+  const idx=Math.min(done.length, topics.length-1);
+  const topic=topics[idx]||topics[0];
+  addMsg('user',`Объясни тему "${topic}" по ${state.subject}`);
+  const bubble=addMsg('bot','⏳ DOROSai готовит объяснение...');
+  try{
+    const ans=await callAI(`Кратко объясни тему "${topic}" (${state.subject}, ${state.level}) простым языком с примерами.`);
+    bubble.textContent=ans;
+    const last=state.chatHistory[state.chatHistory.length-1];
+    if(last&&last.role==='bot') last.text=ans; saveState();
+  }catch(e){ bubble.textContent='Ошибка ИИ.'; }
+}
+async function aiSummary(){
+  const topics=SUBJECTS[state.subject].levels[state.level]||[];
+  const done=getProgress(state.subject,state.level);
+  const topic=topics[Math.min(done.length,topics.length-1)]||topics[0];
+  addMsg('user',`Сделай конспект: ${topic}`);
+  const bubble=addMsg('bot','⏳ Составляю конспект...');
+  try{
+    const ans=await callAI(`Составь краткий учебный конспект по теме "${topic}" (${state.subject}, ${state.level}). Формулы, определения, примеры.`);
+    bubble.textContent=ans;
+    const last=state.chatHistory[state.chatHistory.length-1];
+    if(last&&last.role==='bot') last.text=ans; saveState();
+  }catch(e){ bubble.textContent='Ошибка ИИ.'; }
+}
+async function aiExplain(){
+  const topics=SUBJECTS[state.subject].levels[state.level]||[];
+  const done=getProgress(state.subject,state.level);
+  const topic=topics[Math.min(done.length,topics.length-1)]||topics[0];
+  addMsg('user',`Объясни простыми словами: ${topic}`);
+  const bubble=addMsg('bot','⏳ Объясняю...');
+  try{
+    const ans=await callAI(`Объясни очень просто, как будто 10-летнему ребёнку: "${topic}" (${state.subject}). Используй аналогии.`);
+    bubble.textContent=ans;
+    const last=state.chatHistory[state.chatHistory.length-1];
+    if(last&&last.role==='bot') last.text=ans; saveState();
+  }catch(e){ bubble.textContent='Ошибка ИИ.'; }
+}
+async function aiVideo(){
+  const topics=SUBJECTS[state.subject].levels[state.level]||[];
+  const done=getProgress(state.subject,state.level);
+  const topic=topics[Math.min(done.length,topics.length-1)]||topics[0];
+  const query=encodeURIComponent(`${topic} ${state.level} ${state.subject} урок`);
+  const url=`https://www.youtube.com/results?search_query=${query}`;
+  addMsg('bot',`🔍 Поиск видео по теме "${topic}":\n${url}`);
+}
+async function askChatAbout(topic){
+  addMsg('user',`Не понял тему "${topic}". Объясни подробнее.`);
+  const bubble=addMsg('bot','⏳ Объясняю...');
+  try{
+    const ans=await callAI(`Подробно объясни тему "${topic}" (${state.subject}, ${state.level}). Примеры, формулы, шаги решения.`);
+    bubble.textContent=ans;
+    const last=state.chatHistory[state.chatHistory.length-1];
+    if(last&&last.role==='bot') last.text=ans; saveState();
+  }catch(e){ bubble.textContent='Ошибка ИИ.'; }
+}
+
+// ================================================================
+// DAILY GOAL
+// ================================================================
+function initDailyGoal(){
+  const today=new Date().toDateString();
+  if(state.dailyGoalDate!==today){ state.dailyGoalDate=today; state.dailyGoalDone=false; saveState(); }
+  renderDailyGoal();
+}
+function renderDailyGoal(){
+  const strip=document.getElementById('dailyGoalStrip');
+  const check=document.getElementById('dailyGoalCheck');
+  if(state.dailyGoalDone){
+    strip.classList.add('done');
+    check.innerHTML='✓';
+  } else {
+    strip.classList.remove('done');
+    check.innerHTML='';
+  }
+}
+function checkDailyGoalDone(){
+  if(!state.dailyGoalDone){
+    state.dailyGoalDone=true; saveState(); renderDailyGoal();
+    toastMsg('🎯 Ежедневная цель выполнена! Отличная работа!','🎉');
+  }
+}
+function checkDailyGoal(){
+  if(state.dailyGoalDone) toastMsg('Ты уже выполнил цель на сегодня!','✅');
+  else toastMsg('Пройди 1 тест, чтобы выполнить цель!','🎯');
+}
+
+// ================================================================
+// ACHIEVEMENTS
+// ================================================================
+const ACH_DEFS = [
+  {id:'first', icon:'🌟', name:'Новичок', desc:'Пройти 1 тест', check:()=>state.totalTestsDone>=1},
+  {id:'five', icon:'📚', name:'Ученик', desc:'Пройти 5 тестов', check:()=>state.totalTestsDone>=5},
+  {id:'ten', icon:'🧠', name:'Эрудит', desc:'Пройти 10 тестов', check:()=>state.totalTestsDone>=10},
+  {id:'twenty', icon:'🎓', name:'Профессор', desc:'Пройти 20 тестов', check:()=>state.totalTestsDone>=20},
+  {id:'polyglot', icon:'🌐', name:'Полиглот', desc:'Тесты в 3 предметах', check:()=>{
+    const subjs=Object.keys(state.progress).filter(s=>Object.values(state.progress[s]||{}).some(arr=>arr.length>0));
+    return subjs.length>=3;
+  }},
+  {id:'streak', icon:'🔥', name:'Горящий', desc:'Выполни ежедневную цель', check:()=>state.dailyGoalDone},
+];
+function checkAchievements(){
+  ACH_DEFS.forEach(a=>{
+    if(!state.achievements[a.id] && a.check()){
+      state.achievements[a.id]=true; saveState();
+      toastMsg(`🏆 Достижение разблокировано: ${a.name}!`,'⭐');
+    }
+  });
+  refreshAchievements();
+}
+function refreshAchievements(){
+  const grid=document.getElementById('achGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  ACH_DEFS.forEach(a=>{
+    const unlocked=!!state.achievements[a.id];
+    const card=document.createElement('div');
+    card.className='ach-card'+(unlocked?' unlocked':'');
+    card.innerHTML=`<div class="ach-icon">${a.icon}</div>
+      <div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div>
+      ${unlocked?'<div style="font-size:.65rem;color:var(--green);margin-top:.2rem;">✓ Получено</div>':''}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ================================================================
+// PROFILE MODAL
+// ================================================================
+function buildProfileContent(){
+  const el=document.getElementById('profileContent');
+  if(!el) return;
+  const totalPct=Math.round(
+    Object.keys(SUBJECTS).reduce((sum,s)=>sum+getSubjectProgress(s),0)/Object.keys(SUBJECTS).length
+  );
+  el.innerHTML=`
+    <div style="font-size:3rem;margin:.5rem 0">${AVATARS[state.avatarIdx]||'🎓'}</div>
+    <div style="font-size:1.2rem;font-weight:700;margin-bottom:.25rem">${state.userName}</div>
+    <div style="color:var(--text-muted);font-size:.82rem;margin-bottom:1.2rem">
+      Пройдено тестов: <strong style="color:var(--cyan)">${state.totalTestsDone}</strong>
+      &nbsp;&nbsp;Общий прогресс: <strong style="color:var(--gold)">${totalPct}%</strong>
+    </div>
+    <div style="text-align:left;margin-bottom:1.2rem">
+      <div class="section-label">Выбрать аватар</div>
+      <div class="avatar-picker" id="profileAvatarPicker"></div>
+    </div>
+    <button class="btn-lg primary" onclick="changeAvatar()" style="width:100%;margin-bottom:.5rem">Сохранить</button>
+    <button class="btn-lg secondary" onclick="openModal('achievementsModal')" style="width:100%">🏆 Достижения</button>
+  `;
+  const picker=document.getElementById('profileAvatarPicker');
+  AVATARS.forEach((a,i)=>{
+    const d=document.createElement('div');
+    d.className='avatar-pick-item'+(i===state.avatarIdx?' selected':'');
+    d.textContent=a; d.dataset.idx=i;
+    d.onclick=()=>{
+      state.avatarIdx=i;
+      document.querySelectorAll('#profileAvatarPicker .avatar-pick-item').forEach(x=>x.classList.remove('selected'));
+      d.classList.add('selected');
     };
+    picker.appendChild(d);
+  });
+}
+function changeAvatar(){
+  saveState(); updateNavAvatar(); updateWelcome();
+  closeModal('profileModal');
+  toastMsg('Аватар обновлён!','✨');
+}
 
-    window.openTestForTopic = async function(topic, grade, lessonIdx) {
-        const modal = document.getElementById('testModal');
-        const contentDiv = document.getElementById('testModalContent');
-        contentDiv.innerHTML = `<div style="text-align:center;"><i class="fas fa-spinner fa-pulse"></i> Генерация теста через ИИ по теме "${topic}" ...</div>`;
-        modal.style.display = 'flex';
-        try {
-            const questions = await generateTestFromAI(topic, grade);
-            let qHtml = `<h3>📋 Тест: ${topic} (${grade} класс)</h3>`;
-            questions.forEach((q, i) => {
-                qHtml += `<div class="test-question" data-qidx="${i}"><strong>${i+1}. ${q.text}</strong><div class="options">`;
-                q.options.forEach((opt, optIdx) => {
-                    qHtml += `<label class="option"><input type="radio" name="q${i}" value="${optIdx}"> ${opt}</label>`;
-                });
-                qHtml += `</div></div>`;
-            });
-            qHtml += `<div style="display:flex; gap:12px; margin-top:20px;"><button id="submitTestBtnLocal" class="btn-neon primary">Проверить</button><button onclick="closeModal('testModal')">Отмена</button></div><div id="testResultMsg"></div>`;
-            contentDiv.innerHTML = qHtml;
-            window.__currentTestQuestions = questions;
-            window.__currentTestMeta = { grade, topic, lessonIdx };
-            document.getElementById('submitTestBtnLocal').onclick = () => submitGeneratedTest(questions, grade, lessonIdx);
-        } catch(e) { contentDiv.innerHTML = `<div>Ошибка генерации теста: ${e.message}<button onclick="closeModal('testModal')">Закрыть</button></div>`; }
-    };
+// ================================================================
+// FORMULA NUDGE
+// ================================================================
+function scheduleFormulaNudge(){
+  setTimeout(showNudge, 5*60*1000); // 5 min
+}
+function showNudge(){
+  const f=FORMULAS[Math.floor(Math.random()*FORMULAS.length)];
+  document.getElementById('nudgeFormula').textContent=f.t||f.f;
+  document.getElementById('nudgeExplain').textContent=f.e;
+  document.getElementById('nudgeExplain').style.display='none';
+  document.getElementById('formulaNudge').style.display='block';
+}
+function nudgeKnow(){
+  document.getElementById('formulaNudge').style.display='none';
+  toastMsg('Отлично! Формула в памяти 🧠','✅');
+  setTimeout(showNudge,5*60*1000);
+}
+function nudgeDK(){
+  document.getElementById('nudgeExplain').style.display='block';
+  toastMsg('Прочитай объяснение, это поможет!','💡');
+  setTimeout(()=>{ document.getElementById('formulaNudge').style.display='none'; setTimeout(showNudge,5*60*1000); }, 8000);
+}
 
-    async function submitGeneratedTest(questions, grade, lessonIdx) {
-        let correct = 0;
-        questions.forEach((_, i) => {
-            const selected = document.querySelector(`input[name="q${i}"]:checked`);
-            if (selected && parseInt(selected.value) === questions[i].correct) correct++;
-        });
-        const resultDiv = document.getElementById('testResultMsg');
-        if (correct >= 4) {
-            resultDiv.innerHTML = `<div style="background:rgba(16,185,129,0.2); border-radius:20px; padding:12px;">✅ Поздравляем! ${correct}/5. Тема освоена! 🎓</div>`;
-            markLessonCompleted(grade, lessonIdx);
-            setTimeout(() => showCertificateForTopic(questions[0]?.text || "Алгебра", grade, lessonIdx), 500);
-        } else {
-            resultDiv.innerHTML = `<div style="background:rgba(239,68,68,0.2); padding:12px; border-radius:20px;">❌ ${correct}/5 правильных. Рекомендуем пересмотреть видео и попробовать ещё раз.</div>`;
-        }
-    }
+// ================================================================
+// MODALS
+// ================================================================
+function openModal(id){
+  if(id==='profileModal') buildProfileContent();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  if(el) el.classList.remove('open');
+  if(id==='testModal'){
+    stopTestTimer();
+    document.getElementById('checkTestBtn').disabled=false;
+    currentTestData=null;
+  }
+}
 
-    function showCertificateForTopic(topic, grade, lessonIdx) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-        doc.setFillColor(10,12,30); doc.rect(0,0,297,210,'F');
-        doc.setDrawColor(6,205,212); doc.setLineWidth(1); doc.roundedRect(15,15,267,180,10,10,'S');
-        doc.setFontSize(28); doc.setTextColor(244,185,64); doc.text('DOROSlearn', 148.5, 50, { align: 'center' });
-        doc.setFontSize(20); doc.setTextColor(255,255,255); doc.text('СЕРТИФИКАТ', 148.5, 80, { align: 'center' });
-        doc.setFontSize(14); doc.text(`об успешном прохождении темы: ${topic} (${grade} класс)`, 148.5, 105, { align: 'center' });
-        let name = localStorage.getItem('doros_username') || 'Ученик';
-        doc.setFontSize(18); doc.text(name, 148.5, 135, { align: 'center' });
-        doc.setFontSize(10); doc.text(`Дата: ${new Date().toLocaleDateString()}`, 148.5, 160, { align: 'center' });
-        doc.save(`DOROS_cert_${topic}.pdf`);
-        window.toastMessage(`🎉 Сертификат загружен!`);
-    }
+// ================================================================
+// TOAST
+// ================================================================
+function toastMsg(msg, icon='ℹ️'){
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`${icon} ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(12px)'; setTimeout(()=>t.remove(),300); }, 2800);
+}
 
-    window.markUnderstood = function(lessonIdx) { markLessonCompleted(currentGrade, lessonIdx); toastMessage('Урок отмечен пройденным!'); };
-    window.markConfused = function(topic) { addChatMessage(`user`, `Я не понял тему "${topic}", объясни подробнее`); callChatAI(`Объясни тему "${topic}" для ${currentGrade} класса по алгебре простыми словами и примерами`); };
+// ================================================================
+// KEYBOARD SHORTCUT: Enter for chat
+// ================================================================
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal-overlay.open').forEach(m=>{ if(m.id!=='nameModal'||state.userName) closeModal(m.id); });
+  }
+});
 
-    // Чат-функции + интеграция
-    function addChatMessage(role, text) {
-        const container = document.getElementById('chatMessagesArea');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `msg ${role}`;
-        msgDiv.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
-        container.appendChild(msgDiv);
-        container.scrollTop = container.scrollHeight;
-    }
-    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';return m;}); }
-    async function callChatAI(prompt) {
-        addChatMessage('bot', '🤖 DOROSai печатает...');
-        const model = document.getElementById('chatModelSelect').value;
-        try {
-            const answer = await callAI(prompt, model);
-            const lastBot = document.querySelectorAll('.msg.bot');
-            if(lastBot.length && lastBot[lastBot.length-1].innerText.includes('печатает')) lastBot[lastBot.length-1].remove();
-            addChatMessage('bot', answer);
-        } catch(e) { addChatMessage('bot', 'Ошибка ИИ, повтори позже.'); }
-    }
-    window.aiGenerateTestForCurrentTopic = function() {
-        const topics = curriculum[currentGrade];
-        const lastLessonIdx = Math.max(0, (progress[currentGrade]||0));
-        const topic = topics[lastLessonIdx];
-        if(topic) openTestForTopic(topic, currentGrade, lastLessonIdx);
-        else toastMessage('Сначала выберите доступный урок');
-    };
-    window.aiFindVideoByTopic = async function() {
-        const topics = curriculum[currentGrade];
-        const idx = (progress[currentGrade]||0);
-        const topic = topics[idx];
-        if(topic) {
-            const url = await searchYouTubeVideo(topic, currentGrade);
-            addChatMessage('bot', `🔍 Видео по теме "${topic}": ${url.includes('embed') ? 'https://www.youtube.com/watch?v='+url.split('/embed/')[1] : url}`);
-        } else toastMessage('Нет активной темы');
-    };
-    window.aiMakeSummary = async function() {
-        const topics = curriculum[currentGrade];
-        const idx = (progress[currentGrade]||0);
-        const topic = topics[idx];
-        if(topic) {
-            addChatMessage('user', `Сделай конспект по теме "${topic}" для ${currentGrade} класса алгебра`);
-            const summary = await callAI(`Напиши краткий конспект по алгебре: тема "${topic}", ${currentGrade} класс, основные формулы и определения.`, 'openai');
-            addChatMessage('bot', summary);
-        } else toastMessage('Сначала открой урок');
-    };
-    document.getElementById('sendChatBtn').onclick = async () => {
-        const inp = document.getElementById('chatInput');
-        if(!inp.value.trim()) return;
-        let text = inp.value;
-        addChatMessage('user', text);
-        inp.value = '';
-        await callChatAI(text);
-    };
-    // ИИ-решатель задач
-    document.getElementById('openSolverBtn').onclick = () => { document.getElementById('solverModal').style.display = 'flex'; document.getElementById('solverAnswer').innerHTML = ''; };
-    document.getElementById('solveTaskBtn').onclick = async () => {
-        const task = document.getElementById('solverTask').value;
-        if(!task.trim()) return;
-        document.getElementById('solverAnswer').innerHTML = '<i class="fas fa-spinner fa-pulse"></i> ИИ решает...';
-        const solution = await callAI(`Ты репетитор по алгебре. Реши задачу пошагово, подробно. Задача: ${task}`, 'openai');
-        document.getElementById('solverAnswer').innerHTML = `<div style="white-space:pre-wrap;">${escapeHtml(solution)}</div>`;
-    };
-    window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
-    function toastMessage(msg) { let t=document.createElement('div'); t.className='toast'; t.innerHTML=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
-
-    // выбор класса
-    function buildGradeSelector() {
-        const container = document.getElementById('gradeSelector');
-        for(let g=5; g<=11; g++) {
-            let btn = document.createElement('div');
-            btn.className = `grade-btn ${g===currentGrade?'active':''}`;
-            btn.innerText = `${g} класс`;
-            btn.onclick = () => { currentGrade = g; document.querySelectorAll('.grade-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderLessons(); };
-            container.appendChild(btn);
-        }
-    }
-
-    // инициализация, загрузка чата и хранилища
-    loadProgress();
-    buildGradeSelector();
-    renderLessons();
-
-    document.getElementById('resetProgressBtn').onclick = resetProgress;
-    // закрытие модалок по клику на оверлей
-    document.querySelectorAll('.modal-overlay').forEach(ov => ov.addEventListener('click', (e) => { if(e.target === ov) ov.style.display = 'none'; }));
-    window.toastMessage = toastMessage;
-    window.showCertificateForTopic = showCertificateForTopic;
+// ================================================================
+// EXPOSE GLOBALS
+// ================================================================
+window.openTest=openTest;
+window.downloadCert=downloadCert;
+window.askChatAbout=askChatAbout;
+window.markDoneManual=markDoneManual;
+window.saveName=saveName;
+window.sendChat=sendChat;
+window.clearChatHistory=clearChatHistory;
+window.checkTest=checkTest;
+window.closeModal=closeModal;
+window.openModal=openModal;
+window.checkDailyGoal=checkDailyGoal;
+window.selectOpt=selectOpt;
+window.changeAvatar=changeAvatar;
+window.nudgeKnow=nudgeKnow;
+window.nudgeDK=nudgeDK;
+window.aiTestCurrentTopic=aiTestCurrentTopic;
+window.aiSummary=aiSummary;
+window.aiExplain=aiExplain;
+window.aiVideo=aiVideo;
+window.resetProgress=resetProgress;
 </script>
 </body>
 </html>
